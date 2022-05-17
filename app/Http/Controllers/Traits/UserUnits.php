@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Http\Controllers\Traits;
+
+use App\Status;
+use App\Unit;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
+
+trait UserUnits
+{
+	/**
+	 * Get units list according to the user level
+	 *
+	 * @param boolean $onlyActive
+	 *
+	 * @return Collection
+	 */
+	public function getUserUnits($onlyActive = false)
+	{
+		$user = auth()->user();
+		
+		$query = Unit::orderBy('unit_name')
+			->when($onlyActive, function ($query) {
+				return $query->where('status_id', '!=', Status::STATUS_UNIT_INACTIVE);
+			});
+
+		// HQ+ level
+		if (Gate::allows('hq-user-group')) {
+			return $query->get();
+		}
+
+		// Operations level
+		if (Gate::allows('operations-user-group')) {
+			return $query->where('ops_manager_user_id', $user->user_id)->get();
+		}
+
+		// Units level
+		$unitMembersIds = explode(",", $user->unit_member);
+
+		return $query->whereIn('unit_id', $unitMembersIds)->get();
+	}
+
+}

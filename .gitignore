@@ -1,0 +1,15 @@
+/node_modules
+/public/storage
+/vendor
+/.idea
+/file_backup
+/file_share
+/files
+/bootstrap
+/storage
+/public/build
+Homestead.json
+Homestead.yaml
+.env
+composer.lock
+

@@ -1,0 +1,225 @@
+ALTER TABLE `units` ADD `ops_manager_user_id` TEXT CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL AFTER `unitsuppliers`;
+
+
+/* ===================== New columns for Phased Budget Report ================================= */
+
+
+ALTER TABLE `trading_account` ADD `labour_totals` FLOAT NOT NULL AFTER `gpp_on_net_sales_month_12`, ADD `labour_month_1` FLOAT NOT NULL AFTER `labour_totals`, ADD `labour_month_2` FLOAT NOT NULL AFTER `labour_month_1`, ADD `labour_month_3` FLOAT NOT NULL AFTER `labour_month_2`, ADD `labour_month_4` FLOAT NOT NULL AFTER `labour_month_3`, ADD `labour_month_5` FLOAT NOT NULL AFTER `labour_month_4`, ADD `labour_month_6` FLOAT NOT NULL AFTER `labour_month_5`, ADD `labour_month_7` FLOAT NOT NULL AFTER `labour_month_6`, ADD `labour_month_8` FLOAT NOT NULL AFTER `labour_month_7`, ADD `labour_month_9` FLOAT NOT NULL AFTER `labour_month_8`, ADD `labour_month_10` FLOAT NOT NULL AFTER `labour_month_9`, ADD `labour_month_11` FLOAT NOT NULL AFTER `labour_month_10`, ADD `labour_month_12` FLOAT NOT NULL AFTER `labour_month_11`;
+ALTER TABLE `trading_account` ADD `training_totals` FLOAT NOT NULL AFTER `labour_month_12`, ADD `training_month_1` FLOAT NOT NULL AFTER `training_totals`, ADD `training_month_2` FLOAT NOT NULL AFTER `training_month_1`, ADD `training_month_3` FLOAT NOT NULL AFTER `training_month_2`, ADD `training_month_4` FLOAT NOT NULL AFTER `training_month_3`, ADD `training_month_5` FLOAT NOT NULL AFTER `training_month_4`, ADD `training_month_6` FLOAT NOT NULL AFTER `training_month_5`, ADD `training_month_7` FLOAT NOT NULL AFTER `training_month_6`, ADD `training_month_8` FLOAT NOT NULL AFTER `training_month_7`, ADD `training_month_9` FLOAT NOT NULL AFTER `training_month_8`, ADD `training_month_10` FLOAT NOT NULL AFTER `training_month_9`, ADD `training_month_11` FLOAT NOT NULL AFTER `training_month_10`, ADD `training_month_12` FLOAT NOT NULL AFTER `training_month_11`;
+ALTER TABLE `trading_account` ADD `cleaning_totals` FLOAT NOT NULL AFTER `training_month_12`, ADD `cleaning_month_1` FLOAT NOT NULL AFTER `cleaning_totals`, ADD `cleaning_month_2` FLOAT NOT NULL AFTER `cleaning_month_1`, ADD `cleaning_month_3` FLOAT NOT NULL AFTER `cleaning_month_2`, ADD `cleaning_month_4` FLOAT NOT NULL AFTER `cleaning_month_3`, ADD `cleaning_month_5` FLOAT NOT NULL AFTER `cleaning_month_4`, ADD `cleaning_month_6` FLOAT NOT NULL AFTER `cleaning_month_5`, ADD `cleaning_month_7` FLOAT NOT NULL AFTER `cleaning_month_6`, ADD `cleaning_month_8` FLOAT NOT NULL AFTER `cleaning_month_7`, ADD `cleaning_month_9` FLOAT NOT NULL AFTER `cleaning_month_8`, ADD `cleaning_month_10` FLOAT NOT NULL AFTER `cleaning_month_9`, ADD `cleaning_month_11` FLOAT NOT NULL AFTER `cleaning_month_10`, ADD `cleaning_month_12` FLOAT NOT NULL AFTER `cleaning_month_11`;
+ALTER TABLE `trading_account` ADD `bank_charges_totals` FLOAT NOT NULL AFTER `delph_and_cutlery_month_12`, ADD `bank_charges_month_1` FLOAT NOT NULL AFTER `bank_charges_totals`, ADD `bank_charges_month_2` FLOAT NOT NULL AFTER `bank_charges_month_1`, ADD `bank_charges_month_3` FLOAT NOT NULL AFTER `bank_charges_month_2`, ADD `bank_charges_month_4` FLOAT NOT NULL AFTER `bank_charges_month_3`, ADD `bank_charges_month_5` FLOAT NOT NULL AFTER `bank_charges_month_4`, ADD `bank_charges_month_6` FLOAT NOT NULL AFTER `bank_charges_month_5`, ADD `bank_charges_month_7` FLOAT NOT NULL AFTER `bank_charges_month_6`, ADD `bank_charges_month_8` FLOAT NOT NULL AFTER `bank_charges_month_7`, ADD `bank_charges_month_9` FLOAT NOT NULL AFTER `bank_charges_month_8`, ADD `bank_charges_month_10` FLOAT NOT NULL AFTER `bank_charges_month_9`, ADD `bank_charges_month_11` FLOAT NOT NULL AFTER `bank_charges_month_10`, ADD `bank_charges_month_12` FLOAT NOT NULL AFTER `bank_charges_month_11`;
+ALTER TABLE `trading_account` ADD `investment_totals` FLOAT NOT NULL AFTER `bank_charges_month_12`, ADD `investment_month_1` FLOAT NOT NULL AFTER `investment_totals`, ADD `investment_month_2` FLOAT NOT NULL AFTER `investment_month_1`, ADD `investment_month_3` FLOAT NOT NULL AFTER `investment_month_2`, ADD `investment_month_4` FLOAT NOT NULL AFTER `investment_month_3`, ADD `investment_month_5` FLOAT NOT NULL AFTER `investment_month_4`, ADD `investment_month_6` FLOAT NOT NULL AFTER `investment_month_5`, ADD `investment_month_7` FLOAT NOT NULL AFTER `investment_month_6`, ADD `investment_month_8` FLOAT NOT NULL AFTER `investment_month_7`, ADD `investment_month_9` FLOAT NOT NULL AFTER `investment_month_8`, ADD `investment_month_10` FLOAT NOT NULL AFTER `investment_month_9`, ADD `investment_month_11` FLOAT NOT NULL AFTER `investment_month_10`, ADD `investment_month_12` FLOAT NOT NULL AFTER `investment_month_11`;
+ALTER TABLE `trading_account` ADD `management_fee_totals` FLOAT NOT NULL AFTER `investment_month_12`, ADD `management_fee_month_1` FLOAT NOT NULL AFTER `management_fee_totals`, ADD `management_fee_month_2` FLOAT NOT NULL AFTER `management_fee_month_1`, ADD `management_fee_month_3` FLOAT NOT NULL AFTER `management_fee_month_2`, ADD `management_fee_month_4` FLOAT NOT NULL AFTER `management_fee_month_3`, ADD `management_fee_month_5` FLOAT NOT NULL AFTER `management_fee_month_4`, ADD `management_fee_month_6` FLOAT NOT NULL AFTER `management_fee_month_5`, ADD `management_fee_month_7` FLOAT NOT NULL AFTER `management_fee_month_6`, ADD `management_fee_month_8` FLOAT NOT NULL AFTER `management_fee_month_7`, ADD `management_fee_month_9` FLOAT NOT NULL AFTER `management_fee_month_8`, ADD `management_fee_month_10` FLOAT NOT NULL AFTER `management_fee_month_9`, ADD `management_fee_month_11` FLOAT NOT NULL AFTER `management_fee_month_10`, ADD `management_fee_month_12` FLOAT NOT NULL AFTER `management_fee_month_11`;
+ALTER TABLE `trading_account` ADD `insurance_and_related_costs_totals` FLOAT NOT NULL AFTER `management_fee_month_12`, ADD `insurance_and_related_costs_month_1` FLOAT NOT NULL AFTER `insurance_and_related_costs_totals`, ADD `insurance_and_related_costs_month_2` FLOAT NOT NULL AFTER `insurance_and_related_costs_month_1`, ADD `insurance_and_related_costs_month_3` FLOAT NOT NULL AFTER `insurance_and_related_costs_month_2`, ADD `insurance_and_related_costs_month_4` FLOAT NOT NULL AFTER `insurance_and_related_costs_month_3`, ADD `insurance_and_related_costs_month_5` FLOAT NOT NULL AFTER `insurance_and_related_costs_month_4`, ADD `insurance_and_related_costs_month_6` FLOAT NOT NULL AFTER `insurance_and_related_costs_month_5`, ADD `insurance_and_related_costs_month_7` FLOAT NOT NULL AFTER `insurance_and_related_costs_month_6`, ADD `insurance_and_related_costs_month_8` FLOAT NOT NULL AFTER `insurance_and_related_costs_month_7`, ADD `insurance_and_related_costs_month_9` FLOAT NOT NULL AFTER `insurance_and_related_costs_month_8`, ADD `insurance_and_related_costs_month_10` FLOAT NOT NULL AFTER `insurance_and_related_costs_month_9`, ADD `insurance_and_related_costs_month_11` FLOAT NOT NULL AFTER `insurance_and_related_costs_month_10`, ADD `insurance_and_related_costs_month_12` FLOAT NOT NULL AFTER `insurance_and_related_costs_month_11`;
+ALTER TABLE `trading_account` ADD `coffee_machine_rental_totals` FLOAT NOT NULL AFTER `insurance_and_related_costs_month_12`, ADD `coffee_machine_rental_month_1` FLOAT NOT NULL AFTER `coffee_machine_rental_totals`, ADD `coffee_machine_rental_month_2` FLOAT NOT NULL AFTER `coffee_machine_rental_month_1`, ADD `coffee_machine_rental_month_3` FLOAT NOT NULL AFTER `coffee_machine_rental_month_2`, ADD `coffee_machine_rental_month_4` FLOAT NOT NULL AFTER `coffee_machine_rental_month_3`, ADD `coffee_machine_rental_month_5` FLOAT NOT NULL AFTER `coffee_machine_rental_month_4`, ADD `coffee_machine_rental_month_6` FLOAT NOT NULL AFTER `coffee_machine_rental_month_5`, ADD `coffee_machine_rental_month_7` FLOAT NOT NULL AFTER `coffee_machine_rental_month_6`, ADD `coffee_machine_rental_month_8` FLOAT NOT NULL AFTER `coffee_machine_rental_month_7`, ADD `coffee_machine_rental_month_9` FLOAT NOT NULL AFTER `coffee_machine_rental_month_8`, ADD `coffee_machine_rental_month_10` FLOAT NOT NULL AFTER `coffee_machine_rental_month_9`, ADD `coffee_machine_rental_month_11` FLOAT NOT NULL AFTER `coffee_machine_rental_month_10`, ADD `coffee_machine_rental_month_12` FLOAT NOT NULL AFTER `coffee_machine_rental_month_11`;
+ALTER TABLE `trading_account` ADD `other_rental_totals` FLOAT NOT NULL AFTER `coffee_machine_rental_month_12`, ADD `other_rental_month_1` FLOAT NOT NULL AFTER `other_rental_totals`, ADD `other_rental_month_2` FLOAT NOT NULL AFTER `other_rental_month_1`, ADD `other_rental_month_3` FLOAT NOT NULL AFTER `other_rental_month_2`, ADD `other_rental_month_4` FLOAT NOT NULL AFTER `other_rental_month_3`, ADD `other_rental_month_5` FLOAT NOT NULL AFTER `other_rental_month_4`, ADD `other_rental_month_6` FLOAT NOT NULL AFTER `other_rental_month_5`, ADD `other_rental_month_7` FLOAT NOT NULL AFTER `other_rental_month_6`, ADD `other_rental_month_8` FLOAT NOT NULL AFTER `other_rental_month_7`, ADD `other_rental_month_9` FLOAT NOT NULL AFTER `other_rental_month_8`, ADD `other_rental_month_10` FLOAT NOT NULL AFTER `other_rental_month_9`, ADD `other_rental_month_11` FLOAT NOT NULL AFTER `other_rental_month_10`, ADD `other_rental_month_12` FLOAT NOT NULL AFTER `other_rental_month_11`;
+ALTER TABLE `trading_account` ADD `it_support_totals` FLOAT NOT NULL AFTER `other_rental_month_12`, ADD `it_support_month_1` FLOAT NOT NULL AFTER `it_support_totals`, ADD `it_support_month_2` FLOAT NOT NULL AFTER `it_support_month_1`, ADD `it_support_month_3` FLOAT NOT NULL AFTER `it_support_month_2`, ADD `it_support_month_4` FLOAT NOT NULL AFTER `it_support_month_3`, ADD `it_support_month_5` FLOAT NOT NULL AFTER `it_support_month_4`, ADD `it_support_month_6` FLOAT NOT NULL AFTER `it_support_month_5`, ADD `it_support_month_7` FLOAT NOT NULL AFTER `it_support_month_6`, ADD `it_support_month_8` FLOAT NOT NULL AFTER `it_support_month_7`, ADD `it_support_month_9` FLOAT NOT NULL AFTER `it_support_month_8`, ADD `it_support_month_10` FLOAT NOT NULL AFTER `it_support_month_9`, ADD `it_support_month_11` FLOAT NOT NULL AFTER `it_support_month_10`, ADD `it_support_month_12` FLOAT NOT NULL AFTER `it_support_month_11`;
+ALTER TABLE `trading_account` ADD `marketing_totals` FLOAT NOT NULL AFTER `free_issues_month_12`, ADD `marketing_month_1` FLOAT NOT NULL AFTER `marketing_totals`, ADD `marketing_month_2` FLOAT NOT NULL AFTER `marketing_month_1`, ADD `marketing_month_3` FLOAT NOT NULL AFTER `marketing_month_2`, ADD `marketing_month_4` FLOAT NOT NULL AFTER `marketing_month_3`, ADD `marketing_month_5` FLOAT NOT NULL AFTER `marketing_month_4`, ADD `marketing_month_6` FLOAT NOT NULL AFTER `marketing_month_5`, ADD `marketing_month_7` FLOAT NOT NULL AFTER `marketing_month_6`, ADD `marketing_month_8` FLOAT NOT NULL AFTER `marketing_month_7`, ADD `marketing_month_9` FLOAT NOT NULL AFTER `marketing_month_8`, ADD `marketing_month_10` FLOAT NOT NULL AFTER `marketing_month_9`, ADD `marketing_month_11` FLOAT NOT NULL AFTER `marketing_month_10`, ADD `marketing_month_12` FLOAT NOT NULL AFTER `marketing_month_11`;
+ALTER TABLE `trading_account` ADD `set_up_costs_totals` FLOAT NOT NULL AFTER `marketing_month_12`, ADD `set_up_costs_month_1` FLOAT NOT NULL AFTER `set_up_costs_totals`, ADD `set_up_costs_month_2` FLOAT NOT NULL AFTER `set_up_costs_month_1`, ADD `set_up_costs_month_3` FLOAT NOT NULL AFTER `set_up_costs_month_2`, ADD `set_up_costs_month_4` FLOAT NOT NULL AFTER `set_up_costs_month_3`, ADD `set_up_costs_month_5` FLOAT NOT NULL AFTER `set_up_costs_month_4`, ADD `set_up_costs_month_6` FLOAT NOT NULL AFTER `set_up_costs_month_5`, ADD `set_up_costs_month_7` FLOAT NOT NULL AFTER `set_up_costs_month_6`, ADD `set_up_costs_month_8` FLOAT NOT NULL AFTER `set_up_costs_month_7`, ADD `set_up_costs_month_9` FLOAT NOT NULL AFTER `set_up_costs_month_8`, ADD `set_up_costs_month_10` FLOAT NOT NULL AFTER `set_up_costs_month_9`, ADD `set_up_costs_month_11` FLOAT NOT NULL AFTER `set_up_costs_month_10`, ADD `set_up_costs_month_12` FLOAT NOT NULL AFTER `set_up_costs_month_11`;
+ALTER TABLE `trading_account` ADD `credit_card_machines_totals` FLOAT NOT NULL AFTER `set_up_costs_month_12`, ADD `credit_card_machines_month_1` FLOAT NOT NULL AFTER `credit_card_machines_totals`, ADD `credit_card_machines_month_2` FLOAT NOT NULL AFTER `credit_card_machines_month_1`, ADD `credit_card_machines_month_3` FLOAT NOT NULL AFTER `credit_card_machines_month_2`, ADD `credit_card_machines_month_4` FLOAT NOT NULL AFTER `credit_card_machines_month_3`, ADD `credit_card_machines_month_5` FLOAT NOT NULL AFTER `credit_card_machines_month_4`, ADD `credit_card_machines_month_6` FLOAT NOT NULL AFTER `credit_card_machines_month_5`, ADD `credit_card_machines_month_7` FLOAT NOT NULL AFTER `credit_card_machines_month_6`, ADD `credit_card_machines_month_8` FLOAT NOT NULL AFTER `credit_card_machines_month_7`, ADD `credit_card_machines_month_9` FLOAT NOT NULL AFTER `credit_card_machines_month_8`, ADD `credit_card_machines_month_10` FLOAT NOT NULL AFTER `credit_card_machines_month_9`, ADD `credit_card_machines_month_11` FLOAT NOT NULL AFTER `credit_card_machines_month_10`, ADD `credit_card_machines_month_12` FLOAT NOT NULL AFTER `credit_card_machines_month_11`;
+ALTER TABLE `trading_account` ADD `bizimply_cost_totals` FLOAT NOT NULL AFTER `credit_card_machines_month_12`, ADD `bizimply_cost_month_1` FLOAT NOT NULL AFTER `bizimply_cost_totals`, ADD `bizimply_cost_month_2` FLOAT NOT NULL AFTER `bizimply_cost_month_1`, ADD `bizimply_cost_month_3` FLOAT NOT NULL AFTER `bizimply_cost_month_2`, ADD `bizimply_cost_month_4` FLOAT NOT NULL AFTER `bizimply_cost_month_3`, ADD `bizimply_cost_month_5` FLOAT NOT NULL AFTER `bizimply_cost_month_4`, ADD `bizimply_cost_month_6` FLOAT NOT NULL AFTER `bizimply_cost_month_5`, ADD `bizimply_cost_month_7` FLOAT NOT NULL AFTER `bizimply_cost_month_6`, ADD `bizimply_cost_month_8` FLOAT NOT NULL AFTER `bizimply_cost_month_7`, ADD `bizimply_cost_month_9` FLOAT NOT NULL AFTER `bizimply_cost_month_8`, ADD `bizimply_cost_month_10` FLOAT NOT NULL AFTER `bizimply_cost_month_9`, ADD `bizimply_cost_month_11` FLOAT NOT NULL AFTER `bizimply_cost_month_10`, ADD `bizimply_cost_month_12` FLOAT NOT NULL AFTER `bizimply_cost_month_11`;
+ALTER TABLE `trading_account` ADD `kitchtech_totals` FLOAT NOT NULL AFTER `bizimply_cost_month_12`, ADD `kitchtech_month_1` FLOAT NOT NULL AFTER `kitchtech_totals`, ADD `kitchtech_month_2` FLOAT NOT NULL AFTER `kitchtech_month_1`, ADD `kitchtech_month_3` FLOAT NOT NULL AFTER `kitchtech_month_2`, ADD `kitchtech_month_4` FLOAT NOT NULL AFTER `kitchtech_month_3`, ADD `kitchtech_month_5` FLOAT NOT NULL AFTER `kitchtech_month_4`, ADD `kitchtech_month_6` FLOAT NOT NULL AFTER `kitchtech_month_5`, ADD `kitchtech_month_7` FLOAT NOT NULL AFTER `kitchtech_month_6`, ADD `kitchtech_month_8` FLOAT NOT NULL AFTER `kitchtech_month_7`, ADD `kitchtech_month_9` FLOAT NOT NULL AFTER `kitchtech_month_8`, ADD `kitchtech_month_10` FLOAT NOT NULL AFTER `kitchtech_month_9`, ADD `kitchtech_month_11` FLOAT NOT NULL AFTER `kitchtech_month_10`, ADD `kitchtech_month_12` FLOAT NOT NULL AFTER `kitchtech_month_11`;
+
+CREATE TABLE `ccsl5_dev`.`phased_budget_unit_rows` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `user_id` INT(11) NOT NULL , `unit_id` INT(11) NOT NULL , `row_index` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (`id`), INDEX `user_id_idx` (`user_id`), INDEX `unit_id_idx` (`unit_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+
+/* ===================== New 21% ================================= */
+
+
+ALTER TABLE `credit_sales` ADD `goods_21` FLOAT(8,2) NOT NULL AFTER `gross_9`, ADD `vat_21` FLOAT(8,2) NOT NULL AFTER `goods_21`, ADD `gross_21` FLOAT(8,2) NOT NULL AFTER `vat_21`;
+
+SET SQL_MODE='ALLOW_INVALID_DATES';
+ALTER TABLE `purchases` ADD `goods_21` FLOAT(8,2) NOT NULL AFTER `goods_13`;
+ALTER TABLE `purchases` ADD `vat_21` FLOAT(8,2) NOT NULL AFTER `vat_13`;
+ALTER TABLE `purchases` ADD `gross_21` FLOAT(8,2) NOT NULL AFTER `gross_13`;
+
+INSERT INTO `tax_codes`(`tax_code_title`, `tax_rate`, `cash_purch`, `credit_purch`, `tax_code_display_rate`) VALUES ('T7', 21, 1, 1, 21);
+
+ALTER TABLE `vending_sales` ADD `net_21` FLOAT(8,2) NOT NULL AFTER `net_9`;
+
+
+/* ===================== Customer feedback ================================= */
+
+
+CREATE TABLE `contact_types` ( `id` INT(6) UNSIGNED NOT NULL AUTO_INCREMENT , `title` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;
+
+INSERT INTO `contact_types`(`title`) VALUES ('meeting');
+INSERT INTO `contact_types`(`title`) VALUES ('email');
+INSERT INTO `contact_types`(`title`) VALUES ('phone');
+INSERT INTO `contact_types`(`title`) VALUES ('other');
+
+CREATE TABLE `feedback_types` ( `id` INT(6) UNSIGNED NOT NULL AUTO_INCREMENT , `score` INT(1) UNSIGNED NOT NULL , `title` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+INSERT INTO `feedback_types`(`score`, `title`) VALUES (0, 'Very poor');
+INSERT INTO `feedback_types`(`score`, `title`) VALUES (1, 'Below average');
+INSERT INTO `feedback_types`(`score`, `title`) VALUES (2, 'Average');
+INSERT INTO `feedback_types`(`score`, `title`) VALUES (3, 'Above average');
+INSERT INTO `feedback_types`(`score`, `title`) VALUES (4, 'Very good');
+
+CREATE TABLE `customer_feedbacks` ( `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT , `unit_id` INT(11) UNSIGNED NOT NULL , `contact_type_id` INT UNSIGNED NOT NULL , `feedback_type_id` INT UNSIGNED NOT NULL , `contact_date` DATETIME NOT NULL , `notes` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , PRIMARY KEY (`id`), INDEX `unit_id_idx` (`unit_id`), INDEX `contact_type_idx` (`contact_type_id`), INDEX `feedback_type_idx` (`feedback_type_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+
+/* ===================== Updates for Unit Manager ================================= */
+
+
+ALTER TABLE `units` ADD `client_contact_name` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL AFTER `ops_manager_user_id`, ADD `client_contact_email` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL AFTER `client_contact_name`;
+ALTER TABLE `units` ADD `status_id` INT(6) UNSIGNED NOT NULL DEFAULT '1' AFTER `client_contact_email`, ADD INDEX `status_idx` (`status_id`);
+
+CREATE TABLE `statuses` ( `id` INT(3) NOT NULL AUTO_INCREMENT , `name` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `type` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+INSERT INTO `statuses`(`name`, `type`) VALUES ('Active', 'unit_manager');
+INSERT INTO `statuses`(`name`, `type`) VALUES ('On-hold', 'unit_manager');
+INSERT INTO `statuses`(`name`, `type`) VALUES ('Inactive', 'unit_manager');
+
+
+/* ===================== Updates for Phased Budget ================================= */
+
+
+CREATE TABLE `contract_types` ( `id` INT(6) NOT NULL AUTO_INCREMENT , `title` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+INSERT INTO `contract_types`(`title`) VALUES ('Fixed Price');
+INSERT INTO `contract_types`(`title`) VALUES ('Cost Plus');
+INSERT INTO `contract_types`(`title`) VALUES ('Cost Plus With Cap');
+INSERT INTO `contract_types`(`title`) VALUES ('Commercial');
+
+ALTER TABLE `trading_account` ADD `contract_type_id` INT(6) UNSIGNED NULL AFTER `unit_id`, ADD INDEX `contract_type_idx` (`contract_type_id`);
+
+
+/* ===================== Operations Scorecard ================================= */
+
+
+CREATE TABLE `ops_scorecard` ( `ops_scorecard_id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT , `unit_id` INT(11) UNSIGNED NOT NULL , `presentation` INT(6) NOT NULL , `presentation_notes` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `foodcost_awareness` INT(6) NOT NULL , `foodcost_awareness_notes` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `hr_issues` INT(6) NOT NULL , `hr_issues_notes` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `morale` INT(6) NOT NULL , `morale_notes` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `purch_compliance` INT(6) NOT NULL , `purch_compliance_notes` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `haccp_compliance` INT(6) NOT NULL , `haccp_compliance_notes` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `health_safety_iso` INT(6) NOT NULL , `health_safety_iso_notes` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `accidents_incidents` INT(6) NOT NULL , `accidents_incidents_notes` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `security_cash_ctl` INT(6) NOT NULL , `security_cash_ctl_notes` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `marketing_upselling` INT(6) NOT NULL , `marketing_upselling_notes` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `training` INT(6) NOT NULL , `training_notes` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `objectives` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `outstanding_issues` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `sp_projects_functions` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `innovation` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `add_support_req` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `scorecard_date` DATE NOT NULL , `created_by` INT(11) UNSIGNED NOT NULL , `date_created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , `modified_by` INT(11) UNSIGNED NULL DEFAULT NULL , `date_modified` TIMESTAMP NULL DEFAULT NULL , `deleted` TINYINT(1) NOT NULL DEFAULT '0' , PRIMARY KEY (`ops_scorecard_id`), INDEX `unit_idx` (`unit_id`), INDEX `created_by_idx` (`created_by`), INDEX `modified_by_idx` (`modified_by`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+
+/* ===================== Phased Budget ================================= */
+
+
+CREATE TABLE `budget_types` ( `id` INT NOT NULL AUTO_INCREMENT , `title` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+INSERT INTO `budget_types`(`title`) VALUES ('GP Gross');
+INSERT INTO `budget_types`(`title`) VALUES ('GP Net');
+
+ALTER TABLE `trading_account` ADD `budget_type_id` INT(6) UNSIGNED NOT NULL AFTER `contract_type_id`, ADD INDEX `budget_type_idx` (`budget_type_id`);
+
+
+/* ===================== Purchases Report ================================= */
+
+
+ALTER TABLE `purchases` ADD INDEX `unit_idx` (`unit_id`);
+ALTER TABLE `purchases` ADD INDEX `user_idx` (`supervisor_id`);
+ALTER TABLE `purchases` ADD INDEX `nominal_codes_idx` (`net_ext_ID`);
+
+
+/* ===================== Deleted problem ================================= */
+
+ALTER TABLE `purchases` CHANGE `deleted` `deleted` TINYINT(1) NOT NULL DEFAULT '0';
+UPDATE `purchases` SET `deleted` = 2 WHERE `deleted` = 1;
+UPDATE `purchases` SET `deleted` = 1 WHERE `deleted` = 0;
+UPDATE `purchases` SET `deleted` = 0 WHERE `deleted` = 2;
+
+
+/* ===================== Dynamic tax rates ================================= */
+
+ALTER TABLE `tax_codes` CHANGE `tax_rate` `tax_rate` FLOAT(6,2) NOT NULL;
+
+ALTER TABLE `purchases` ADD `tax_code_id` INT(6) UNSIGNED NOT NULL AFTER `tax_code_title`, ADD INDEX `tax_code_idx` (`tax_code_id`);
+UPDATE `purchases` SET `tax_code_id` = 1 WHERE `tax_code_title` = 'T0';
+UPDATE `purchases` SET `tax_code_id` = 2 WHERE `tax_code_title` = 'T4';
+UPDATE `purchases` SET `tax_code_id` = 3 WHERE `tax_code_title` = 'T1';
+UPDATE `purchases` SET `tax_code_id` = 4 WHERE `tax_code_title` = 'T5';
+UPDATE `purchases` SET `tax_code_id` = 5 WHERE `tax_code_title` = 'T6';
+UPDATE `purchases` SET `tax_code_id` = 6 WHERE `tax_code_title` = 'TN';
+UPDATE `purchases` SET `tax_code_id` = 8 WHERE `tax_code_title` = 'T2';
+
+DELETE FROM `report_column_visible` WHERE `report_type` = 'purchases';
+
+ALTER TABLE `nominal_codes` ADD `vending_sales` TINYINT(1) NOT NULL DEFAULT '1' AFTER `credit_purch`;
+ALTER TABLE `tax_codes` ADD `vending_sales` TINYINT(1) NOT NULL DEFAULT '1' AFTER `credit_purch`;
+
+CREATE TABLE `vending_sale_goods` ( `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT , `vending_sales_id` INT(11) UNSIGNED NOT NULL , `net_ext_id` INT(11) UNSIGNED NOT NULL , `amount` FLOAT(8,2) NOT NULL , `tax_code_id` INT(11) UNSIGNED NOT NULL , PRIMARY KEY (`id`), INDEX `vending_sale_idx` (`vending_sales_id`), INDEX `net_ext_id` (`net_ext_id`), INDEX `tax_code_idx` (`tax_code_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+CREATE TABLE `vending_sale_tax_codes` ( `net_ext_id` INT(11) UNSIGNED NOT NULL , `tax_code_id` INT(11) UNSIGNED NOT NULL , INDEX `net_ext_idx` (`net_ext_id`), INDEX `tax_code_idx` (`tax_code_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+ALTER TABLE `tax_codes` ADD `credit_sales` TINYINT(1) NOT NULL AFTER `credit_purch`;
+
+CREATE TABLE `credit_sale_goods` ( `credit_sale_goods` INT(11) NOT NULL AUTO_INCREMENT , `credit_sales_id` INT(11) UNSIGNED NOT NULL , `amount` FLOAT(8,2) NOT NULL , `tax_code_id` INT(11) UNSIGNED NOT NULL , PRIMARY KEY (`credit_sale_goods`), INDEX `credit_sale_idx` (`credit_sales_id`), INDEX `tax_code_idx` (`tax_code_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+DROP TRIGGER IF EXISTS `credS_report`
+
+
+/* ===================== Update for the Purchases ================================= */
+
+ALTER TABLE `purchases` ADD `updated_by` INT(11) UNSIGNED NULL DEFAULT NULL AFTER `tax_code_id`, ADD `time_updated` TIMESTAMP NULL DEFAULT NULL AFTER `updated_by`, ADD INDEX `updated_by_user_idx` (`updated_by`);
+
+DELETE FROM `report_column_visible` WHERE `report_type` = 'purchases';
+
+ALTER TABLE `purchases` CHANGE `stmnt_chk_user` `stmnt_chk_user` INT(11) NOT NULL DEFAULT '0';
+
+ALTER TABLE `purchases` ADD INDEX `stmnt_chk_user_idx` (`stmnt_chk_user`);
+
+
+/* ===================== Lodgements ================================= */
+
+CREATE TABLE `lodgements` ( `lodgement_id` INT(11) NOT NULL AUTO_INCREMENT , `unit_id` INT(11) UNSIGNED NOT NULL , `date` DATE NOT NULL , `cash` FLOAT(8,2) NOT NULL , `coin` FLOAT(8,2) NOT NULL , `slip_number` VARCHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `bag_number` VARCHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `created_by` INT(11) UNSIGNED NOT NULL , `updated_by` INT(11) UNSIGNED NULL DEFAULT NULL, `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , `updated_at` TIMESTAMP on update CURRENT_TIMESTAMP NULL DEFAULT NULL , PRIMARY KEY (`lodgement_id`), INDEX `unit_idx` (`unit_id`), INDEX `created_by_user_idx` (`created_by`), INDEX `updated_by_user_idx` (`updated_by`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+ALTER TABLE `lodgements` ADD `remarks` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL AFTER `bag_number`;
+
+ALTER TABLE `cash_sales` ADD `lodgement_id` INT(11) NULL DEFAULT NULL AFTER `lodge_coin`;
+ALTER TABLE `vending_sales` ADD `lodgement_id` INT(11) NULL DEFAULT NULL AFTER `closed`;
+
+
+/* ===================== Summary Sales Report ================================= */
+
+CREATE VIEW `summary_sales_report` AS 
+        SELECT cs.cash_sales_id as id, CONVERT('cash' USING utf8) as sale_type, cs.date as entry_date, un.unit_name, u.username as supervisor, cs.reg_number, '' as machine_name, cs.sale_date, cs.z_number, cs.z_food, cs.z_confect_food, cs.z_fruit, cs.z_minerals, cs.z_confect, cs.cash_count, cs.credit_card, cs.staff_cards, cs.cash_credit_card, cs.z_read, cs.cash_purchase, cs.credit_sales_id, cs.unit_id
+        FROM cash_sales AS cs
+        LEFT JOIN users as u ON cs.supervisor_id = u.user_id
+        LEFT JOIN units as un ON cs.unit_id = un.unit_id
+    UNION ALL
+        SELECT vs.vending_sales_id as id, CONVERT('vending' USING utf8) as sale_type, vs.date as entry_date, un.unit_name, u.username as supervisor, vs.till_number as reg_number, vm.vend_name as machine_name, vs.sale_date, 0 as 'z_number', 0 as 'z_food', 0 as 'z_confect_food', 0 as 'z_fruit', 0 as 'z_minerals', 0 as 'z_confect', 0 as 'cash_count', 0 as 'credit_card', 0 as 'staff_cards', 0 as 'cash_credit_card', vs.z_read, 0 as 'cash_purchase', '' as 'credit_sales_id', vs.unit_id
+        FROM vending_sales AS vs
+        LEFT JOIN users as u ON vs.supervisor_id = u.user_id
+        LEFT JOIN units as un ON vs.unit_id = un.unit_id
+        LEFT JOIN vend_management AS vm ON vs.vend_id = vm.vend_management_id
+
+CREATE TABLE `report_hidden_columns` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `user_id` INT(11) UNSIGNED NOT NULL , `report_name` VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `column_index` INT(3) NOT NULL , `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (`id`), INDEX `user_idx` (`user_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+INSERT INTO `report_hidden_columns`(`user_id`, `report_name`, `column_index`) SELECT user_id, report_type, column_name FROM report_column_visible;
+
+
+/* ===================== Events ================================= */
+
+CREATE TABLE `events` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `user_id` INT(11) UNSIGNED NOT NULL , `ip_address` INT(10) UNSIGNED NOT NULL , `action` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (`id`), INDEX `user_idx` (`user_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+CREATE TABLE `active_users` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `user_id` INT(11) UNSIGNED NOT NULL , `session_token` VARCHAR(255) NOT NULL , `ip_address` INT(11) NOT NULL , `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , `updated_at` TIMESTAMP on update CURRENT_TIMESTAMP NULL DEFAULT NULL , `expired_at` TIMESTAMP NULL DEFAULT NULL , PRIMARY KEY (`id`), INDEX `user_idx` (`user_id`), INDEX `session_token_idx` (`session_token`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+
+/* ===================== Favourites Menu ================================= */
+
+CREATE TABLE `user_menu_links` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `user_id` INT(11) UNSIGNED NOT NULL , `link` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `position` INT(3) NOT NULL , `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (`id`), INDEX `user_idx` (`user_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+CREATE TABLE `user_profile_settings` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `user_id` INT(11) UNSIGNED NOT NULL , `show_sidebar` TINYINT(1) NOT NULL , PRIMARY KEY (`id`), INDEX `user_idx` (`user_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+
+/* ===================== Operations Scorecard ================================= */
+
+ALTER TABLE `ops_scorecard` ADD `presentation_private` TINYINT(1) NOT NULL AFTER `presentation_notes`;
+ALTER TABLE `ops_scorecard` ADD `foodcost_awareness_private` TINYINT(1) NOT NULL AFTER `foodcost_awareness_notes`;
+ALTER TABLE `ops_scorecard` ADD `hr_issues_private` TINYINT(1) NOT NULL AFTER `hr_issues_notes`;
+ALTER TABLE `ops_scorecard` ADD `morale_private` TINYINT(1) NOT NULL AFTER `morale_notes`;
+ALTER TABLE `ops_scorecard` ADD `purch_compliance_private` TINYINT(1) NOT NULL AFTER `purch_compliance_notes`;
+ALTER TABLE `ops_scorecard` ADD `haccp_compliance_private` TINYINT(1) NOT NULL AFTER `haccp_compliance_notes`;
+ALTER TABLE `ops_scorecard` ADD `health_safety_iso_private` TINYINT(1) NOT NULL AFTER `health_safety_iso_notes`;
+ALTER TABLE `ops_scorecard` ADD `accidents_incidents_private` TINYINT(1) NOT NULL AFTER `accidents_incidents_notes`;
+ALTER TABLE `ops_scorecard` ADD `security_cash_ctl_private` TINYINT(1) NOT NULL AFTER `security_cash_ctl_notes`;
+ALTER TABLE `ops_scorecard` ADD `marketing_upselling_private` TINYINT(1) NOT NULL AFTER `marketing_upselling_notes`;
+ALTER TABLE `ops_scorecard` ADD `training_private` TINYINT(1) NOT NULL AFTER `training_notes`;
+ALTER TABLE `ops_scorecard` ADD `objectives_private` TINYINT(1) NOT NULL AFTER `objectives`;
+ALTER TABLE `ops_scorecard` ADD `outstanding_issues_private` TINYINT(1) NOT NULL AFTER `outstanding_issues`;
+ALTER TABLE `ops_scorecard` ADD `sp_projects_functions_private` TINYINT(1) NOT NULL AFTER `sp_projects_functions`;
+ALTER TABLE `ops_scorecard` ADD `innovation_private` TINYINT(1) NOT NULL AFTER `innovation`;
+ALTER TABLE `ops_scorecard` ADD `add_support_req_private` TINYINT(1) NOT NULL AFTER `add_support_req`;
+ALTER TABLE `ops_scorecard` ADD `send_email` TINYINT(1) NOT NULL AFTER `add_support_req_private`;
+ALTER TABLE `ops_scorecard` ADD `attached_files` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL AFTER `add_support_req_private`;
+
+
+/* ===================== New user group ================================= */
+
+INSERT INTO `user_groups`(`user_group_name`) VALUES ('Limited Access');

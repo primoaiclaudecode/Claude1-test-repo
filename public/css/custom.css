@@ -1,0 +1,444 @@
+.dataTables_info{
+	float:right !important;
+}
+.dt-buttons {
+	padding-top: 15px !important;
+}
+
+.dataTables_length {
+	width: 25% !important;
+	float:right !important;
+	padding-top: 15px !important;
+}
+ 
+.dataTables_paginate {
+    float: inherit !important;
+	padding-top: 15px !important;
+}
+.paging_simple_numbers {
+    float: inherit !important;
+	padding-top: 15px !important;
+}
+.dataTables_info {
+    text-align: center !important;
+    padding-left: 0px !important;
+    width: 100%;
+}
+.margin-bottom-0 {
+	margin-bottom: 0;
+}
+.margin-top-3 {
+	margin-top: -3px;
+}
+.margin-bottom-3 {
+	margin-bottom: -3px;
+}
+.margin-bottom-10 {
+	margin-bottom: 10px !important;
+}
+@media (max-width: 767px) {
+	.margin-bottom-15 {
+		margin-bottom: 15px !important;
+	}
+
+	.div_invoice_total {
+		border: 0px !important;
+	}
+
+	.div_sales_total {
+		border: 0px !important;
+	}
+}
+
+.margin-top-10 {
+	margin-top: 10px !important;
+}
+.margin-top-25 {
+	margin-top: 25px;
+}
+.margin-top-35 {
+	margin-top: 35px;
+}
+.margin-bottom-5 {
+	margin-bottom: 5px;
+}
+@media (max-width: 350px) {
+	.ccsl-logo {
+		height: 32px;
+	}
+}
+@media (max-width: 340px) {
+	.ccsl-logo {
+		height: 30px;
+	}
+}
+@media (max-width: 330px) {
+	.ccsl-logo {
+		height: 28px;
+	}
+}
+@media (max-width: 320px) {
+	.ccsl-logo {
+		height: 26px;
+	}
+}
+@media (max-width: 310px) {
+	.ccsl-logo {
+		height: 24px;
+	}
+}
+.dataTables_length, .dataTables_filter {
+	padding: 0;
+}
+.dataTables-padding {
+	padding: 10px 15px;
+}
+.text-align-center {
+	text-align: center;
+}
+table.dataTable.display tbody tr.even>.sorting_1, table.dataTable.order-column.stripe tbody tr.even>.sorting_1 {
+    background-color: #fafafa !important;
+}
+table.dataTable a:link {
+    text-decoration: underline !important;
+}
+table.dataTable a:hover {
+    color: #FF6C60 !important;
+    text-decoration: none !important;
+}
+table.table-class-for-links a:link {
+    text-decoration: underline !important;
+}
+table.table-class-for-links a:hover {
+    color: #FF6C60 !important;
+    text-decoration: none !important;
+}
+.display-inline {
+	display: inline !important;
+}
+.multiselect {
+    width: 100%;
+    height: 11em;
+    overflow: auto;
+}
+.multiselect label {
+    display: block;
+    margin: 0 2px;
+    font-size: 14px !important;
+    color: #555 !important;
+    font-weight: normal !important;
+}
+.font-size-16 {
+	font-size: 16px !important;
+}
+.normal-font-weight {
+	font-weight: normal;
+}
+.highlight-div {
+	border: 1px solid #797979;
+}
+@media (max-width: 530px) {
+	associated-user tr th:nth-child(1),
+	.email-address {
+	    display: none;
+	}
+}
+a.dt-button.red {
+    color: #ff6c60;
+    font-weight: bold;
+}
+a.dt-button.green {
+    color: #00b100;
+    font-weight: bold;
+}
+table.dataTable.dtr-inline.collapsed>tbody>tr>td:first-child:before, table.dataTable.dtr-inline.collapsed>tbody>tr>th:first-child:before {
+    top: auto !important;
+}
+.text-align-right {
+	text-align: right;
+}
+.cash_credit_purch_msg {
+	display: none;
+}
+.custom-labels {
+	display: inline-block !important;
+    margin-bottom: 5px !important;
+    font-weight: 700 !important;
+}
+.auto_calc {
+    background-color: #F7DECB !important;
+    border: 1px solid #d3d3d3;
+}
+#b_drop_td {
+	vertical-align: inherit;
+}
+@media (max-width: 992px) {
+	#b_drop {
+		height: 12px;
+	}
+
+	.margin-bottom-15 {
+		margin-bottom: 15px !important;
+	}
+}
+.vertical-align-middle {
+	vertical-align: middle !important;
+}
+@media (max-width: 768px) {
+	.margin-left-0 {
+		margin-left: 0 !important;
+	}
+	.margin-right-0 {
+		margin-right: 0 !important;
+	}
+	.padding-left-0 {
+		padding-left: 0 !important;
+	}
+	.padding-right-0 {
+		padding-right: 0 !important;
+	}
+}
+.set-margin-left-0 {
+	margin-left: 0 !important;
+}
+.set-margin-right-0 {
+	margin-right: 0 !important;
+}
+.error_message {
+    color: #F00;
+}
+.hidden_element {
+	display: none;
+}
+.border-top-0 {
+	border-top: 0px !important;
+}
+.padding-0 {
+	padding: 0 !important;
+}
+.padding-left-18 {
+	padding-left: 18%;
+}
+.left-padding-0 {
+	padding-left: 0 !important;
+}
+.margin-right-20 {
+	margin-right: 20px;
+}
+.margin-right-34 {
+	margin-right: 34px;
+}
+.margin-right-47 {
+	margin-right: 47px;
+}
+.textbox_budget_year {
+	border: 0px !important;
+	background-color: transparent;
+	font-size: 18px !important;
+	font-weight: bold !important;
+}
+#month-headers td {
+	border: 0px !important;
+	background-color: transparent;
+	font-size: 12px !important;
+	text-align: center !important;
+	font-weight: bold !important;
+}
+#trading_account_tbl input {
+    margin: 2px !important;
+    width: 95%;
+	text-align: right;
+	font-size: 12px;
+	padding-left: 3px;
+	padding-right: 3px;
+}
+.textbox_as_label {
+	border: 0px !important;
+	background-color: transparent;
+	font-size: 12px !important;
+	text-align: center !important;
+	font-weight: bold !important;
+}
+#change_log_table.table {
+	/*width: 96%;*/
+}
+table.simpleTable a:link {
+    text-decoration: underline !important;
+}
+table.simpleTable a:hover {
+    color: #FF6C60 !important;
+    text-decoration: none !important;
+}
+.header {
+	z-index: 1000;
+}
+.checkbox-outline:focus {
+    outline:1px solid #517397 !important;
+}
+.dt-button-collection {
+	top: 340px !important;
+}
+#purchases-report .dt-button {
+	margin-top: 10px;
+}
+tr.green-row
+{
+	background: #6CBD44 !important;
+	color: white;
+}
+tr.green-row a
+{
+	color: white;
+}
+tr.orange-row
+{
+	background: orange !important;
+	color: white;
+}
+tr.orange-row a
+{
+	color: white;
+}
+#cash_sales_form.checkbox input[type="checkbox"], .checkbox-inline input[type="checkbox"] {
+    margin-left: -20px !important;
+    vertical-align: middle;
+  	position: relative !important;
+  	bottom: 3px;
+}
+.margin-bottom-minus-15 {
+	margin-bottom: -15px !important;
+}
+
+/* Reports Checkboxes */
+label.checkbox-inline, label.checkbox {
+  background-color: #eee !important;
+  cursor: pointer !important;
+  font-weight: 400 !important;
+  margin-bottom: 10px !important;
+  margin-right: .5% !important;
+  margin-left:0 !important;
+  padding: 10px 10px 10px 30px !important;
+}
+label.checkbox-inline.checked, label.checkbox.checked {
+  background-color: #9abf60 !important;
+  color: #fff !important;
+  text-shadow: 1px 1px 2px #b2b2b2 !important;
+}
+.columns label.checkbox-inline {
+  min-width: 160px !important;
+  vertical-align: top !important;
+  width: 15% !important;
+  margin-left:0 !important;
+}
+.margin-top-50 {
+	margin-top: 50px;
+}
+.margin-top-45 {
+	margin-top: 45px;
+}
+.margin-top-60 {
+	margin-top: 60px;
+}
+.cursor-pointer {
+	cursor: pointer !important;
+}
+.fixed-width-table-with-x-scroll {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+.purchases-summary .table>thead>tr>th {
+    vertical-align: bottom;
+    border-bottom: 1px solid #111;
+}
+@media (max-width: 768px) {
+	.form-horizontal .control-label.upload-csv {
+	    padding-top: 7px;
+	    margin-bottom: 0;
+	}
+	.btns-margin {
+		margin-top: 10px;
+		margin-bottom: 20px;
+	}
+}
+@media (max-width: 768px) {
+	.files-dir.col-sm-1 {
+		padding-left: 0 !important;
+	}
+}
+.padding-left-50 {
+	padding-left: 50px !important;
+}
+.breadcrumb {
+  padding: 0;
+  margin-bottom: 15px;
+  list-style: none;
+  border-radius: 4px;
+}
+.breadcrumb > li {
+  display: inline-block;
+}
+.breadcrumb > li + li:before {
+  content: "/\00a0";
+  padding: 0 5px;
+  color: #cccccc;
+}
+.breadcrumb > .active {
+  color: #777777;
+}
+.breadcrumb-font {
+    font-size: 15px;
+    font-weight: 600;
+}
+.breadcrumb a:link {
+    text-decoration: none !important;
+}
+.breadcrumb a:hover {
+    color: #FF6C60 !important;
+    text-decoration: none !important;
+}
+.files.dataTables-padding {
+	padding: 7px 7px 10px;
+}
+.modal-header {
+    background: #9abf60 !important;
+    color: #fff !important;
+    border-radius: 5px 5px 0 0;
+    -webkit-border-radius: 5px 5px 0 0;
+    border-bottom: none;
+}
+.panel-title {
+    color: #fff !important;
+ }
+
+.budget-type {
+	display: flex;
+	align-items: flex-end;
+}
+
+.budget-type-cell {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	margin-left: 15px;
+}
+
+.budget-type-cell input {
+	margin-top: 10px;
+}
+
+.table-no-wrap th, .table-no-wrap td {
+	white-space: nowrap
+}
+
+.table-mobile input {
+	min-width: 120px;
+}
+
+.table-small {
+	min-width: 750px;
+}
+
+.table-medium {
+	min-width: 1015px;
+}

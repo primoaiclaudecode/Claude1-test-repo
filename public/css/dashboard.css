@@ -1,0 +1,139 @@
+.card, .chart-card {
+	margin-top: 35px;
+	border-radius: 6px;
+	color: #333;
+	background: #fff;
+	width: 100%;
+	font-size: 18px;
+	border: 1px solid #eee;
+	box-shadow: 0 1px 4px 0 rgba(0,0,0,.14);
+}
+
+.card .card-header {
+	position: relative;
+	margin: 0 15px;
+	padding: 0;
+	text-align: right;
+}
+
+.card .card-icon {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	float: left;
+	margin-top: -20px;
+
+	width: 86px;
+	height: 86px;
+
+	border-radius: 3px;
+	color: #fff;
+	background-color: #eee;
+}
+
+.card.danger .card-icon {
+	background: linear-gradient(60deg,#ef5350,#e53935);
+}
+
+.card .card-icon i {
+	font-size: 36px;
+}
+
+.card.warning .card-icon {
+	background: linear-gradient(60deg,#ffa726,#fb8c00);
+}
+
+.card .card-category {
+	color: #999;
+	font-size: 14px;
+	padding-top: 10px;
+}
+
+.card .card-title {
+	color: #3c4858;
+	font-size: 36px;
+}
+
+.card .card-footer {
+	padding-top: 10px;
+	margin: 0 15px 10px;
+	border-radius: 0;
+	border-top: 1px solid #eee;
+
+	color: #999;
+	font-size: 12px;
+	line-height: 22px;
+}
+
+.problem-card, .budget-card, .unit-card {
+	margin-bottom: 10px;
+	padding: 15px 15px 5px 15px;
+	border: 1px solid #eee;
+	box-shadow: 0 1px 4px 0 rgba(0,0,0,.14);
+}
+
+.unit-card .unit-name {
+	text-align: center;
+	font-size: 18px;
+	font-weight: bold;
+}
+
+.unit-card hr {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.chart-card {
+	padding: 20px;
+	margin-top: 5px;
+}
+
+.chart-card .control-label {
+	font-weight: 300;
+	font-size: 14px;
+	text-align: left;
+}
+
+.margin-left-10 {
+	margin-left: 10px;
+}
+
+.show-chart {
+	text-decoration: none !important;
+	color: #797979;
+}
+
+#totals_gross_percents_chart, #totals_net_percents_chart, #totals_cost_percents_chart {
+	height: 300px !important;
+	min-height: 300px !important;
+}
+
+.percent-chart-totals {
+	display: inline-block;
+	margin-top: -40px;
+}
+
+.percent-chart-totals span {
+	font-size: 18px;
+	font-weight: 600;
+	color: #999;
+	padding: 5px 0;
+}
+
+.percent-chart-totals hr {
+	margin-top: 5px !important;
+	margin-bottom: 5px !important;
+}
+
+.percent-chart-totals hr.purple {
+	border-top: 1px solid #775dd0;
+}
+
+.percent-chart-totals hr.yellow {
+	border-top: 1px solid #feb019;
+}
+
+.percent-chart-totals hr.red {
+	border-top: 1px solid #ff4560;
+}
