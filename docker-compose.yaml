@@ -1,0 +1,52 @@
+version: "3.7"
+services:
+  fpm:
+    image: php:7.1-fpm
+    build:
+      context: ./images/php
+    depends_on:
+      - sql
+    volumes:
+      - ./:/var/www/html
+      - ./logs:/var/www/logs
+    ports:
+      - 9000:9000
+    networks:
+      - sam
+  nginx:
+    build: ./images/nginx
+    depends_on:
+      - fpm
+    ports:
+      - 8088:80
+    volumes:
+      - ./:/var/www/html
+      - ./images/logs:/var/log/nginx
+    networks:
+      - sam
+  sql:
+    image: mysql:5.7.23
+    ports:
+      - 33333:3306
+    volumes:
+      - ./mysql:/var/lib/mysql
+      - ./images/mysql/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_HOST: 172.18.0.4
+    networks:
+      - sam
+  cache:
+    image: redis:latest
+    ports:
+      - 63333:6379
+    networks:
+      - sam
+
+
+networks:
+  sam:
+    driver: bridge
