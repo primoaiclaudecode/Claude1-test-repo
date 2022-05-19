@@ -48,7 +48,6 @@ class ReportController extends Controller
 	public function __construct()
 	{
 		$this->middleware('auth');
-		$this->middleware('role:admin')->only('operationsScorecard', 'operationsScorecardGrid');
 		$this->middleware('role:management')->only('operationsScorecard', 'operationsScorecardGrid');
 		$this->middleware('role:hq')->only('purchasesSummary', 'purchasesSummaryGrid');
 		$this->middleware('role:unit');
@@ -5580,7 +5579,7 @@ class ReportController extends Controller
 	 */
 	public function operationsScorecard()
 	{
-		if (Gate::denies('admin-user-group') && Gate::denies('management-user-group')) {
+		if (Gate::denies('management-user-group')) {
 			abort(403, 'Access denied');
 		}
 
@@ -5611,7 +5610,7 @@ class ReportController extends Controller
 	 */
 	public function operationsScorecardGrid(Request $request)
 	{
-		if (Gate::denies('admin-user-group') && Gate::denies('management-user-group')) {
+		if (Gate::denies('management-user-group')) {
 			abort(403, 'Access denied');
 		}
 
