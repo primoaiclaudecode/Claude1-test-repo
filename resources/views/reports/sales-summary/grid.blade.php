@@ -24,6 +24,8 @@
                     <th>Machine Name</th>
                     <th>Sale Date</th>
                     <th>Z Number</th>
+                    <th>Currency</th>
+                    <th>Exchange Rate</th>
                     <th>Z Food</th>
                     <th>Z Conf. Food</th>
                     <th>Z Fruit Juice</th>
@@ -45,6 +47,8 @@
                 </thead>
                 <tfoot>
                 <tr>
+                    <th></th>
+                    <th></th>
                     <th></th>
                     <th></th>
                     <th></th>
@@ -165,10 +169,10 @@
                         className: "text-align-center"
                     },
                     {
-                        targets: [7], className: "text-align-right"
+                        targets: [7, 9], className: "text-align-right"
                     },
                     {
-                        targets: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+                        targets: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
                         className: "amount-cell",                        
                         render: $.fn.dataTable.render.number('', '.', 2, ''),
                         searchable: false
@@ -210,7 +214,7 @@
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
-                    var colNumber = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].concat(goodColumns);
+                    var colNumber = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21].concat(goodColumns);
 
                     for (i = 0; i < colNumber.length; i++) {
                         var colNo = colNumber[i];
@@ -218,9 +222,10 @@
                             .column(colNo, {page: 'current'})
                             .data()
                             .reduce(function (a, b) {
+                                console.log(a, b);
                                 return parseFloat(a) + parseFloat(b);
                             }, 0);
-                        $(api.column(colNo).footer()).html('€' + total2.toFixed(2));
+                        $(api.column(colNo).footer()).html('{{ $currencySymbol }}' + total2.toFixed(2));
                     }
                 },
                 bSortClasses: false

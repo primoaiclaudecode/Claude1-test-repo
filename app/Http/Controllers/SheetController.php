@@ -6,12 +6,15 @@ use App\BudgetType;
 use App\ContactType;
 use App\ContractType;
 use App\CreditSaleGood;
+use App\Currency;
 use App\CustomerFeedback;
 use App\Event;
+use App\ExchangeRate;
 use App\FeedbackType;
 use App\File;
 use App\Http\Controllers\Traits\UserUnits;
 use App\Lodgement;
+use App\LodgementCost;
 use App\OperationsScorecard;
 use App\PhasedBudgetUnitRow;
 use App\Region;
@@ -242,6 +245,433 @@ class SheetController extends Controller
 		);
 	}
 
+	/**
+	 * Get data for cash sales page
+	 *
+	 * @param Request $request
+	 */
+	public function regNumberCashPurchasesCreditSales(Request $request)
+	{
+		$cashSalesData = array();
+
+		if ($request->has('unit_name') && $request->unit_name > 0) {
+			// Reg Number Radio Buttons [Starts]
+			$sheet_id = $request->sheet_id;
+			$regNumStr = '';
+			$regTabIndex = 2;
+			$selectedCash = 0;
+			if ($sheet_id > 0) {
+				$selectedCash = 1;
+				$query = \DB::table('cash_sales as CS');
+				$query->where('CS.cash_sales_id', '=', $sheet_id);
+				$cash_sale_data = $query->first();
+			}
+
+			$regManagement = \DB::select(
+				"SELECT reg_management_id, reg_number
+                    FROM `reg_management`
+                    WHERE unit_id='" . $request->unit_name . "'
+                    ORDER BY reg_number
+                "
+			);
+			if ($regManagement) {
+				$cashSalesData['total_reg_nums'] = count($regManagement);
+
+				$k = 1;
+				foreach ($regManagement as $regValue) {
+					$selectedRegNum = $regValue->reg_management_id == $request->selected_reg_number ? 'checked="checked"' : $k == 1 ? 'checked="checked"' : '';
+					$regNumStr .= '<div class="radio"><label><input type="radio" name="reg_number" id="reg_number_' . $k . '" ' . $selectedRegNum . ' tabindex="' . $regTabIndex . '" value="' . $regValue->reg_management_id . '"> ' . $regValue->reg_number . '</label></div>';
+					$k++;
+				}
+
+				$cashSalesData['reg_num'] = $regNumStr;
+			} else {
+				$cashSalesData['reg_num'] = "<input class='form-control' tabindex='" . $regTabIndex . "' type='text' name='reg_number' value='' id='reg_number' />";
+			}
+			// Reg Number Radio Buttons [Ends]
+
+			// Cash Purchases Checkboxes [Starts]
+			$cashPurchStr = '';
+			$cashPurchTabIndex = 14;
+
+			$cashPurch = \DB::select(
+				"SELECT unique_id, receipt_invoice_date, purchase_details, gross_total, currency_id, date
+                    FROM `purchases`
+                    WHERE cash_sale_vis = 1 AND purch_type = 'cash' AND deleted = 0 AND unit_id=" . $request->unit_name . " GROUP BY unique_id
+                "
+			);
+			$selectedLinkPurchase = 0;
+			if ($selectedCash == 1) {
+				if ($cash_sale_data->cash_purchases_id != '') {
+					$purchases = \DB::table('purchases as P');
+					$purchases->where('cash_sale_vis', '=', 1);
+					$purchases->where('purch_type', '=', 'cash');
+					$purchases->where('deleted', '=', 0);
+					$purchases->whereIn('P.unique_id', explode(",", $cash_sale_data->cash_purchases_id));
+					$purchases_sel_data = $purchases->get();
+				}
+			}
+			if ($cashPurch) {
+				$i = 1;
+				$checkedCashPurch = '';
+				foreach ($cashPurch as $cashPurchValue) {
+					if (Session::get('purchIdsArrSession')) {
+						$checkedCashPurch = in_array($cashPurchValue->unique_id, Session::get('purchIdsArrSession')) ? 'checked="checked"' : '';
+					} else {
+						$selectedLinkPurchase = 1;
+					}
+
+					$cashPurchStr .= '<div class="checkbox-wrapper">';
+					$cashPurchStr .= '<div class="checkbox"><label><input ' . $checkedCashPurch . ' type="checkbox" tabindex="' . $cashPurchTabIndex . '" id="cash_purch_chk_' . $i . '" name="cash_purch_chk_' . $i . '" value="' . number_format($cashPurchValue->gross_total, 2, ".", ",") . '" class="checkboxes"><span class="currency-symbol"></span><span class="currency-amount">' . number_format($cashPurchValue->gross_total, 2, ".", ",") . '</span>' . ' - ' . date('d-m-Y', strtotime($cashPurchValue->receipt_invoice_date)) . ' - ' . $cashPurchValue->purchase_details . '</label></div>';
+					$cashPurchStr .= '<input type="hidden" name="purch_id_' . $i . '" value="' . $cashPurchValue->unique_id . '">';
+					$exchangeData = $cashPurchValue->gross_total . '_' . $cashPurchValue->currency_id . '_' . $cashPurchValue->date;
+					$cashPurchStr .= '<input type="hidden" name="exchange_data" value="' . $exchangeData . '" />';
+					$cashPurchStr .= '</div>';
+					$i++;
+				}
+				if ($selectedLinkPurchase == 1 && $request->sheet_id != '') {
+					//////////// Get Sheet ID
+					$cashPurch1 = \DB::select(
+						"SELECT unique_id, receipt_invoice_date, purchase_details, gross_total, currency_id, date
+							FROM `purchases`
+							WHERE cash_sale_vis = 0 AND purch_type = 'cash' AND deleted = 0 AND cash_sales_record_id=" . $request->sheet_id . " GROUP BY unique_id
+						"
+					);
+					foreach ($cashPurch1 as $cashPurchValue) {
+
+						$cashPurchStr .= '<div class="checkbox-wrapper">';
+						$cashPurchStr .= '<div class="checkbox"><label><input checked="checked" type="checkbox" tabindex="' . $cashPurchTabIndex . '" id="cash_purch_chk_' . $i . '" name="cash_purch_chk_' . $i . '" value="' . number_format($cashPurchValue->gross_total, 2, ".", ",") . '" class="checkboxes"><span class="currency-symbol"></span><span class="currency-amount">' . number_format($cashPurchValue->gross_total, 2, ".", ",") . '</span>' . ' - ' . date('d-m-Y', strtotime($cashPurchValue->receipt_invoice_date)) . ' - ' . $cashPurchValue->purchase_details . '</label></div>';
+						$cashPurchStr .= '<input type="hidden" name="purch_id_' . $i . '" value="' . $cashPurchValue->unique_id . '">';
+						$exchangeData = $cashPurchValue->gross_total . '_' . $cashPurchValue->currency_id . '_' . $cashPurchValue->date;
+						$cashPurchStr .= '<input type="hidden" name="exchange_data" value="' . $exchangeData . '" />';
+						$cashPurchStr .= '</div>';
+						$i++;
+					}
+				}
+				if (isset($purchases_sel_data) && count($purchases_sel_data) > 0 && !empty($purchases_sel_data)) {
+					foreach ($purchases_sel_data as $cashPurchValue) {
+						$cashPurchStr .= '<div class="checkbox-wrapper">';
+						$cashPurchStr .= '<div class="checkbox"><label><input ' . $checkedCashPurch . ' type="checkbox" tabindex="' . $cashPurchTabIndex . '" id="cash_purch_chk_' . $i . '" name="cash_purch_chk_' . $i . '" value="' . number_format($cashPurchValue->gross_total, 2, ".", ",") . '" class="checkboxes" checked="checked"><span class="currency-symbol"></span><span class="currency-amount">' . number_format($cashPurchValue->gross_total, 2, ".", ",") . '</span>' . ' - ' . date('d-m-Y', strtotime($cashPurchValue->receipt_invoice_date)) . ' - ' . $cashPurchValue->purchase_details . '</label></div>';
+						$cashPurchStr .= '<input type="hidden" name="purch_id_' . $i . '" value="' . $cashPurchValue->unique_id . '">';
+						$exchangeData = $cashPurchValue->gross_total . '_' . $cashPurchValue->currency_id . '_' . $cashPurchValue->date;
+						$cashPurchStr .= '<input type="hidden" name="exchange_data" value="' . $exchangeData . '" />';
+						$cashPurchStr .= '</div>';
+						$i++;
+					}
+				}
+				$cashSalesData['cash_purchases_data'] = $cashPurchStr;
+			} else {
+				$cashPurchStr = '';
+				$i = 1;
+				$checkedCashPurch = '';
+				if (isset($purchases_sel_data) && count($purchases_sel_data) > 0 && !empty($purchases_sel_data)) {
+					foreach ($purchases_sel_data as $cashPurchValue) {
+						$cashPurchStr .= '<div class="checkbox-wrapper">';
+						$cashPurchStr .= '<div class="checkbox"><label><input ' . $checkedCashPurch . ' type="checkbox" tabindex="' . $cashPurchTabIndex . '" id="cash_purch_chk_' . $i . '" name="cash_purch_chk_' . $i . '" value="' . number_format($cashPurchValue->gross_total, 2, ".", ",") . '" class="checkboxes" checked="checked"><span class="currency-symbol"></span><span class="currency-amount">' . number_format($cashPurchValue->gross_total, 2, ".", ",") . '</span>' . ' - ' . date('d-m-Y', strtotime($cashPurchValue->receipt_invoice_date)) . ' - ' . $cashPurchValue->purchase_details . '</label></div>';
+						$cashPurchStr .= '<input type="hidden" name="purch_id_' . $i . '" value="' . $cashPurchValue->unique_id . '">';
+						$exchangeData = $cashPurchValue->gross_total . '_' . $cashPurchValue->currency_id . '_' . $cashPurchValue->date;
+						$cashPurchStr .= '<input type="hidden" name="exchange_data" value="' . $exchangeData . '" />';
+						$cashPurchStr .= '</div>';
+						$i++;
+					}
+				}
+				$cashSalesData['cash_purchases_data'] = $cashPurchStr;
+			}
+			// Cash Purchases Checkboxes [Ends]
+
+			// Credit Sales Checkboxes [Starts]
+			$creditSalesStr = '';
+			$creditSalesTabIndex = 15;
+
+			$creditSales = \DB::select(
+				"SELECT credit_sales_id, credit_reference, sale_date, gross_total, currency_id, sale_date
+                    FROM `credit_sales`
+                    WHERE cash_sale_vis = 1 AND unit_id=" . $request->unit_name
+			);
+			if ($selectedCash == 1) {
+				if ($cash_sale_data->credit_sales_id != '') {
+					$credit_sales = \DB::table('credit_sales as CS');
+					$credit_sales->whereIn('CS.credit_sales_id', explode(",", $cash_sale_data->credit_sales_id));
+					$credit_sel_data = $credit_sales->get();
+				}
+			}
+			if ($creditSales) {
+				$i = 1;
+				$checkedCreditSales = '';
+				foreach ($creditSales as $creditSalesValue) {
+					if (Session::get('creditSalesIdsArrSession')) {
+						$checkedCreditSales = in_array($creditSalesValue->credit_sales_id, Session::get('creditSalesIdsArrSession')) ? 'checked="checked"' : '';
+					}
+
+					$creditSalesStr .= '<div class="checkbox-wrapper">';
+					$creditSalesStr .= '<div class="checkbox"><label><input ' . $checkedCreditSales . ' type="checkbox" tabindex="' . $creditSalesTabIndex . '" id="credit_sales_chk_' . $i . '" name="credit_sales_chk_' . $i . '" value="' . number_format($creditSalesValue->gross_total, 2, ".", ",") . '" class="checkboxes"><span class="currency-symbol"></span><span class="currency-amount">' . number_format($creditSalesValue->gross_total, 2, ".", ",") . '</span>' . ' - ' . date('d-m-Y', strtotime($creditSalesValue->sale_date)) . ' - ' . $creditSalesValue->credit_reference . '</label></div>';
+					$creditSalesStr .= '<input type="hidden" name="credit_sales_id_' . $i . '" value="' . $creditSalesValue->credit_sales_id . '" />';
+					$exchangeData = $creditSalesValue->gross_total . '_' . $creditSalesValue->currency_id . '_' . $creditSalesValue->sale_date;
+					$creditSalesStr .= '<input type="hidden" name="exchange_data" value="' . $exchangeData . '" />';
+					$creditSalesStr .= '</div>';
+					$i++;
+				}
+				if (isset($credit_sel_data) && count($credit_sel_data) > 0 && !empty($credit_sel_data)) {
+					foreach ($credit_sel_data as $creditSalesValue) {
+						$creditSalesStr .= '<div class="checkbox-wrapper">';
+						$creditSalesStr .= '<div class="checkbox"><label><input ' . $checkedCreditSales . ' type="checkbox" tabindex="' . $creditSalesTabIndex . '" id="credit_sales_chk_' . $i . '" name="credit_sales_chk_' . $i . '" value="' . number_format($creditSalesValue->gross_total, 2, ".", ",") . '" class="checkboxes" checked="checked"><span class="currency-symbol"></span><span class="currency-amount">' . number_format($creditSalesValue->gross_total, 2, ".", ",") . '</span>' . ' - ' . date('d-m-Y', strtotime($creditSalesValue->sale_date)) . ' - ' . $creditSalesValue->credit_reference . '</label></div>';
+						$creditSalesStr .= '<input type="hidden" name="credit_sales_id_' . $i . '" value="' . $creditSalesValue->credit_sales_id . '" />';
+						$exchangeData = $creditSalesValue->gross_total . '_' . $creditSalesValue->currency_id . '_' . $creditSalesValue->sale_date;
+						$creditSalesStr .= '<input type="hidden" name="exchange_data" value="' . $exchangeData . '" />';
+						$creditSalesStr .= '</div>';
+						$i++;
+					}
+				}
+				$cashSalesData['credit_sales_data'] = $creditSalesStr;
+			} else {
+				$i = 1;
+				$creditSalesStr = '';
+				$checkedCreditSales = '';
+				if (isset($credit_sel_data) && count($credit_sel_data) > 0 && !empty($credit_sel_data)) {
+					foreach ($credit_sel_data as $creditSalesValue) {
+						$creditSalesStr .= '<div class="checkbox-wrapper">';
+						$creditSalesStr .= '<div class="checkbox"><label><input ' . $checkedCreditSales . ' type="checkbox" tabindex="' . $creditSalesTabIndex . '" id="credit_sales_chk_' . $i . '" name="credit_sales_chk_' . $i . '" value="' . number_format($creditSalesValue->gross_total, 2, ".", ",") . '" class="checkboxes" checked="checked" ><span class="currency-symbol"></span><span class="currency-amount">' . number_format($creditSalesValue->gross_total, 2, ".", ",") . '</span>' . ' - ' . date('d-m-Y', strtotime($creditSalesValue->sale_date)) . ' - ' . $creditSalesValue->credit_reference . '</label></div>';
+						$creditSalesStr .= '<input type="hidden" name="credit_sales_id_' . $i . '" value="' . $creditSalesValue->credit_sales_id . '" />';
+						$exchangeData = $creditSalesValue->gross_total . '_' . $creditSalesValue->currency_id . '_' . $creditSalesValue->sale_date;
+						$creditSalesStr .= '<input type="hidden" name="exchange_data" value="' . $exchangeData . '" />';
+						$creditSalesStr .= '</div>';
+						$i++;
+					}
+				}
+				$cashSalesData['credit_sales_data'] = $creditSalesStr;
+			}
+
+			// Credit Sales Checkboxes [Ends]
+		}
+		echo json_encode($cashSalesData);
+	}
+
+	/**
+	 * Exchange amount
+	 *
+	 * @param Request $request
+	 *
+	 * @return float
+	 */
+	public function exchangeAmount(Request $request)
+	{
+		$this->validate($request, [
+			'amount' => 'required|numeric',
+			'domestic_currency_id' => 'required|integer',
+			'foreign_currency_id' => 'required|integer',
+			'date' => 'required|date',
+		]);
+
+		$exchangeRate = ExchangeRate::where('domestic_currency_id', $request->domestic_currency_id)
+			->where('foreign_currency_id', $request->foreign_currency_id)
+			->whereDate('date', Carbon::parse($request->date)->format('Y-m-d'))
+			->first();
+
+		$exchangedAmount = is_null($exchangeRate) ? $request->amount : $request->amount * $exchangeRate->exchange_rate;
+
+		return number_format($exchangedAmount, 2, '.', ',');
+	}
+
+	/**
+	 * Get suppliers list for the unit
+	 *
+	 * @param Request $request
+	 *
+	 * @return \Illuminate\Http\JsonResponse
+	 */
+	public function suppliersJson(Request $request)
+	{
+		$unit = Unit::find($request->unit_id);
+
+		$suppliers = [];
+
+		if (!is_null($unit)) {
+			$suppliers = Supplier::whereIn('suppliers_id', explode(',', $unit->unitsuppliers))
+				->orderBy('supplier_name')
+				->get(['suppliers_id', 'supplier_name']);
+
+			if (count($suppliers) > 0) {
+				$suppliers->prepend(
+					[
+						'suppliers_id' => 0,
+						'supplier_name' => 'Choose Supplier'
+					]
+				);
+			}
+		}
+
+		return response()->json($suppliers);
+	}
+
+	/**
+	 * Check if invoice number is unique for the supplier
+	 * @param Request $request
+	 *
+	 * @return \Illuminate\Http\JsonResponse
+	 */
+	public function supplierInvoiceNoUnique(Request $request)
+	{
+		$sheetId = $request->sheet_id;
+
+		$supplierInvoiceNo = Purchase::select(['reference_invoice_number'])
+			->where('suppliers_id', $request->supplier)
+			->where('reference_invoice_number', $request->invoice_number)
+			->where('deleted', 0)
+			->when($sheetId, function ($query) use ($sheetId) {
+				return $query->where('unique_id', '!=', $sheetId);
+			})
+			->first();
+
+		return response()->json(
+			[
+				'available' => is_null($supplierInvoiceNo)
+			]
+		);
+	}
+
+	/**
+	 * Get vending machines for the unit.
+	 *
+	 * @param Request $request
+	 *
+	 * @return \Illuminate\Http\JsonResponse
+	 */
+	public function machineNameJson(Request $request)
+	{
+		$unitId = $request->input('unit_id', 0);
+
+		$machines = Vending::where('unit_id', $unitId)
+			->orderBy('vend_name')
+			->get(['vend_management_id', 'vend_name']);
+
+		$regNumbers = Register::where('unit_id', $unitId)
+			->orderBy('reg_number')
+			->get(['reg_management_id', 'reg_number']);
+
+		return response()->json(
+			[
+				'machines' => $machines,
+				'regNumbers' => $regNumbers
+			]
+		);
+	}
+
+	/**
+	 * Check if vending machine is closed.
+	 *
+	 * @param Request $request
+	 *
+	 * @return \Illuminate\Http\JsonResponse
+	 */
+	public function closingReadingJson(Request $request)
+	{
+		$vendingSale = VendingSales::where('unit_id', $request->unit_id)
+			->where('vend_id', $request->selected_machine)
+			->orderBy('vending_sales_id', 'desc')
+			->first();
+
+		return response()->json(
+			[
+				'closing' => !is_null($vendingSale) ? $vendingSale->closing : ''
+			]
+		);
+	}
+
+	/**
+	 * Get supplier currency
+	 *
+	 * @param Request $request
+	 *
+	 * @return \Illuminate\Http\JsonResponse
+	 */
+	public function supplierCurrency(Request $request)
+	{
+		$supplier = Supplier::find($request->supplier_id);
+
+		if (is_null($supplier) || is_null($supplier->currency)) {
+			return response()->json([
+				'currencyId' => 0,
+				'currencySymbol' => ''
+			]);
+		}
+
+		return response()->json([
+			'currencyId' => $supplier->currency_id,
+			'currencySymbol' => $supplier->currency->currency_symbol
+		]);
+	}
+
+	/**
+	 * Get register currency
+	 *
+	 * @param Request $request
+	 *
+	 * @return \Illuminate\Http\JsonResponse
+	 */
+	public function registerCurrency(Request $request)
+	{
+		$register = Register::find($request->reg_number);
+
+		if (is_null($register) || is_null($register->currency)) {
+			return response()->json([
+				'currencyId' => 0,
+				'currencySymbol' => ''
+			]);
+		}
+
+		return response()->json([
+			'currencyId' => $register->currency_id,
+			'currencySymbol' => $register->currency->currency_symbol
+		]);
+	}
+
+	/**
+	 * Get unit currency
+	 *
+	 * @param Request $request
+	 *
+	 * @return \Illuminate\Http\JsonResponse
+	 */
+	public function unitCurrency(Request $request)
+	{
+		$unit = Unit::find($request->unit_id);
+
+		if (is_null($unit) || is_null($unit->currency)) {
+			return response()->json([
+				'currencyId' => 0,
+				'currencySymbol' => ''
+			]);
+		}
+
+		return response()->json([
+			'currencyId' => $unit->currency_id,
+			'currencySymbol' => $unit->currency->currency_symbol
+		]);
+	}
+
+	/**
+	 * Get machine currency
+	 *
+	 * @param Request $request
+	 *
+	 * @return \Illuminate\Http\JsonResponse
+	 */
+	public function machineCurrency(Request $request)
+	{
+		$machine = Vending::find($request->vend_machine_id);
+
+		if (is_null($machine) || is_null($machine->currency)) {
+			return response()->json([
+				'currencyId' => 0,
+				'currencySymbol' => ''
+			]);
+		}
+
+		return response()->json([
+			'currencyId' => $machine->currency_id,
+			'currencySymbol' => $machine->currency->currency_symbol
+		]);
+	}
 
 	/**
 	 * Cash/Credit purchase page
@@ -262,6 +692,7 @@ class SheetController extends Controller
 		$receiptDate = Carbon::now()->format('d-m-Y');
 		$referenceNumber = '';
 		$purchaseDetails = '';
+		$currencyId = 0;
 		$purchaseItems = [];
 
 		// Back from the confirm page
@@ -276,6 +707,7 @@ class SheetController extends Controller
 			$receiptDate = $backData['receipt_date'];
 			$referenceNumber = $backData['reference_number'];
 			$purchaseDetails = $backData['purchase_details'];
+			$currencyId = $backData['currency_id'];
 			$purchaseItems = $backData['purchase_items'];
 		}
 
@@ -289,6 +721,7 @@ class SheetController extends Controller
 
 			$supplier = $purchase->supplier;
 			$supplierId = $purchase->suppliers_id;
+			$currencyId = $purchase->currency_id;
 			$purchaseDetails = $purchase->purchase_details;
 
 			if ($purchase->purch_type === 'credit') {
@@ -336,6 +769,17 @@ class SheetController extends Controller
 		$taxCodeTitles = TaxCode::where($dbField, 1)->orderBy('tax_code_display_rate')->pluck('tax_code_display_rate', 'tax_code_ID');
 		$taxCodeRates = TaxCode::where($dbField, 1)->pluck('tax_rate', 'tax_code_ID');
 
+		// Currency
+		$currencySymbol = '';
+		if ($currencyId > 0) {
+			$currency = Currency::find($currencyId);
+
+			$currencySymbol = $currency->currency_symbol;
+		}
+
+		// Currencies
+		$currencies = Currency::pluck('currency_name', 'currency_id');
+
 		return view(
 			'sheets.purchases.index', [
 				'sheetId' => $sheetId,
@@ -353,15 +797,20 @@ class SheetController extends Controller
 				'purchaseItems' => $purchaseItems,
 				'netExt' => $netExts,
 				'taxCodeTitles' => $taxCodeTitles,
-				'taxCodeRates' => $taxCodeRates
+				'taxCodeRates' => $taxCodeRates,
+				'currencies' => $currencies,
+				'selectedCurrency' => $currencyId,
+				'currencySymbol' => $currencySymbol
 			]
 		);
 	}
 
 	public function purchaseConfirmation(Request $request, $purchType)
 	{
+		// Unit
 		$selectedUnit = Unit::find($request->unit_id);
 
+		// Supplier
 		$supplierName = $request->supplier;
 
 		if ($request->supplier_id && $request->supplier_id > 0) {
@@ -370,6 +819,16 @@ class SheetController extends Controller
 			$supplierName = $supplier->supplier_name;
 		}
 
+		// Currency
+		$currencySymbol = '';
+
+		if ($request->currency_id > 0) {
+			$currency = Currency::find($request->currency_id);
+
+			$currencySymbol = $currency->currency_symbol;
+		}
+
+		// Purchase items
 		$purchaseItems = [];
 
 		foreach ($request->net_ext as $index => $value) {
@@ -401,6 +860,7 @@ class SheetController extends Controller
 			'receipt_date' => $request->receipt_date,
 			'reference_number' => $request->reference_number,
 			'purchase_details' => $request->purchase_details,
+			'currency_id' => $request->currency_id,
 			'purchase_items' => $purchaseItems,
 		];
 
@@ -417,6 +877,8 @@ class SheetController extends Controller
 				'receiptDate' => $request->receipt_date,
 				'referenceNumber' => $request->reference_number,
 				'purchaseDetails' => $request->purchase_details,
+				'currencyId' => $request->currency_id,
+				'currencySymbol' => $currencySymbol,
 				'totalGoods' => $request->goods_total,
 				'totalVat' => $request->vat_total,
 				'totalGross' => $request->gross_total,
@@ -435,8 +897,6 @@ class SheetController extends Controller
 		DB::beginTransaction();
 
 		try {
-			$eventAction = '';
-
 			if ($request->has('sheet_id')) {
 				$eventAction = 'Edit ' . ucfirst($purchType) . ' Purchase';
 				$uniqueId = $request->sheet_id;
@@ -476,6 +936,7 @@ class SheetController extends Controller
 				$purchase->unit_name = $request->unit_name;
 				$purchase->suppliers_id = $request->input('supplier_id', 0);
 				$purchase->supplier = $request->supplier_name;
+				$purchase->currency_id = $request->currency_id;
 				$purchase->purchase_details = $request->purchase_details;
 
 				// Created at/by
@@ -560,50 +1021,6 @@ class SheetController extends Controller
 		return redirect('/sheets/purchases/' . $purchType)->cookie('unitIdCookie', $request->unit_id, time() + (10 * 365 * 24 * 60 * 60));
 	}
 
-	public function suppliersJson(Request $request)
-	{
-		$unit = Unit::find($request->unit_id);
-
-		$suppliers = [];
-
-		if (!is_null($unit)) {
-			$suppliers = Supplier::whereIn('suppliers_id', explode(',', $unit->unitsuppliers))
-				->orderBy('supplier_name')
-				->get(['suppliers_id', 'supplier_name']);
-
-			if (count($suppliers) > 0) {
-				$suppliers->prepend(
-					[
-						'suppliers_id' => 0,
-						'supplier_name' => 'Choose Supplier'
-					]
-				);
-			}
-		}
-
-		return response()->json($suppliers);
-	}
-
-	public function supplierInvoiceNoUnique(Request $request)
-	{
-		$sheetId = $request->sheet_id;
-
-		$supplierInvoiceNo = Purchase::select(['reference_invoice_number'])
-			->where('suppliers_id', $request->supplier)
-			->where('reference_invoice_number', $request->invoice_number)
-			->where('deleted', 0)
-			->when($sheetId, function ($query) use ($sheetId) {
-				return $query->where('unique_id', '!=', $sheetId);
-			})
-			->first();
-
-		return response()->json(
-			[
-				'available' => is_null($supplierInvoiceNo)
-			]
-		);
-	}
-
 	/**
 	 * Credit Sales Sheet.
 	 */
@@ -637,6 +1054,7 @@ class SheetController extends Controller
 			$saleDate = Carbon::parse($creditSales->sale_date)->format('d-m-Y');
 			$creditReference = $creditSales->credit_reference;
 			$costCentre = $creditSales->cost_centre;
+			$currencyId = $creditSales->currency_id;
 
 			$creditSaleGoods = CreditSaleGood::where('credit_sales_id', $sheetId)->get();
 
@@ -681,6 +1099,8 @@ class SheetController extends Controller
 	{
 		$selectedUnit = Unit::find($request->unit_id);
 
+		$currencySymbol = $selectedUnit->currency->currency_symbol;
+
 		$saleItems = [];
 		foreach ($request->tax_code as $index => $value) {
 			$saleItems[$value] = isset($request->gross[$index]) ? $request->gross[$index] : 0;
@@ -707,6 +1127,8 @@ class SheetController extends Controller
 				'grossTotal' => $request->gross_total,
 				'goodsTotal' => $request->goods_total,
 				'vatTotal' => $request->vat_total,
+				'currencyId' => $selectedUnit->currency_id,
+				'currencySymbol' => $currencySymbol,
 				'saleItems' => serialize($saleItems),
 				'backData' => serialize($backData)
 			]
@@ -750,6 +1172,8 @@ class SheetController extends Controller
 			$creditSales->docket_number = $request->docket_number;
 			$creditSales->credit_reference = $request->credit_reference;
 			$creditSales->cost_centre = $request->cost_centre;
+
+			$creditSales->currency_id = $request->currency_id;
 
 			$creditSales->goods_total = (float)str_replace(',', '', $request->total_goods);
 			$creditSales->vat_total = (float)str_replace(',', '', $request->total_vat);
@@ -822,6 +1246,14 @@ class SheetController extends Controller
 		$zRead = !is_null($cashSalesData) ? $cashSalesData->z_read : $request->z_read;
 		$overRing = !is_null($cashSalesData) ? $cashSalesData->over_ring : $request->over_ring;
 		$saleDetails = !is_null($cashSalesData) ? $cashSalesData->sale_details : $request->sale_details;
+		$currencyId = !is_null($cashSalesData) ? $cashSalesData->currency_id : $request->currency_id;
+
+		$currencySymbol = '';
+		if ($currencyId > 0) {
+			$currency = Currency::find($currencyId);
+
+			$currencySymbol = $currency->currency_symbol;
+		}
 
 		return view(
 			'sheets.cash-sales.index', [
@@ -846,6 +1278,8 @@ class SheetController extends Controller
 				'overRing' => $overRing,
 				'saleDetails' => $saleDetails,
 				'reg_number' => $reg_number,
+				'selectedCurrency' => $currencyId,
+				'currencySymbol' => $currencySymbol,
 				'sheetId' => $request->has('sheet_id') ? $request->sheet_id : $sheetId
 			]
 
@@ -893,6 +1327,15 @@ class SheetController extends Controller
 
 		session(['creditSalesIdsArrSession' => $creditSalesIdsArr]);
 
+		// Currency
+		$currencySymbol = '';
+
+		if ($request->currency_id > 0) {
+			$currency = Currency::find($request->currency_id);
+
+			$currencySymbol = $currency->currency_symbol;
+		}
+
 		return view(
 			'sheets.cash-sales.confirmation', [
 				'userId' => $userId,
@@ -918,6 +1361,8 @@ class SheetController extends Controller
 				'staffCards' => $request->staff_cards,
 				'overRing' => $request->over_ring,
 				'saleDetails' => $request->sale_details,
+				'currencyId' => $request->currency_id,
+				'currencySymbol' => $currencySymbol,
 				'sheetId' => $request->has('sheet_id') ? $request->sheet_id : ''
 			]
 		);
@@ -991,6 +1436,7 @@ class SheetController extends Controller
 		$cashSales->unit_id = $request->unit_id;
 		$cashSales->reg_management_id = $request->reg_management_id;
 		$cashSales->staff_cards = $staff_cards;
+		$cashSales->currency_id = $request->currency_id;
 
 		if ($request->has('sheet_id') && $request->sheet_id > 0) {
 			$cashSales->updated_by = session()->get('userId');
@@ -1049,6 +1495,7 @@ class SheetController extends Controller
 		$remarks = '';
 		$selectedCashSales = [];
 		$selectedVendingSales = [];
+		$lodgementCosts = [];
 
 		// Back from the confirm page
 		if ($request->isMethod('post')) {
@@ -1063,6 +1510,7 @@ class SheetController extends Controller
 			$remarks = $backData['remarks'];
 			$selectedCashSales = $backData['selected_cash_sales'];
 			$selectedVendingSales = $backData['selected_vending_sales'];
+			$lodgementCosts = $backData['lodgement_costs'];
 		}
 
 		// Request contain sheet id
@@ -1079,10 +1527,35 @@ class SheetController extends Controller
 
 			$selectedCashSales = CashSales::where('lodgement_id', $lodgementId)->pluck('cash_sales_id')->toArray();
 			$selectedVendingSales = VendingSales::where('lodgement_id', $lodgementId)->pluck('vending_sales_id')->toArray();
+
+			$costs = LodgementCost::where('lodgement_id', $lodgementId)->get();
+
+			$lodgementCosts = [];
+			foreach ($costs as $cost) {
+				$lodgementCosts[] = [
+					'currency' => $cost->currency_id,
+					'cash' => $cost->cash,
+					'coin' => $cost->coin
+				];
+			}
 		}
 
 		// Get list of units for current user level
 		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+
+		// Currency
+		$unit = Unit::find($unitId);
+		$currencyId = is_null($unit) ? 0 : $unit->currency_id;
+
+		$currencySymbol = '';
+		if ($currencyId > 0) {
+			$currency = Currency::find($currencyId);
+
+			$currencySymbol = $currency->currency_symbol;
+		}
+
+		// Currencies
+		$currencies = Currency::pluck('currency_name', 'currency_id');
 
 		return view(
 			'sheets.lodgements.index', [
@@ -1095,6 +1568,10 @@ class SheetController extends Controller
 				'slipNumber' => $slipNumber,
 				'bagNumber' => $bagNumber,
 				'remarks' => $remarks,
+				'lodgementCosts' => $lodgementCosts,
+				'currencies' => [0 => 'Choose'] + $currencies->toArray(),
+				'currencyId' => $currencyId,
+				'currencySymbol' => $currencySymbol,
 				'selectedCashSales' => implode(',', $selectedCashSales),
 				'selectedVendingSales' => implode(',', $selectedVendingSales)
 			]
@@ -1110,6 +1587,34 @@ class SheetController extends Controller
 		$cashSales = $request->input('cash_sales', []);
 		$vendingSales = $request->input('vending_sales', []);
 
+		// Lodgement items
+		$lodgementCosts = [];
+
+		foreach ($request->currency as $index => $value) {
+			$lodgementCosts[$index]['currency'] = $value;
+		}
+
+		foreach ($request->cash as $index => $value) {
+			$lodgementCosts[$index]['cash'] = $value;
+		}
+
+		foreach ($request->coin as $index => $value) {
+			$lodgementCosts[$index]['coin'] = $value;
+		}
+
+		$cashTotal = preg_replace('/[^\d\.]/', '', $request->cash_total);
+		$coinTotal = preg_replace('/[^\d\.]/', '', $request->coin_total);
+		$total = number_format($cashTotal + $coinTotal, 2, '.', ',');
+
+		// Currency
+		$currencySymbol = '';
+
+		if ($request->currency_id > 0) {
+			$currency = Currency::find($request->currency_id);
+
+			$currencySymbol = $currency->currency_symbol;
+		}
+
 		$backData = [
 			'unit_id' => $request->unit_id,
 			'date' => $request->date,
@@ -1120,6 +1625,7 @@ class SheetController extends Controller
 			'remarks' => $request->remarks,
 			'selected_cash_sales' => $cashSales,
 			'selected_vending_sales' => $vendingSales,
+			'lodgement_costs' => $lodgementCosts
 		];
 
 		return view(
@@ -1128,14 +1634,16 @@ class SheetController extends Controller
 				'unitId' => $request->unit_id,
 				'unitName' => $selectedUnit->unit_name,
 				'date' => $request->date,
-				'cash' => $request->date,
-				'coin' => $request->coin,
 				'slipNumber' => $request->slip_number,
 				'bagNumber' => $request->bag_number,
 				'remarks' => $request->remarks,
-				'total' => $request->total,
+				'cashTotal' => $request->cash_total,
+				'coinTotal' => $request->coin_total,
+				'total' => $total,
+				'currencySymbol' => $currencySymbol,
 				'selectedCashSales' => serialize($cashSales),
 				'selectedVendingSales' => serialize($vendingSales),
+				'lodgementCosts' => serialize($lodgementCosts),
 				'backData' => serialize($backData)
 			]
 		);
@@ -1155,8 +1663,10 @@ class SheetController extends Controller
 				$lodgementId = $request->lodgement_id;
 
 				$lodgement = Lodgement::findOrFail($lodgementId);
-
 				$lodgement->updated_by = $userId;
+
+				// Delete previous lodgement costs
+				LodgementCost::where('lodgement_id', $lodgementId)->delete();
 
 				// Detach lodgement from Cash Sales
 				CashSales::where('lodgement_id', $lodgementId)
@@ -1178,28 +1688,39 @@ class SheetController extends Controller
 				$eventAction = 'Create Lodgement';
 
 				$lodgement = new Lodgement();
-
 				$lodgement->created_by = $userId;
 			}
 
 			// Track action
 			Event::trackAction($eventAction);
 
-			$cash = preg_replace('/[^\d\.]/', '', $request->cash);
-			$coin = preg_replace('/[^\d\.]/', '', $request->coin);
-
 			$lodgement->unit_id = $request->unit_id;
 			$lodgement->date = Carbon::parse($request->date)->format('Y-m-d');
-			$lodgement->cash = $cash;
-			$lodgement->coin = $coin;
+			$lodgement->cash = preg_replace('/[^\d\.]/', '', $request->cash_total);
+			$lodgement->coin = preg_replace('/[^\d\.]/', '', $request->coin_total);
 			$lodgement->slip_number = $request->slip_number;
 			$lodgement->bag_number = $request->bag_number;
 			$lodgement->remarks = $request->remarks;
 
 			$lodgement->save();
 
+			// Save costs
+			$lodgementCosts = unserialize($request->lodgement_costs);
+
+			foreach ($lodgementCosts as $cost) {
+				$lodgementCost = new LodgementCost();
+
+				$lodgementCost->lodgement_id = $lodgement->lodgement_id;
+				$lodgementCost->currency_id = $cost['currency'];
+				$lodgementCost->cash = preg_replace('/[^\d\.]/', '', $cost['cash']);
+				$lodgementCost->coin = preg_replace('/[^\d\.]/', '', $cost['coin']);
+
+				$lodgementCost->save();
+			}
+
 			// Update Cash Sales with Lodgement ID
 			$cashSales = unserialize($request->selected_cash_sales);
+
 			foreach ($cashSales as $cashSaleId) {
 				CashSales::where('cash_sales_id', $cashSaleId)
 					->update(
@@ -1211,6 +1732,7 @@ class SheetController extends Controller
 
 			// Update Vending Sales with Lodgement ID
 			$vendingSales = unserialize($request->selected_vending_sales);
+
 			foreach ($vendingSales as $vendingSaleId) {
 				VendingSales::where('vending_sales_id', $vendingSaleId)
 					->update(
@@ -1406,10 +1928,14 @@ class SheetController extends Controller
 
 		// Vending machine
 		$machine = '';
+		$currencyId = 0;
+		$currencySymbol = '';
 		if ($request->vend_machine_id && $request->vend_machine_id > 0) {
 			$vendMachine = Vending::find($request->vend_machine_id);
 
 			$machine = $vendMachine->vend_name;
+			$currencyId = $vendMachine->currency_id;
+			$currencySymbol = $vendMachine->currency->currency_symbol;
 		}
 
 		// Reg number
@@ -1475,6 +2001,8 @@ class SheetController extends Controller
 				'cash' => $request->cash,
 				'taxes' => $taxes,
 				'total' => $request->total,
+				'currencyId' => $currencyId,
+				'currencySymbol' => $currencySymbol,
 				'goodItems' => serialize($goods),
 				'backData' => serialize($backData)
 			]
@@ -1506,6 +2034,8 @@ class SheetController extends Controller
 
 			$vendingSales->supervisor = $userName;
 			$vendingSales->supervisor_id = $userId;
+
+			$vendingSales->currency_id = $request->currency_id;
 
 			$vendingSales->date = Carbon::now()->format('Y-m-d');
 			$vendingSales->sale_date = Carbon::parse($request->sale_date)->format('Y-m-d');
@@ -1555,40 +2085,6 @@ class SheetController extends Controller
 		return redirect('/sheets/vending-sales/')->cookie('unitIdCookieVendingSalesSheet', $request->unit_id, time() + (10 * 365 * 24 * 60 * 60));
 	}
 
-	public function machineNameJson(Request $request)
-	{
-		$unitId = $request->input('unit_id', 0);
-
-		$machines = Vending::where('unit_id', $unitId)
-			->orderBy('vend_name')
-			->get(['vend_management_id', 'vend_name']);
-
-		$regNumbers = Register::where('unit_id', $unitId)
-			->orderBy('reg_number')
-			->get(['reg_management_id', 'reg_number']);
-
-		return response()->json(
-			[
-				'machines' => $machines,
-				'regNumbers' => $regNumbers
-			]
-		);
-	}
-
-	public function closingReadingJson(Request $request)
-	{
-		$vendingSale = VendingSales::where('unit_id', $request->unit_id)
-			->where('vend_id', $request->selected_machine)
-			->orderBy('vending_sales_id', 'desc')
-			->first();
-
-		return response()->json(
-			[
-				'closing' => !is_null($vendingSale) ? $vendingSale->closing : ''
-			]
-		);
-	}
-
 	/**
 	 * Phased Budget Sheet.
 	 */
@@ -1621,14 +2117,14 @@ class SheetController extends Controller
 		// Rows visibility
 		$unitId = $changeLogBudget ? $changeLogBudget->unit_id : $selectedUnit;
 
-		$hiddenUnitRows = PhasedBudgetUnitRow::where('user_id', $userId)->where('unit_id', $unitId)->get();
+		$visibleUnitRows = PhasedBudgetUnitRow::where('user_id', $userId)->where('unit_id', $unitId)->get();
 
 		$unitRows = [];
 
 		foreach (PhasedBudgetUnitRow::$rows as $rowIndex => $rowName) {
 			$unitRows[$rowIndex] = [
 				'name' => $rowName,
-				'hidden' => $hiddenUnitRows->contains(function ($value) use ($rowIndex) {
+				'hidden' => !$visibleUnitRows->contains(function ($value) use ($rowIndex) {
 					return $rowIndex == $value->row_index;
 				})
 			];
@@ -2985,13 +3481,13 @@ class SheetController extends Controller
 		$unitId = $request->input('unit_name', 0);
 
 		// Rows visibility
-		$hiddenUnitRows = PhasedBudgetUnitRow::where('user_id', $userId)->where('unit_id', $unitId)->get(['row_index']);
+		$visibleUnitRows = PhasedBudgetUnitRow::where('user_id', $userId)->where('unit_id', $unitId)->get(['row_index']);
 		$unitRows = [];
 
 		foreach (PhasedBudgetUnitRow::$rows as $rowIndex => $rowName) {
 			$unitRows[] = [
 				'rowIndex' => $rowIndex,
-				'hidden' => $hiddenUnitRows->contains(function ($value) use ($rowIndex) {
+				'hidden' => !$visibleUnitRows->contains(function ($value) use ($rowIndex) {
 					return $rowIndex == $value->row_index;
 				})
 			];
@@ -3287,6 +3783,15 @@ class SheetController extends Controller
 		$selectedUnit = $request->unit_id;
 		$unitName = $request->unit_name;
 
+		// Currency symbol
+		$unit = Unit::find($selectedUnit);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+
+		$currencySymbol = $defaultCurrency->currency_symbol;
+		if (!is_null($unit) && !is_null($unit->currency)) {
+			$currencySymbol = $unit->currency->currency_symbol;
+		}
+
 		return view(
 			'sheets.stock-control.index', [
 				'todayDate' => Carbon::now()->format('d-m-Y'),
@@ -3304,7 +3809,8 @@ class SheetController extends Controller
 				'freeIssues' => $request->free_issues,
 				'totalChemicalsCleanDispFreeIssues' => $request->total_chemicals_clean_disp_free_issues,
 				'total' => $request->total,
-				'comments' => $request->comments
+				'comments' => $request->comments,
+				'currencySymbol' => $currencySymbol
 			]
 
 		);
@@ -3314,6 +3820,15 @@ class SheetController extends Controller
 	{
 		$userId = session()->get('userId');
 		$userName = session()->get('userName');
+
+		// Currency symbol
+		$unit = Unit::find($request->unit_name);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+
+		$currencySymbol = $defaultCurrency->currency_symbol;
+		if (!is_null($unit) && !is_null($unit->currency)) {
+			$currencySymbol = $unit->currency->currency_symbol;
+		}
 
 		return view(
 			'sheets.stock-control.confirmation', [
@@ -3341,7 +3856,8 @@ class SheetController extends Controller
 				'cleanDispDelta' => $request->clean_disp_delta,
 				'freeIssuesDelta' => $request->free_issues_delta,
 				'totalDelta' => $request->total_delta,
-				'overallTotal' => $request->foods + $request->minerals + $request->choc_snacks + $request->vending + $request->chemicals + $request->clean_disp + $request->free_issues
+				'overallTotal' => $request->foods + $request->minerals + $request->choc_snacks + $request->vending + $request->chemicals + $request->clean_disp + $request->free_issues,
+				'currencySymbol' => $currencySymbol
 			]
 		);
 	}
@@ -4098,7 +4614,6 @@ class SheetController extends Controller
 					$ccEmails = User::whereIn('user_id', $operationsManagers)->pluck('user_email');
 				}
 
-				// Send email
 				Mail::to($unit->email)
 					->cc($ccEmails)
 					->send(
@@ -4601,182 +5116,6 @@ class SheetController extends Controller
 				'onsiteVisits' => $onsiteVisits
 			]
 		);
-	}
-
-	public function regNumberCashPurchasesCreditSales(Request $request)
-	{
-		$cashSalesDataArr = array();
-		$cashSalesData = array();
-		if ($request->has('unit_name') && $request->unit_name > 0) {
-			// Reg Number Radio Buttons [Starts]
-			$sheet_id = $request->sheet_id;
-			$regNumStr = '';
-			$regTabIndex = 2;
-			$selectedCash = 0;
-			if ($sheet_id > 0) {
-				$selectedCash = 1;
-				$query = \DB::table('cash_sales as CS');
-				$query->where('CS.cash_sales_id', '=', $sheet_id);
-				$cash_sale_data = $query->first();
-			}
-			//dd($cash_sale_data);
-
-			$regManagement = \DB::select(
-				"SELECT reg_management_id, reg_number
-                    FROM `reg_management`
-                    WHERE unit_id='" . $request->unit_name . "'
-                    ORDER BY reg_number
-                "
-			);
-			if ($regManagement) {
-				$cashSalesData['total_reg_nums'] = count($regManagement);
-
-				$k = 1;
-				foreach ($regManagement as $regValue) {
-					$selectedRegNum = $regValue->reg_management_id == $request->selected_reg_number ? 'checked="checked"' : $k == 1 ? 'checked="checked"' : '';
-					$regNumStr .= '<div class="radio"><label><input type="radio" name="reg_number" id="reg_number_' . $k . '" ' . $selectedRegNum . ' tabindex="' . $regTabIndex . '" value="' . $regValue->reg_management_id . '"> ' . $regValue->reg_number . '</label></div>';
-					$k++;
-				}
-
-				$cashSalesData['reg_num'] = $regNumStr;
-			} else {
-				$cashSalesData['reg_num'] = "<input class='form-control' tabindex='" . $regTabIndex . "' type='text' name='reg_number' value='' id='reg_number' />";
-			}
-			// Reg Number Radio Buttons [Ends]
-
-			// Cash Purchases Checkboxes [Starts]
-			$cashPurchStr = '';
-			$cashPurchTabIndex = 14;
-
-			$cashPurch = \DB::select(
-				"SELECT unique_id, receipt_invoice_date, purchase_details, gross_total
-                    FROM `purchases`
-                    WHERE cash_sale_vis = 1 AND purch_type = 'cash' AND deleted = 0 AND unit_id=" . $request->unit_name . " GROUP BY unique_id
-                "
-			);
-			//credit_sales_id
-			//cash_purchases_id
-			//selectedCash			
-			//dd($cashPurch);
-			$selectedLinkPurchase = 0;
-			if ($selectedCash == 1) {
-				if ($cash_sale_data->cash_purchases_id != '') {
-					$purchases = \DB::table('purchases as P');
-					$purchases->where('cash_sale_vis', '=', 1);
-					$purchases->where('purch_type', '=', 'cash');
-					$purchases->where('deleted', '=', 0);
-					$purchases->whereIn('P.unique_id', explode(",", $cash_sale_data->cash_purchases_id));
-					$purchases_sel_data = $purchases->get();
-				}
-			}
-			if ($cashPurch) {
-				$i = 1;
-				$checkedCashPurch = '';
-				//print_r(Session::get('purchIdsArrSession'));
-				foreach ($cashPurch as $cashPurchValue) {
-					if (Session::get('purchIdsArrSession')) {
-						$checkedCashPurch = in_array($cashPurchValue->unique_id, Session::get('purchIdsArrSession')) ? 'checked="checked"' : '';
-					} else {
-						$selectedLinkPurchase = 1;
-					}
-
-					$cashPurchStr .= '<div class="checkbox"><label><input ' . $checkedCashPurch . ' type="checkbox" tabindex="' . $cashPurchTabIndex . '" id="cash_purch_chk_' . $i . '" name="cash_purch_chk_' . $i . '" value="' . number_format($cashPurchValue->gross_total, 2, ".", ",") . '" class="checkboxes"> &euro;' . number_format($cashPurchValue->gross_total, 2, ".", ",") . ' - ' . date('d-m-Y', strtotime($cashPurchValue->receipt_invoice_date)) . ' - ' . $cashPurchValue->purchase_details . '</label></div>';
-					$cashPurchStr .= '<input type="hidden" name="purch_id_' . $i . '" value="' . $cashPurchValue->unique_id . '">';
-					//echo $cashPurchStr;
-					$i++;
-				}
-				if ($selectedLinkPurchase == 1 && $request->sheet_id != '') {
-					//////////// Get Sheet ID
-					$cashPurch1 = \DB::select(
-						"SELECT unique_id, receipt_invoice_date, purchase_details, gross_total
-							FROM `purchases`
-							WHERE cash_sale_vis = 0 AND purch_type = 'cash' AND deleted = 0 AND cash_sales_record_id=" . $request->sheet_id . " GROUP BY unique_id
-						"
-					);
-					foreach ($cashPurch1 as $cashPurchValue) {
-
-						$cashPurchStr .= '<div class="checkbox"><label><input checked="checked" type="checkbox" tabindex="' . $cashPurchTabIndex . '" id="cash_purch_chk_' . $i . '" name="cash_purch_chk_' . $i . '" value="' . number_format($cashPurchValue->gross_total, 2, ".", ",") . '" class="checkboxes"> &euro;' . number_format($cashPurchValue->gross_total, 2, ".", ",") . ' - ' . date('d-m-Y', strtotime($cashPurchValue->receipt_invoice_date)) . ' - ' . $cashPurchValue->purchase_details . '</label></div>';
-						$cashPurchStr .= '<input type="hidden" name="purch_id_' . $i . '" value="' . $cashPurchValue->unique_id . '">';
-						//echo $cashPurchStr;
-						$i++;
-					}
-				}
-				if (isset($purchases_sel_data) && count($purchases_sel_data) > 0 && !empty($purchases_sel_data)) {
-					foreach ($purchases_sel_data as $cashPurchValue) {
-						$cashPurchStr .= '<div class="checkbox"><label><input ' . $checkedCashPurch . ' type="checkbox" tabindex="' . $cashPurchTabIndex . '" id="cash_purch_chk_' . $i . '" name="cash_purch_chk_' . $i . '" value="' . number_format($cashPurchValue->gross_total, 2, ".", ",") . '" class="checkboxes" checked="checked"> &euro;' . number_format($cashPurchValue->gross_total, 2, ".", ",") . ' - ' . date('d-m-Y', strtotime($cashPurchValue->receipt_invoice_date)) . ' - ' . $cashPurchValue->purchase_details . '</label></div>';
-						$cashPurchStr .= '<input type="hidden" name="purch_id_' . $i . '" value="' . $cashPurchValue->unique_id . '">';
-						$i++;
-					}
-				}
-				$cashSalesData['cash_purchases_data'] = $cashPurchStr;
-			} else {
-				$cashPurchStr = '';
-				$i = 1;
-				$checkedCashPurch = '';
-				if (isset($purchases_sel_data) && count($purchases_sel_data) > 0 && !empty($purchases_sel_data)) {
-					foreach ($purchases_sel_data as $cashPurchValue) {
-						$cashPurchStr .= '<div class="checkbox"><label><input ' . $checkedCashPurch . ' type="checkbox" tabindex="' . $cashPurchTabIndex . '" id="cash_purch_chk_' . $i . '" name="cash_purch_chk_' . $i . '" value="' . number_format($cashPurchValue->gross_total, 2, ".", ",") . '" class="checkboxes" checked="checked"> &euro;' . number_format($cashPurchValue->gross_total, 2, ".", ",") . ' - ' . date('d-m-Y', strtotime($cashPurchValue->receipt_invoice_date)) . ' - ' . $cashPurchValue->purchase_details . '</label></div>';
-						$cashPurchStr .= '<input type="hidden" name="purch_id_' . $i . '" value="' . $cashPurchValue->unique_id . '">';
-						$i++;
-					}
-				}
-				$cashSalesData['cash_purchases_data'] = $cashPurchStr;
-			}
-			// Cash Purchases Checkboxes [Ends]
-
-			// Credit Sales Checkboxes [Starts]
-			$creditSalesStr = '';
-			$creditSalesTabIndex = 15;
-
-			$creditSales = \DB::select(
-				"SELECT credit_sales_id, credit_reference, sale_date, gross_total
-                    FROM `credit_sales`
-                    WHERE cash_sale_vis = 1 AND unit_id=" . $request->unit_name
-			);
-			if ($selectedCash == 1) {
-				if ($cash_sale_data->credit_sales_id != '') {
-					$credit_sales = \DB::table('credit_sales as CS');
-					$credit_sales->whereIn('CS.credit_sales_id', explode(",", $cash_sale_data->credit_sales_id));
-					$credit_sel_data = $credit_sales->get();
-				}
-			}
-			if ($creditSales) {
-				$i = 1;
-				$checkedCreditSales = '';
-				foreach ($creditSales as $creditSalesValue) {
-					if (Session::get('creditSalesIdsArrSession')) {
-						$checkedCreditSales = in_array($creditSalesValue->credit_sales_id, Session::get('creditSalesIdsArrSession')) ? 'checked="checked"' : '';
-					}
-
-					$creditSalesStr .= '<div class="checkbox"><label><input ' . $checkedCreditSales . ' type="checkbox" tabindex="' . $creditSalesTabIndex . '" id="credit_sales_chk_' . $i . '" name="credit_sales_chk_' . $i . '" value="' . number_format($creditSalesValue->gross_total, 2, ".", ",") . '" class="checkboxes"> &euro;' . number_format($creditSalesValue->gross_total, 2, ".", ",") . ' - ' . date('d-m-Y', strtotime($creditSalesValue->sale_date)) . ' - ' . $creditSalesValue->credit_reference . '</label></div>';
-					$creditSalesStr .= '<input type="hidden" name="credit_sales_id_' . $i . '" value="' . $creditSalesValue->credit_sales_id . '">';
-					$i++;
-				}
-				if (isset($credit_sel_data) && count($credit_sel_data) > 0 && !empty($credit_sel_data)) {
-					foreach ($credit_sel_data as $creditSalesValue) {
-						$creditSalesStr .= '<div class="checkbox"><label><input ' . $checkedCreditSales . ' type="checkbox" tabindex="' . $creditSalesTabIndex . '" id="credit_sales_chk_' . $i . '" name="credit_sales_chk_' . $i . '" value="' . number_format($creditSalesValue->gross_total, 2, ".", ",") . '" class="checkboxes" checked="checked"> &euro;' . number_format($creditSalesValue->gross_total, 2, ".", ",") . ' - ' . date('d-m-Y', strtotime($creditSalesValue->sale_date)) . ' - ' . $creditSalesValue->credit_reference . '</label></div>';
-						$creditSalesStr .= '<input type="hidden" name="credit_sales_id_' . $i . '" value="' . $creditSalesValue->credit_sales_id . '">';
-						$i++;
-					}
-				}
-				$cashSalesData['credit_sales_data'] = $creditSalesStr;
-			} else {
-				$i = 1;
-				$creditSalesStr = '';
-				$checkedCreditSales = '';
-				if (isset($credit_sel_data) && count($credit_sel_data) > 0 && !empty($credit_sel_data)) {
-					foreach ($credit_sel_data as $creditSalesValue) {
-						$creditSalesStr .= '<div class="checkbox"><label><input ' . $checkedCreditSales . ' type="checkbox" tabindex="' . $creditSalesTabIndex . '" id="credit_sales_chk_' . $i . '" name="credit_sales_chk_' . $i . '" value="' . number_format($creditSalesValue->gross_total, 2, ".", ",") . '" class="checkboxes" checked="checked" > &euro;' . number_format($creditSalesValue->gross_total, 2, ".", ",") . ' - ' . date('d-m-Y', strtotime($creditSalesValue->sale_date)) . ' - ' . $creditSalesValue->credit_reference . '</label></div>';
-						$creditSalesStr .= '<input type="hidden" name="credit_sales_id_' . $i . '" value="' . $creditSalesValue->credit_sales_id . '">';
-						$i++;
-					}
-				}
-				$cashSalesData['credit_sales_data'] = $creditSalesStr;
-			}
-
-			// Credit Sales Checkboxes [Ends]
-		}
-		echo json_encode($cashSalesData);
 	}
 
 	/**

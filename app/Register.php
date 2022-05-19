@@ -17,4 +17,12 @@ class Register extends Model
     {
         return $this->belongsTo('App\Unit');
     }
+
+	/**
+	 * Get currency.
+	 */
+	public function currency()
+	{
+		return $this->belongsTo('App\Currency');
+	}
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\BudgetType;
+use App\Currency;
 use App\Http\Controllers\Traits\UserUnits;
 use App\PhasedBudget;
 use App\Problem;
@@ -141,7 +142,7 @@ class HomeController extends Controller
 	}
 
 	/**
-	 * Get data for the dashboard
+	 * Get Totals and Units data for the dashboard
 	 *
 	 * @param Request $request
 	 *
@@ -157,19 +158,30 @@ class HomeController extends Controller
 		$startDate = Carbon::parse($request->input('startDate'));
 		$endDate = Carbon::parse($request->input('endDate'));
 
+		// Currency
+		$currency = Currency::where('is_default', 1)->first();
+		$dashboardCurrency = $currency->currency_id;
+		$currencySymbol = $currency->currency_symbol;
+
 		// Lodgements
 		$unitsCashLodge = [];
 
-		$lodgements = DB::table('lodgements')
+		$lodgements = DB::table('lodgements as l')
 			->select(
 				[
-					'unit_id',
-					DB::raw('(cash + coin) as total')
+					'l.unit_id',
+					DB::raw('(l.cash + l.coin) * er.exchange_rate as cash_lodge')
 				]
 			)
-			->whereDate('date', '>=', $startDate)
-			->whereDate('date', '<=', $endDate)
-			->orderBy('date', 'asc')
+			->leftJoin('units as u', 'l.unit_id', '=', 'u.unit_id')
+			->leftJoin('exchange_rates as er', function ($join) use ($dashboardCurrency) {
+				$join->on('er.domestic_currency_id', 'u.currency_id')
+					->where('er.foreign_currency_id', $dashboardCurrency)
+					->whereRaw('er.date = l.date');
+			})
+			->whereDate('l.date', '>=', $startDate)
+			->whereDate('l.date', '<=', $endDate)
+			->orderBy('l.date', 'asc')
 			->get();
 
 		foreach ($lodgements as $lodgement) {
@@ -177,7 +189,7 @@ class HomeController extends Controller
 				$unitsCashLodge[$lodgement->unit_id] = 0;
 			}
 
-			$unitsCashLodge[$lodgement->unit_id] += $lodgement->total;
+			$unitsCashLodge[$lodgement->unit_id] += $lodgement->cash_lodge;
 		}
 
 		// Sales
@@ -185,17 +197,19 @@ class HomeController extends Controller
 		$unitsSalesLatestEntry = [];
 		$salesLatestEntry = null;
 
-		$cashSales = DB::table('cash_sales')
+		$cashSales = DB::table('cash_sales as cs')
 			->select(
 				[
-					'unit_id',
-					'z_read',
-					'over_ring',
-					'lodge_cash',
-					'lodge_coin',
-					'sale_date'
+					'cs.unit_id',
+					DB::raw('(cs.z_read - cs.over_ring) * er.exchange_rate as gross_sale'),
+					'cs.sale_date'
 				]
 			)
+			->leftJoin('exchange_rates as er', function ($join) use ($dashboardCurrency) {
+				$join->on('er.domestic_currency_id', 'cs.currency_id')
+					->where('er.foreign_currency_id', $dashboardCurrency)
+					->whereRaw('er.date = cs.sale_date');
+			})
 			->whereDate('sale_date', '>=', $startDate)
 			->whereDate('sale_date', '<=', $endDate)
 			->orderBy('sale_date', 'asc')
@@ -206,7 +220,7 @@ class HomeController extends Controller
 				$unitsGrossSales[$cashSale->unit_id] = 0;
 			}
 
-			$unitsGrossSales[$cashSale->unit_id] += $cashSale->z_read - $cashSale->over_ring;
+			$unitsGrossSales[$cashSale->unit_id] += $cashSale->gross_sale;
 
 			// Latest entry
 			$unitsSalesLatestEntry[$cashSale->unit_id] = Carbon::parse($cashSale->sale_date)->timestamp;
@@ -235,17 +249,22 @@ class HomeController extends Controller
 			}
 		}
 
-		$vendingSales = DB::table('vending_sales')
+		$vendingSales = DB::table('vending_sales as vs')
 			->select(
 				[
 					'unit_id',
-					'total',
+					DB::raw('vs.total * er.exchange_rate as total'),
 					'sale_date'
 				]
 			)
-			->whereDate('sale_date', '>=', $startDate)
-			->whereDate('sale_date', '<=', $endDate)
-			->orderBy('sale_date', 'asc')
+			->leftJoin('exchange_rates as er', function ($join) use ($dashboardCurrency) {
+				$join->on('er.domestic_currency_id', 'vs.currency_id')
+					->where('er.foreign_currency_id', $dashboardCurrency)
+					->whereRaw('er.date = vs.sale_date');
+			})
+			->whereDate('vs.sale_date', '>=', $startDate)
+			->whereDate('vs.sale_date', '<=', $endDate)
+			->orderBy('vs.sale_date', 'asc')
 			->get();
 
 		foreach ($vendingSales as $vendingSale) {
@@ -330,20 +349,25 @@ class HomeController extends Controller
 		$unitsPurchaseLatestEntry = [];
 		$purchaseLatestEntry = null;
 
-		$purchases = DB::table('purchases')
+		$purchases = DB::table('purchases as p')
 			->select(
 				[
-					'purchases.unit_id',
-					'purchases.goods',
-					'purchases.receipt_invoice_date'
+					'p.unit_id',
+					DB::raw('p.goods * er.exchange_rate as goods'),
+					'p.receipt_invoice_date'
 				]
 			)
-			->leftJoin('nominal_codes', 'nominal_codes.net_ext_ID', '=', 'purchases.net_ext_ID')
-			->whereDate('purchases.receipt_invoice_date', '>=', $startDate)
-			->whereDate('purchases.receipt_invoice_date', '<=', $endDate)
-			->where('purchases.deleted', 0)
-			->where('nominal_codes.cost_of_sales', 1)
-			->orderBy('receipt_invoice_date', 'asc')
+			->leftJoin('nominal_codes as nc', 'nc.net_ext_ID', '=', 'p.net_ext_ID')
+			->leftJoin('exchange_rates as er', function ($join) use ($dashboardCurrency) {
+				$join->on('er.domestic_currency_id', 'p.currency_id')
+					->where('er.foreign_currency_id', $dashboardCurrency)
+					->whereRaw('er.date = p.date');
+			})
+			->whereDate('p.receipt_invoice_date', '>=', $startDate)
+			->whereDate('p.receipt_invoice_date', '<=', $endDate)
+			->where('p.deleted', 0)
+			->where('nc.cost_of_sales', 1)
+			->orderBy('p.receipt_invoice_date', 'asc')
 			->get();
 
 		foreach ($purchases as $purchase) {
@@ -361,17 +385,22 @@ class HomeController extends Controller
 		// Cleaning and Disp
 		$unitsCleans = [];
 
-		$purchases = DB::table('purchases')
+		$purchases = DB::table('purchases as p')
 			->select(
 				[
-					'purchases.unit_id',
-					'purchases.goods'
+					'p.unit_id',
+					DB::raw('p.goods * er.exchange_rate as goods')
 				]
 			)
-			->whereDate('receipt_invoice_date', '>=', $startDate)
-			->whereDate('receipt_invoice_date', '<=', $endDate)
-			->where('purchases.deleted', 0)
-			->whereIn('net_ext_id', [5, 6])
+			->leftJoin('exchange_rates as er', function ($join) use ($dashboardCurrency) {
+				$join->on('er.domestic_currency_id', 'p.currency_id')
+					->where('er.foreign_currency_id', $dashboardCurrency)
+					->whereRaw('er.date = p.date');
+			})
+			->whereDate('p.receipt_invoice_date', '>=', $startDate)
+			->whereDate('p.receipt_invoice_date', '<=', $endDate)
+			->where('p.deleted', 0)
+			->whereIn('p.net_ext_id', [5, 6])
 			->get();
 
 		foreach ($purchases as $purchase) {
@@ -384,6 +413,8 @@ class HomeController extends Controller
 
 		// Data
 		$data = [
+			'currency' => $currencySymbol,
+			'units' => [],
 			'totals' => [
 				'grossSalesActual' => 0,
 				'grossSalesBudget' => 0,
@@ -402,8 +433,7 @@ class HomeController extends Controller
 				'leSales' => !is_null($salesLatestEntry) ? date('d-m-Y', $salesLatestEntry) : '',
 				'cleaningDisp' => 0,
 				'cashLodge' => 0
-			],
-			'units' => [],
+			]
 		];
 
 		// Get list of units for current user level
@@ -518,9 +548,7 @@ class HomeController extends Controller
 				'lePurchase' => $lastPurchaseEntry,
 				'leSales' => $lastSaleEntry,
 				'cleaningDisp' => round($cleaningDisp),
-				'cashLodge' => round($cashLodge),
-				'showGrossChart' => $unitBudgetType == 0 || $unitBudgetType == BudgetType::BUDGET_TYPE_GP,
-				'showNetChart' => $unitBudgetType == 0 || $unitBudgetType == BudgetType::BUDGET_TYPE_NET,
+				'cashLodge' => round($cashLodge)
 			];
 
 			// Total
@@ -570,4 +598,326 @@ class HomeController extends Controller
 
 		return response()->json($data);
 	}
+
+	/**
+	 * Get Unit data for the dashboard
+	 *
+	 * @param Request $request
+	 *
+	 * @return \Illuminate\Http\JsonResponse
+	 */
+	public function getUnitData(Request $request)
+	{
+		$this->validate($request, [
+			'unitId' => 'required|integer',
+			'startDate' => 'required|date',
+			'endDate' => 'required|date',
+		]);
+
+		$startDate = Carbon::parse($request->input('startDate'));
+		$endDate = Carbon::parse($request->input('endDate'));
+
+		// Unit
+		$unitId = $request->unitId;
+		$unit = Unit::find($unitId);
+		
+		// Currency
+		$dashboardCurrency = $unit->currency_id;
+		$currencySymbol = $unit->currency->currency_symbol;
+
+		// Lodgements
+		$cashLodge = 0;
+
+		$lodgements = DB::table('lodgements as l')
+			->select(
+				[
+					'l.unit_id',
+					DB::raw('(l.cash + l.coin) * er.exchange_rate as cash_lodge')
+				]
+			)
+			->leftJoin('units as u', 'l.unit_id', '=', 'u.unit_id')
+			->leftJoin('exchange_rates as er', function ($join) use ($dashboardCurrency) {
+				$join->on('er.domestic_currency_id', 'u.currency_id')
+					->where('er.foreign_currency_id', $dashboardCurrency)
+					->whereRaw('er.date = l.date');
+			})
+			->whereDate('l.date', '>=', $startDate)
+			->whereDate('l.date', '<=', $endDate)
+			->where('l.unit_id', $unitId)
+			->orderBy('l.date', 'asc')
+			->get();
+
+		foreach ($lodgements as $lodgement) {
+			$cashLodge += $lodgement->cash_lodge;
+		}
+		
+		// Sales
+		$grossSalesActual = 0;
+		$salesLatestEntry = 0;
+
+		$cashSales = DB::table('cash_sales as cs')
+			->select(
+				[
+					DB::raw('(cs.z_read - cs.over_ring) * er.exchange_rate as gross_sale'),
+					'cs.sale_date'
+				]
+			)
+			->leftJoin('exchange_rates as er', function ($join) use ($dashboardCurrency) {
+				$join->on('er.domestic_currency_id', 'cs.currency_id')
+					->where('er.foreign_currency_id', $dashboardCurrency)
+					->whereRaw('er.date = cs.sale_date');
+			})
+			->whereDate('sale_date', '>=', $startDate)
+			->whereDate('sale_date', '<=', $endDate)
+			->where('cs.unit_id', $unitId)
+			->orderBy('sale_date', 'asc')
+			->get();
+
+		foreach ($cashSales as $cashSale) {
+			$grossSalesActual += $cashSale->gross_sale;
+			$salesLatestEntry = Carbon::parse($cashSale->sale_date)->timestamp;
+		}
+
+		$creditSales = DB::table('credit_sales')
+			->select(
+				[
+					'sale_date'
+				]
+			)
+			->whereDate('sale_date', '>=', $startDate)
+			->whereDate('sale_date', '<=', $endDate)
+			->where('unit_id', $unitId)
+			->orderBy('sale_date', 'asc')
+			->get();
+
+		foreach ($creditSales as $creditSale) {
+			$creditSaleDate = Carbon::parse($creditSale->sale_date)->timestamp;
+
+			if ($creditSaleDate > $salesLatestEntry) {
+				$salesLatestEntry = $creditSaleDate;
+			}
+		}
+
+		$vendingSales = DB::table('vending_sales as vs')
+			->select(
+				[
+					'unit_id',
+					DB::raw('vs.total * er.exchange_rate as total'),
+					'sale_date'
+				]
+			)
+			->leftJoin('exchange_rates as er', function ($join) use ($dashboardCurrency) {
+				$join->on('er.domestic_currency_id', 'vs.currency_id')
+					->where('er.foreign_currency_id', $dashboardCurrency)
+					->whereRaw('er.date = vs.sale_date');
+			})
+			->whereDate('vs.sale_date', '>=', $startDate)
+			->whereDate('vs.sale_date', '<=', $endDate)
+			->where('vs.unit_id', $unitId)
+			->orderBy('vs.sale_date', 'asc')
+			->get();
+
+		foreach ($vendingSales as $vendingSale) {
+			$grossSalesActual += $vendingSale->total;
+
+			// Latest entry
+			$vendingSaleDate = Carbon::parse($vendingSale->sale_date)->timestamp;
+
+			if ($vendingSaleDate > $salesLatestEntry) {
+				$salesLatestEntry = $vendingSaleDate;
+			}
+		}
+		
+		// Trading accounts
+		$tradingAccount = DB::table('trading_account')
+			->select(
+				[
+					'budget_start_date',
+					'gross_sales_month_1',
+					'gross_sales_month_2',
+					'gross_sales_month_3',
+					'gross_sales_month_4',
+					'gross_sales_month_5',
+					'gross_sales_month_6',
+					'gross_sales_month_7',
+					'gross_sales_month_8',
+					'gross_sales_month_9',
+					'gross_sales_month_10',
+					'gross_sales_month_11',
+					'gross_sales_month_12',
+					'net_sales_month_1',
+					'net_sales_month_2',
+					'net_sales_month_3',
+					'net_sales_month_4',
+					'net_sales_month_5',
+					'net_sales_month_6',
+					'net_sales_month_7',
+					'net_sales_month_8',
+					'net_sales_month_9',
+					'net_sales_month_10',
+					'net_sales_month_11',
+					'net_sales_month_12',
+					'cost_of_sales_month_1',
+					'cost_of_sales_month_2',
+					'cost_of_sales_month_3',
+					'cost_of_sales_month_4',
+					'cost_of_sales_month_5',
+					'cost_of_sales_month_6',
+					'cost_of_sales_month_7',
+					'cost_of_sales_month_8',
+					'cost_of_sales_month_9',
+					'cost_of_sales_month_10',
+					'cost_of_sales_month_11',
+					'cost_of_sales_month_12',
+					'budget_type_id'
+				]
+			)
+			->where('budget_start_date', '<=', $endDate)
+			->where('budget_end_date', '>=', $startDate)
+			->where('unit_id', $unitId)
+			->orderBy('trading_account_id', 'desc')
+			->first();
+
+		// Purchases
+		$costOfSalesActual = 0;
+		$purchaseLatestEntry = null;
+
+		$purchases = DB::table('purchases as p')
+			->select(
+				[
+					DB::raw('p.goods * er.exchange_rate as goods'),
+					'p.receipt_invoice_date'
+				]
+			)
+			->leftJoin('nominal_codes as nc', 'nc.net_ext_ID', '=', 'p.net_ext_ID')
+			->leftJoin('exchange_rates as er', function ($join) use ($dashboardCurrency) {
+				$join->on('er.domestic_currency_id', 'p.currency_id')
+					->where('er.foreign_currency_id', $dashboardCurrency)
+					->whereRaw('er.date = p.date');
+			})
+			->whereDate('p.receipt_invoice_date', '>=', $startDate)
+			->whereDate('p.receipt_invoice_date', '<=', $endDate)
+			->where('p.deleted', 0)
+			->where('p.unit_id', $unitId)
+			->where('nc.cost_of_sales', 1)
+			->orderBy('p.receipt_invoice_date', 'asc')
+			->get();
+
+		foreach ($purchases as $purchase) {
+			$costOfSalesActual += $purchase->goods;
+			$purchaseLatestEntry = Carbon::parse($purchase->receipt_invoice_date)->timestamp;
+		}
+
+		// Cleaning and Disp
+		$cleans = 0;
+
+		$purchases = DB::table('purchases as p')
+			->select(
+				[
+					DB::raw('p.goods * er.exchange_rate as goods')
+				]
+			)
+			->leftJoin('exchange_rates as er', function ($join) use ($dashboardCurrency) {
+				$join->on('er.domestic_currency_id', 'p.currency_id')
+					->where('er.foreign_currency_id', $dashboardCurrency)
+					->whereRaw('er.date = p.date');
+			})
+			->whereDate('p.receipt_invoice_date', '>=', $startDate)
+			->whereDate('p.receipt_invoice_date', '<=', $endDate)
+			->where('p.deleted', 0)
+			->where('p.unit_id', $unitId)
+			->whereIn('p.net_ext_id', [5, 6])
+			->get();
+
+		foreach ($purchases as $purchase) {
+			$cleans += $purchase->goods;
+		}
+
+		// Additional calculations
+		$grossSalesBudget = 0;
+		$netSalesBudget = 0;
+		$costOfSalesBudget = 0;
+		$budgetType = 0;
+
+		if (!is_null($tradingAccount)) {
+			$budgetType = $tradingAccount->budget_type_id;
+
+			$budgetFrom = 1;
+			$budgetTo = 12;
+			$budgetDate = Carbon::parse($tradingAccount->budget_start_date);
+			$startMonth = $startDate->format('Y-m');
+			$endMonth = $endDate->format('Y-m');
+
+			for ($monthIndex = 1; $monthIndex <= 12; $monthIndex++) {
+				$budgetMonth = $budgetDate->format('Y-m');
+
+				if ($startMonth == $budgetMonth) {
+					$budgetFrom = $monthIndex;
+				}
+
+				if ($endMonth == $budgetMonth) {
+					$budgetTo = $monthIndex;
+				}
+
+				$budgetDate->addMonth();
+			}
+
+			for ($i = $budgetFrom; $i <= $budgetTo; $i++) {
+				$field = 'gross_sales_month_' . $i;
+				$grossSalesBudget += $tradingAccount->$field;
+
+				$field = 'net_sales_month_' . $i;
+				$netSalesBudget += $tradingAccount->$field;
+				
+				$field = 'cost_of_sales_month_' . $i;
+				$costOfSalesBudget += $tradingAccount->$field;
+			}
+		}
+
+		$netSalesActual = (($grossSalesActual * .9) / 1.09) + (($grossSalesActual * .1) / 1.23);
+
+		$grossProfitGrossActual = $grossSalesActual - $costOfSalesActual;
+		$grossProfitNetActual = $netSalesActual - $costOfSalesActual;
+
+		$grossProfitGrossBudget = $grossSalesBudget - $costOfSalesBudget;
+		$grossProfitNetBudget = $netSalesBudget - $costOfSalesBudget;
+
+		$grossSalesPercent = $grossSalesBudget != 0 ? $grossSalesActual / $grossSalesBudget * 100 : 0;
+		$netSalesPercent = $netSalesBudget != 0 ? $netSalesActual / $netSalesBudget * 100 : 0;
+		$costOfSalesPercent = $costOfSalesBudget != 0 ? $costOfSalesActual / $costOfSalesBudget * 100 : 0;
+
+		$grossProfitGrossPercent = $grossSalesActual != 0 ? $grossProfitGrossActual / $grossSalesActual * 100 : 0;
+		$grossProfitNetPercent = $netSalesActual != 0 ? $grossProfitNetActual / $netSalesActual * 100 : 0;
+		
+		// Data
+		$unit = [
+			'id' => $unit->unit_id,
+			'name' => $unit->unit_name,
+			'currencySymbol' => $currencySymbol,
+			'grossSalesBudget' => round($grossSalesBudget),
+			'grossSalesActual' => round($grossSalesActual),
+			'grossSalesPercent' => round($grossSalesPercent),
+			'netSalesBudget' => round($netSalesBudget),
+			'netSalesActual' => round($netSalesActual),
+			'netSalesPercent' => round($netSalesPercent),
+			'costOfSalesBudget' => round($costOfSalesBudget),
+			'costOfSalesActual' => round($costOfSalesActual),
+			'costOfSalesPercent' => round($costOfSalesPercent),
+			'gpGrossActual' => round($grossProfitGrossActual),
+			'gpGrossBudget' => round($grossProfitGrossBudget),
+			'gpGrossPercent' => round($grossProfitGrossPercent),
+			'gpNetActual' => round($grossProfitNetActual),
+			'gpNetBudget' => round($grossProfitNetBudget),
+			'gpNetPercent' => round($grossProfitNetPercent),
+			'lePurchase' => $purchaseLatestEntry !== 0 ? date('d-m-Y', $purchaseLatestEntry) : '',
+			'leSales' => $salesLatestEntry !== 0 ? date('d-m-Y', $salesLatestEntry) : '',
+			'cleaningDisp' => round($cleans),
+			'cashLodge' => round($cashLodge),
+			'showGrossChart' => $budgetType == 0 || $budgetType == BudgetType::BUDGET_TYPE_GP,
+			'showNetChart' => $budgetType == 0 || $budgetType == BudgetType::BUDGET_TYPE_NET,
+		];
+
+		return response()->json($unit);
+	}
+	
 }

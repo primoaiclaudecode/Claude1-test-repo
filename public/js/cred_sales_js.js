@@ -48,7 +48,7 @@ function validation() {
 
     $('.error_message').remove();
 
-    // Validate unit
+    // Validate unit and currency
     var unit = $("#unit_id");
 
     if (!unit.val()) {
@@ -60,7 +60,17 @@ function validation() {
 
         return false;
     }
+    
+    if ($('#currency_id').val() == 0) {
+        scrollToElement(unit);
+        unit
+            .after(
+                $('<span />').addClass('error_message').text('This unit has no currency assigned.')
+            );
 
+        return false;
+    }
+        
     // Sale date
     var saleDate = $("#sale_date");
 
@@ -175,10 +185,27 @@ function calculations() {
     }
 }
 
+function getUnitCurrency() {
+    $.ajax({
+        type: 'GET',
+        url: "/unit_currency/json",
+        data: {
+            unit_id: $('#unit_id').val()
+        },
+        dataType: 'json'
+    }).done(function (data) {
+        $('#currency_id').val(data.currencyId)
+        $('.currency-symbol').text(data.currencySymbol)
+    });
+}
+
 $(document).ready(function () {
     // Check if unit is open
     unitCloseCheck();
 
+    // Currency
+    getUnitCurrency();
+    
     // Run calculations
     calculations();
 
@@ -188,6 +215,8 @@ $(document).ready(function () {
     // Unit
     $("#unit_id").change(function () {
         unitCloseCheck();
+        
+        getUnitCurrency();
     });
 
     // Dates

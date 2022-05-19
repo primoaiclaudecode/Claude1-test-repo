@@ -12,6 +12,7 @@
 			{{ Form::hidden('remarks', $remarks) }}
 			{{ Form::hidden('selected_cash_sales', $selectedCashSales) }}
 			{{ Form::hidden('selected_vending_sales', $selectedVendingSales) }}
+			{{ Form::hidden('lodgement_costs', $lodgementCosts) }}
 
 			<div class="form-group margin-bottom-0 margin-left-0 margin-right-0">
 				<div class="clearfix"></div>
@@ -31,24 +32,8 @@
 							</tr>
 							<tr>
 								<td>
-									<label>Cash:</label>
-									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
-										{{ Form::text('cash', $cash, array('class' => 'form-control text-right', 'readonly' => 'readonly')) }}
-									</div>
-								</td>
-								<td>
 									<label>Slip No.:</label>
 									{{ Form::text('slip_number', $slipNumber, array('class' => 'form-control text-right', 'readonly' => 'readonly')) }}
-								</td>
-							</tr>
-							<tr>
-								<td>
-									<label>Coin:</label>
-									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
-										{{ Form::text('coin', $coin, array('class' => 'form-control text-right', 'readonly' => 'readonly')) }}
-									</div>
 								</td>
 								<td>
 									<label>G4S Bag Number:</label>
@@ -57,17 +42,33 @@
 							</tr>
 							<tr>
 								<td>
+									<label>Cash:</label>
+									<div class="input-group">
+										<span class="input-group-addon">{{ $currencySymbol }}</span>
+										{{ Form::text('cash_total', $cashTotal, array('class' => 'form-control text-right', 'readonly' => 'readonly')) }}
+									</div>
+								</td>
+								<td>
+									<label>Coin:</label>
+									<div class="input-group">
+										<span class="input-group-addon">{{ $currencySymbol }}</span>
+										{{ Form::text('coin_total', $coinTotal, array('class' => 'form-control text-right', 'readonly' => 'readonly')) }}
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>
 									<label>Total:</label>
 								</td>
 								<td>
 									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
+										<span class="input-group-addon">{{ $currencySymbol }}</span>
 										{{ Form::text('total', $total, array('class' => 'form-control auto_calc text-right', 'readonly' => 'readonly')) }}
 									</div>
 								</td>
 							</tr>
 						</table>
-					</div>
+					</div>					
 				</div>
 			</div>
 			

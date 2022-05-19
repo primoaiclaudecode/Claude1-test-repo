@@ -136,16 +136,16 @@ function getDashboardData() {
                             $('<td />').text('Totals')
                         )
                         .append(
-                            $('<td />').addClass('text-center').text(numberFormat(data.totals.grossSalesActual))
+                            $('<td />').addClass('text-center').text(data.currency + numberFormat(data.totals.grossSalesActual))
                         )
                         .append(
-                            $('<td />').addClass('text-center').text(numberFormat(data.totals.netSalesActual))
+                            $('<td />').addClass('text-center').text(data.currency + numberFormat(data.totals.netSalesActual))
                         )
                         .append(
-                            $('<td />').addClass('text-center').text(numberFormat(data.totals.costOfSalesActual))
+                            $('<td />').addClass('text-center').text(data.currency + numberFormat(data.totals.costOfSalesActual))
                         )
                         .append(
-                            $('<td />').addClass('text-center').text(numberFormat(data.totals.cleaningDisp))
+                            $('<td />').addClass('text-center').text(data.currency + numberFormat(data.totals.cleaningDisp))
                         )
                         .append(
                             $('<td />').addClass('text-center').text(percentFormat(data.totals.gpGrossPercent))
@@ -160,7 +160,7 @@ function getDashboardData() {
                             $('<td />').addClass('text-center').text(data.totals.leSales)
                         )
                         .append(
-                            $('<td />').addClass('text-center').text(numberFormat(data.totals.cashLodge))
+                            $('<td />').addClass('text-center').text(data.currency + numberFormat(data.totals.cashLodge))
                         )
                 );
 
@@ -173,25 +173,20 @@ function getDashboardData() {
                             .append(
                                 $('<td />')
                                     .append(
-                                        $('<a />').attr('href', '').addClass('show-chart').text(unit.name)
+                                        $('<a />').attr('href', '').addClass('show-unit-chart').text(unit.name)
                                     )
-                                    .on('click', function (e) {
-                                        e.preventDefault();
-
-                                        showUnitChart(unit)
-                                    })
                             )
                             .append(
-                                $('<td />').addClass('text-center').text(numberFormat(unit.grossSalesActual))
+                                $('<td />').addClass('text-center').text(data.currency + numberFormat(unit.grossSalesActual))
                             )
                             .append(
-                                $('<td />').addClass('text-center').text(numberFormat(unit.netSalesActual))
+                                $('<td />').addClass('text-center').text(data.currency + numberFormat(unit.netSalesActual))
                             )
                             .append(
-                                $('<td />').addClass('text-center').text(numberFormat(unit.costOfSalesActual))
+                                $('<td />').addClass('text-center').text(data.currency + numberFormat(unit.costOfSalesActual))
                             )
                             .append(
-                                $('<td />').addClass('text-center').text(numberFormat(unit.cleaningDisp))
+                                $('<td />').addClass('text-center').text(data.currency + numberFormat(unit.cleaningDisp))
                             )
                             .append(
                                 $('<td />').addClass('text-center').text(unit.hideGrossCell ? '' : percentFormat(unit.gpGrossPercent))
@@ -206,18 +201,33 @@ function getDashboardData() {
                                 $('<td />').addClass('text-center').text(unit.leSales)
                             )
                             .append(
-                                $('<td />').addClass('text-center').text(numberFormat(unit.cashLodge))
+                                $('<td />').addClass('text-center').text(data.currency + numberFormat(unit.cashLodge))
                             )
                     );
             })
 
             // Draw Totals chart
-            showTotalsChart(data.totals)
+            showTotalsChart(data.totals, data.currency)
         }
     });
 };
 
-function showTotalsChart(totals) {
+function getUnitData(unitId) {
+    $.ajax({
+        type: "get",
+        url: '/dashboard/unit',
+        data: {
+            unitId: unitId,
+            startDate: $('#from_date').val(),
+            endDate: $('#to_date').val(),
+        },
+        success: function (data) {
+            showUnitChart(data)
+        }
+    });
+};
+
+function showTotalsChart(totals, currency) {
     $('#chart').empty();
 
     $('#chart')
@@ -233,13 +243,13 @@ function showTotalsChart(totals) {
                                 .append(
                                     $('<div />').addClass('percent-chart-totals')
                                         .append(
-                                            $('<span />').text('Actual: ' + numberFormat(totals.grossSalesActual))
+                                            $('<span />').text('Actual: ' + currency + numberFormat(totals.grossSalesActual))
                                         )
                                         .append(
                                             $('<hr />').addClass('purple')
                                         )
                                         .append(
-                                            $('<span />').text('Budget: ' + numberFormat(totals.grossSalesBudget))
+                                            $('<span />').text('Budget: ' + currency + numberFormat(totals.grossSalesBudget))
                                         )
                                 )
                         )
@@ -254,13 +264,13 @@ function showTotalsChart(totals) {
                                 .append(
                                     $('<div />').addClass('percent-chart-totals')
                                         .append(
-                                            $('<span />').text('Actual: ' + numberFormat(totals.netSalesActual))
+                                            $('<span />').text('Actual: ' + currency + numberFormat(totals.netSalesActual))
                                         )
                                         .append(
                                             $('<hr />').addClass('yellow')
                                         )
                                         .append(
-                                            $('<span />').text('Budget: ' + numberFormat(totals.netSalesBudget))
+                                            $('<span />').text('Budget: ' + currency + numberFormat(totals.netSalesBudget))
                                         )
                                 )
                         )
@@ -275,13 +285,13 @@ function showTotalsChart(totals) {
                                 .append(
                                     $('<div />').addClass('percent-chart-totals')
                                         .append(
-                                            $('<span />').text('Actual: ' + numberFormat(totals.costOfSalesActual))
+                                            $('<span />').text('Actual: ' + currency + numberFormat(totals.costOfSalesActual))
                                         )
                                         .append(
                                             $('<hr />').addClass('red')
                                         )
                                         .append(
-                                            $('<span />').text('Budget: ' + numberFormat(totals.costOfSalesBudget))
+                                            $('<span />').text('Budget: ' + currency + numberFormat(totals.costOfSalesBudget))
                                         )
                                 )
                         )
@@ -326,7 +336,7 @@ function showTotalsChart(totals) {
     
     var chartColors = ['#775dd0', '#546E7A', '#feb019', '#546E7A', '#ff4560', '#546E7A', '#008ffb'];
     
-    drawSalesChart($('#totals_chart').get(0), chartCategories, chartData, chartColors);
+    drawSalesChart($('#totals_chart').get(0), chartCategories, chartData, chartColors, currency);
 }
 
 function showUnitChart(unit) {
@@ -363,13 +373,13 @@ function showUnitChart(unit) {
                         .append(
                             $('<div />').addClass('percent-chart-totals')
                                 .append(
-                                    $('<span />').text('Actual: ' + numberFormat(unit.grossSalesActual))
+                                    $('<span />').text('Actual: ' + unit.currencySymbol + numberFormat(unit.grossSalesActual))
                                 )
                                 .append(
                                     $('<hr />').addClass('purple')
                                 )
                                 .append(
-                                    $('<span />').text('Budget: ' + numberFormat(unit.grossSalesBudget))
+                                    $('<span />').text('Budget: ' + unit.currencySymbol + numberFormat(unit.grossSalesBudget))
                                 )
                         )
                 )
@@ -397,13 +407,13 @@ function showUnitChart(unit) {
                         .append(
                             $('<div />').addClass('percent-chart-totals')
                                 .append(
-                                    $('<span />').text('Actual: ' + numberFormat(unit.netSalesActual))
+                                    $('<span />').text('Actual: ' + unit.currencySymbol + numberFormat(unit.netSalesActual))
                                 )
                                 .append(
                                     $('<hr />').addClass('yellow')
                                 )
                                 .append(
-                                    $('<span />').text('Budget: ' + numberFormat(unit.netSalesBudget))
+                                    $('<span />').text('Budget: ' + unit.currencySymbol + numberFormat(unit.netSalesBudget))
                                 )
                         )
                 )
@@ -433,13 +443,13 @@ function showUnitChart(unit) {
                     .append(
                         $('<div />').addClass('percent-chart-totals')
                             .append(
-                                $('<span />').text('Actual: ' + numberFormat(unit.costOfSalesActual))
+                                $('<span />').text('Actual: ' + unit.currencySymbol + numberFormat(unit.costOfSalesActual))
                             )
                             .append(
                                 $('<hr />').addClass('red')
                             )
                             .append(
-                                $('<span />').text('Budget: ' + numberFormat(unit.costOfSalesBudget))
+                                $('<span />').text('Budget: ' + unit.currencySymbol + numberFormat(unit.costOfSalesBudget))
                             )
                     )
             )
@@ -473,7 +483,7 @@ function showUnitChart(unit) {
     drawPercentsChart($('#unit_cost_percents_chart').get(0), unit.costOfSalesPercent, 'Cost of Sales', '#ff4560');
     
     // Sales chart
-    drawSalesChart($('#sales_chart').get(0), chartCategories, chartData, chartColors);
+    drawSalesChart($('#sales_chart').get(0), chartCategories, chartData, chartColors, unit.currencySymbol);
 }
 
 function percentFormat(number) {
@@ -484,7 +494,7 @@ function numberFormat(number) {
     return new Intl.NumberFormat('en-EN').format(number)
 }
 
-function drawSalesChart(element, chartCategories, chartData, chartColors) {
+function drawSalesChart(element, chartCategories, chartData, chartColors, currency) {
     var chartOptions = {
         chart: {
             height: 330,
@@ -525,7 +535,7 @@ function drawSalesChart(element, chartCategories, chartData, chartColors) {
         tooltip: {
             y: {
                 formatter: function (value, {series, seriesIndex, dataPointIndex, w}) {
-                    return numberFormat(value);
+                    return currency + numberFormat(value);
                 },
                 title: {
                     formatter: function (seriesName) {
@@ -583,4 +593,12 @@ $(document).ready(function () {
     $("#from_date, #to_date").change(function () {
         getDashboardData();
     });
+    
+    $(document).on('click', '.show-unit-chart', function(e) {
+        e.preventDefault();
+        
+        var unitId = $(this).parents('tr').attr('id');
+        
+        getUnitData(unitId);
+    })
 });

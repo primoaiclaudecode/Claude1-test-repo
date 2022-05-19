@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Currency;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
@@ -65,9 +66,14 @@ class SupplierController extends Controller
 	 */
 	public function create()
 	{
-		return view('suppliers.create')
-			->with('heading', 'Create New Supplier')
-			->with('btn_caption', 'Create Supplier');
+		// Currencies
+		$currencies = Currency::pluck('currency_name', 'currency_id');
+		
+		return view('suppliers.create', [
+			'heading' => 'Create New Supplier',
+			'btn_caption' => 'Create Supplier',
+			'currencies' => $currencies
+		]);
 	}
 
 	/**
@@ -79,7 +85,8 @@ class SupplierController extends Controller
 	public function store(Request $request)
 	{
 		$this->validate($request, [
-			'supplier_name' => 'required|min:5'
+			'supplier_name' => 'required|min:5',
+			'currency_id' => 'required|integer'
 		]);
 
 		$supplier = new Supplier;
@@ -94,6 +101,7 @@ class SupplierController extends Controller
 		$supplier->accounts_email = $request->accounts_email;
 		$supplier->remit_email = $request->remit_email;
 		$supplier->suppliersunit = '';
+		$supplier->currency_id = $request->currency_id;
 		$supplier->save();
 		Session::flash('flash_message', 'Supplier has been added successfully!'); //<--FLASH MESSAGE
 		return redirect('/suppliers');
@@ -120,10 +128,14 @@ class SupplierController extends Controller
 	{
 		$supplier = Supplier::find($id);
 
+		// Currencies
+		$currencies = Currency::pluck('currency_name', 'currency_id');
+		
 		return view('suppliers.create', [
 			'heading' => 'Edit Supplier',
 			'btn_caption' => 'Edit Supplier',
-			'supplier' => $supplier
+			'supplier' => $supplier,
+			'currencies' => $currencies
 		]);
 	}
 
@@ -137,7 +149,8 @@ class SupplierController extends Controller
 	public function update(Request $request, $id)
 	{
 		$this->validate($request, [
-			'supplier_name' => 'required|min:5'
+			'supplier_name' => 'required|min:5',
+			'currency_id' => 'required|integer'
 		]);
 
 		$supplier = Supplier::find($id);
@@ -160,6 +173,7 @@ class SupplierController extends Controller
 		$supplier->accounts_email = $request->accounts_email;
 		$supplier->remit_email = $request->remit_email;
 		$supplier->suppliersunit = '';
+		$supplier->currency_id = $request->currency_id;
 		$supplier->save();
 
 		// Redirect to the page with created supplier copy 

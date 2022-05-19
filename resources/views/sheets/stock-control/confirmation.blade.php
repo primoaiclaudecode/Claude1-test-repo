@@ -30,14 +30,14 @@
                                 <td>
                                     <label>Total (Foods, Minerals, Snacks, Vending):</label>
                                     <div class="input-group">
-                                        <span class="input-group-addon">&euro;</span>
+                                        <span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
                                         {{ Form::text('total_fmsv', $foodsPlusMinerals, array('class' => 'form-control auto_calc text-right', 'readonly' => 'readonly')) }}
                                     </div>
                                 </td>
                                 <td>
                                     <label>Total (Chemicals, Disposables, Free Issues):</label>
                                     <div class="input-group">
-                                        <span class="input-group-addon">&euro;</span>
+                                        <span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
                                         {{ Form::text('total_cdf', $totalChemicalsCleanDispFreeIssues, array('class' => 'form-control auto_calc text-right', 'readonly' => 'readonly')) }}
                                     </div>
                                 </td>
@@ -46,7 +46,7 @@
                                 <td>
                                     <label>Total:</label>
                                     <div class="input-group">
-                                        <span class="input-group-addon">&euro;</span>
+                                        <span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
                                         {{ Form::text('totals', $total, array('class' => 'form-control auto_calc text-right', 'readonly' => 'readonly')) }}
                                     </div>
                                 </td>
@@ -109,7 +109,6 @@
                 <a href='javascript: void(0)' onclick="document.forms['re_enter_frm'].submit();">Go back and re-enter stock control</a>
                 <br/>
             </p>
-
         </section>
     </section>
 @stop

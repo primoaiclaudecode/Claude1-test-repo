@@ -10,7 +10,7 @@
 			@if(Session::has('flash_message'))
 				<div class="alert alert-success"><em> {!! session('flash_message') !!}</em></div>
 			@endif
-			
+
 			@if(Session::has('error_message'))
 				<div class="alert alert-danger"><em> {!! session('error_message') !!}</em></div>
 			@endif
@@ -73,6 +73,17 @@
 				@endif
 			</div>
 
+			@if ($purchType == 'cash')
+				<div class="form-group">
+					<label class="col-xs-12 col-sm-3 col-md-2 control-label custom-labels">Currency:</label>
+					<div class="col-xs-12 col-sm-9 col-md-4">
+						{!! Form::select('currency_id', $currencies, $selectedCurrency, ['id' => 'currency_id', 'class'=>'form-control', 'placeholder' => 'Select Currency', 'tabindex' => 5]) !!}
+					</div>
+				</div>
+			@else
+				{{ Form::hidden('currency_id', $selectedCurrency, ['id' => 'currency_id']) }}
+			@endif
+
 			<div class="form-group">
 				<label class="col-xs-12 col-sm-3 col-md-2 control-label custom-labels">Purchase Details:</label>
 				<div class="col-xs-12 col-sm-9 col-md-10">
@@ -105,7 +116,7 @@
 
 									<td width="17%">
 										<div class="input-group">
-											<span class="input-group-addon">&euro;</span>
+											<span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 											{{ Form::text('goods[]', $purchaseItem['goods'], array('class' => 'form-control text-right currencyFields', 'onchange' => 'calculations()')) }}
 										</div>
 									</td>
@@ -116,14 +127,14 @@
 
 									<td width="17%">
 										<div class="input-group">
-											<span class="input-group-addon">&euro;</span>
+											<span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 											{{ Form::text('vat[]', $purchaseItem['vat'], array('class' => 'form-control text-right auto_calc', 'readonly' => 'readonly')) }}
 										</div>
 									</td>
 
 									<td width="17%">
 										<div class="input-group">
-											<span class="input-group-addon">&euro;</span>
+											<span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 											{{ Form::text('gross[]', $purchaseItem['gross'], array('class' => 'form-control text-right auto_calc', 'readonly' => 'readonly')) }}
 										</div>
 									</td>
@@ -139,20 +150,20 @@
 									</td>
 									<td width="17%">
 										<div class="input-group">
-											<span class="input-group-addon">&euro;</span>
+											<span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 											{{ Form::text('goods[]', '0.00', array('class' => 'form-control text-right currencyFields', 'onchange' => 'calculations()')) }}
 										</div>
 									<td width="17%">
 									{!! Form::select('tax_rate[]', $taxCodeTitles, null, ['class'=>'form-control', 'placeholder' => 'Choose', 'dir' => 'rtl', 'onchange' => 'calculations()']) !!}
 									<td width="17%">
 										<div class="input-group">
-											<span class="input-group-addon">&euro;</span>
+											<span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 											{{ Form::text('vat[]', '0.00', array('class' => 'form-control text-right auto_calc', 'readonly' => 'readonly')) }}
 										</div>
 									</td>
 									<td width="17%">
 										<div class="input-group">
-											<span class="input-group-addon">&euro;</span>
+											<span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 											{{ Form::text('gross[]', '0.00', array('class' => 'form-control text-right auto_calc', 'readonly' => 'readonly')) }}
 										</div>
 									</td>
@@ -169,28 +180,28 @@
 									<input id="add_line" class="btn btn-primary" type="button" value="add line"/>
 								</td>
 								<td width="17%">
-									<div class="input-group"><span class="input-group-addon">&euro;</span>
+									<div class="input-group"><span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 										<input name="goods_total" type="text" class="auto_calc text-right form-control" id="goods_total" value="0.00"
-										       readonly="readonly"/>
+											   readonly="readonly"/>
 									</div>
 								</td>
 								<td width="17%">&nbsp;</td>
 								<td width="17%">
-									<div class="input-group"><span class="input-group-addon">&euro;</span>
+									<div class="input-group"><span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 										<input name="vat_total" type="text" class="auto_calc text-right form-control" id="vat_total" value="0.00"
-										       readonly="readonly"/>
+											   readonly="readonly"/>
 									</div>
 								</td>
 								<td width="17%">
-									<div class="input-group"><span class="input-group-addon">&euro;</span>
+									<div class="input-group"><span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 										<input name="gross_total" type="text" class="auto_calc text-right form-control" id="gross_total" value="0.00"
-										       readonly="readonly"/>
+											   readonly="readonly"/>
 									</div>
 								</td>
 								<td width="5%"></td>
 							</tr>
 						</table>
-					</div>
+					</div>					
 				</div>
 
 				<div class="col-md-12 col-lg-8 margin-top-25 padding-left-0 padding-right-0">
@@ -210,21 +221,21 @@
 								<tr id="tax_row_{{ $id }}" data-rate="{{ $taxCodeRates[$id] }}">
 									<td class="vertical-align-middle">{{ $title }}</td>
 									<td>
-										<div class="input-group"><span class="input-group-addon">&euro;</span>
+										<div class="input-group"><span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 											<input name="analysis_goods[]" type="text" class="auto_calc text-right form-control" value="0.00"
-											       readonly="readonly"/>
+												   readonly="readonly"/>
 										</div>
 									</td>
 									<td>
-										<div class="input-group"><span class="input-group-addon">&euro;</span>
+										<div class="input-group"><span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 											<input name="analysis_vat[]" type="text" class="auto_calc text-right form-control" value="0.00"
-											       readonly="readonly"/>
+												   readonly="readonly"/>
 										</div>
 									</td>
 									<td>
-										<div class="input-group"><span class="input-group-addon">&euro;</span>
+										<div class="input-group"><span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 											<input name="analysis_gross[]" type="text" class="auto_calc text-right form-control" value="0.00"
-											       readonly="readonly"/>
+												   readonly="readonly"/>
 										</div>
 									</td>
 								</tr>
@@ -234,23 +245,23 @@
 								<td class="vertical-align-middle"><strong>total</strong></td>
 								<td>
 									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
+										<span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 										<input name="analysis_goods_total" type="text" class="auto_calc text-right form-control" id="analysis_goods_total"
-										       value="0.00" readonly="readonly"/>
+											   value="0.00" readonly="readonly"/>
 									</div>
 								</td>
 								<td>
 									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
+										<span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 										<input name="analysis_vat_total" type="text" class="auto_calc text-right form-control" id="analysis_vat_total"
-										       value="0.00" readonly="readonly"/>
+											   value="0.00" readonly="readonly"/>
 									</div>
 								</td>
 								<td>
 									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
+										<span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
 										<input name="analysis_gross_total" type="text" class="auto_calc text-right form-control" id="analysis_gross_total"
-										       value="0.00" readonly="readonly"/>
+											   value="0.00" readonly="readonly"/>
 									</div>
 								</td>
 							</tr>
@@ -262,9 +273,12 @@
 				<div class="table-responsive col-md-8 div_invoice_total hidden_element padding-left-0 padding-right-0">
 					<table class="table">
 						<tr>
-							<td class="border-top-0 padding-0"><h2>Invoice Total</h2></td>
+							<td class="border-top-0 padding-0">
+								<h2>Invoice Total</h2>
+							</td>
 							<td class="border-top-0 padding-0" align="right">
-								<h2>
+								<h2 id="invoice_total_amount">
+									<span class="currency-symbol">{{ $currencySymbol }}</span>
 									<span id="invoice_total"></span>
 								</h2>
 							</td>
@@ -281,7 +295,7 @@
 
 @section('scripts')
 	<style>
-		#invoice_total {
+		#invoice_total_amount {
 			margin-left: 10px;
 		}
 	</style>

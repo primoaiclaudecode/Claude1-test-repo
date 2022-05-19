@@ -59,8 +59,35 @@ function getSuppliers() {
     });
 }
 
+function getSupplierCurrency() {
+    $.ajax({
+        type: 'GET',
+        url: "/supplier_currency/json",
+        data: {
+            supplier_id: $('#supplier_id').val()
+        },
+        dataType: 'json'
+    }).done(function (data) {
+        $('#currency_id').val(data.currencyId)
+        $('.currency-symbol').text(data.currencySymbol)
+    });
+}
+
+function getCurrency() {
+    $.ajax({
+        type: 'GET',
+        url: "/currency_data/json",
+        data: {
+            currency_id: $('#currency_id').val()
+        },
+        dataType: 'json'
+    }).done(function (data) {
+        $('.currency-symbol').text(data.currencySymbol)
+    });
+}
+
 function setTabbing() {
-    var tabIndex = 6;
+    var tabIndex = $('#purch_type').val() === 'cash' ? 7 : 6;
     
     $('.data-table-row').each(function() {
         $(this).find('select[name="net_ext[]"]').attr('tabindex', tabIndex++);
@@ -175,6 +202,34 @@ function validation() {
             invoiceNumber
                 .after(
                     $('<span />').addClass('error_message').text('This Invoice Number is already in use.')
+                );
+
+            return false;
+        }
+    }
+    
+    // Currency
+    if ($('#purch_type').val() === 'credit') {
+        var supplier = $("#supplier_id");
+        var currency = $("#currency_id");
+
+        if (!currency.val() || currency.val() == 0) {
+            scrollToElement(supplier);
+            supplier
+                .after(
+                    $('<span />').addClass('error_message').text('This supplier has no currency assigned.')
+                );
+
+            return false;
+        }
+    } else {
+        var currency = $("#currency_id");
+
+        if (!currency.val()) {
+            scrollToElement(currency);
+            currency
+                .after(
+                    $('<span />').addClass('error_message').text('Please select a Currency.')
                 );
 
             return false;
@@ -361,7 +416,7 @@ function calculations() {
     // Invoice total
     if(rateTotals.gross > 0) {
         $('.div_invoice_total').slideDown("slow");
-        $("#invoice_total").html('&euro;' + addCommas(addCommas(tableTotals.gross.toFixed(2))));
+        $("#invoice_total").html(addCommas(tableTotals.gross.toFixed(2)));
     } else {
         $('.div_invoice_total').slideUp("slow");
     }
@@ -370,6 +425,11 @@ function calculations() {
 $(document).ready(function () {
     // Check if unit is open
     unitCloseCheck();
+    
+    // Currency
+    if ($('#purch_type').val() === 'cash') {
+        getCurrency()
+    }
     
     // Run calculations
     calculations();
@@ -389,6 +449,15 @@ $(document).ready(function () {
         }
     });
 
+    // Supplier actions: get supplier currency
+    $("#supplier_id").change(function () {
+        getSupplierCurrency();
+    });
+    
+    $('select[name="currency_id"]').on('change', function() {
+        getCurrency();
+    });
+    
     // Date actions
     var d = new Date();
     (d.setMonth(d.getMonth() - 12)) + (d.setDate(d.getDate() + 1));

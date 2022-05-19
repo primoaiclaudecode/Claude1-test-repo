@@ -299,6 +299,10 @@ tr.orange-row a
 {
 	color: white;
 }
+tr.blue-row
+{
+	background: #e3f2fd !important;
+}
 #cash_sales_form.checkbox input[type="checkbox"], .checkbox-inline input[type="checkbox"] {
     margin-left: -20px !important;
     vertical-align: middle;

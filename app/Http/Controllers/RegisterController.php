@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Currency;
 use App\Http\Controllers\Traits\UserUnits;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -72,10 +73,15 @@ class RegisterController extends Controller
     {
 	    // Unit Name Dropdown
 	    $units = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+
+	    // Currencies
+	    $currencies = Currency::pluck('currency_name', 'currency_id');
+	    
         return view('registers.create', [
             'heading' => 'Create New Register',
             'btn_caption' => 'Create Register',
-            'units' => $units
+            'units' => $units,
+	        'currencies' => $currencies
         ]);
     }
 
@@ -88,16 +94,20 @@ class RegisterController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'unit_name' => 'required',
-            'reg_number' => 'required'
+            'unit_id' => 'required',
+            'reg_number' => 'required',
+	        'currency_id' => 'required|integer'
         ]);
         
         $register = new Register;
-        $register->unit_id = $request->unit_name;
+        $register->unit_id = $request->unit_id;
         $register->unit_name = '';
         $register->reg_number = $request->reg_number;
+	    $register->currency_id = $request->currency_id;
         $register->save();
+        
         Session::flash('flash_message','Register has been added successfully!'); //<--FLASH MESSAGE
+	    
         return redirect('/registers');
     }
 
@@ -110,15 +120,19 @@ class RegisterController extends Controller
     public function edit($id)
     {
         $register = Register::find($id);
+        
         // Unit Name Dropdown
 	    $units = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
-        $selectedUnit = $register->unit_id;
+
+	    // Currencies
+	    $currencies = Currency::pluck('currency_name', 'currency_id');
+        
         return view('registers.create', [
             'heading' => 'Edit Register',
             'btn_caption' => 'Edit Register',
             'register' => $register,
             'units' => $units,
-            'selectedUnit' => $selectedUnit
+	        'currencies' => $currencies
         ]);
     }
 
@@ -132,16 +146,20 @@ class RegisterController extends Controller
     public function update(Request $request, $id)
     {
         $this->validate($request, [
-            'unit_name' => 'required',
-            'reg_number' => 'required'
+            'unit_id' => 'required',
+            'reg_number' => 'required',
+	        'currency_id' => 'required|integer'
         ]);
         
         $register = Register::find($id);
-        $register->unit_id = $request->unit_name;
+        $register->unit_id = $request->unit_id;
         $register->unit_name = '';
         $register->reg_number = $request->reg_number;
+	    $register->currency_id = $request->currency_id;
         $register->save();
+        
         Session::flash('flash_message','Register has been updated successfully!'); //<--FLASH MESSAGE
+	    
         return redirect('/registers');
     }
 

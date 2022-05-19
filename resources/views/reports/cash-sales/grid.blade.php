@@ -8,172 +8,180 @@
             </div>
         </header>
 
-        <section class="dataTables-padding">
-            @if(Session::has('flash_message'))
-                <div class="alert alert-success"><em> {!! session('flash_message') !!}</em></div>
-            @endif
+		<section class="dataTables-padding">
+			@if(Session::has('flash_message'))
+				<div class="alert alert-success"><em> {!! session('flash_message') !!}</em></div>
+			@endif
 
-            @if($isSuLevel)
-                <table id="example" class="display nowrap" cellspacing="0" width="100%">
-                    <thead>
-                    <tr>
-                        <th class="text-align-center"><input type="checkbox" id="select_all"/></th>
-                        <th>ID</th>
-                        <th>Date of Entry</th>
-                        <th>Unit Name</th>
-                        <th>Supervisor</th>
-                        <th>Reg Number</th>
-                        <th>Sale Date</th>
-                        <th>Z Number</th>
-                        <th>Z Food</th>
-                        <th>Z Conf. Food</th>
-                        <th>Z Fruit Juice</th>
-                        <th>Z Minerals</th>
-                        <th>Z Confectionary</th>
-                        <th>Cash Count</th>
-                        <th>Credit Card</th>
-                        <th>Staff Card</th>
-                        <th>Total Receipts</th>
-                        <th>Z Read</th>
-                        <th>Variance</th>
-                        <th>Cash Purchase</th>
-                        <th>Credit Sale</th>
-                        <th>Over Ring</th>
-                        <th>Cash +/-</th>
-                        <th>Lodgement Cash</th>
-                        <th>Lodgement Coin</th>
-                        <th>Lodgement Total</th>
-                        <th>Lodgement Date</th>
-                        <th>Lodgement Number</th>
-                        <th>G4S Bag #</th>
-                        <th>Remarks</th>
-                        <th>Updated By</th>
-                        <th>Updated</th>
-                        <th class="text-align-center">Action</th>
-                    </tr>
-                    </thead>
-                    <tfoot>
-                    <tr>
-                        <th class="no-search"></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th class="no-search"></th>
-                    </tr>
-                    </tfoot>
-                    <tbody>
-                    <!-- Datatables renders here. -->
-                    </tbody>
-                </table>
-            @else
-                <table id="example" class="display nowrap" cellspacing="0" width="100%">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Date of Entry</th>
-                        <th>Unit Name</th>
-                        <th>Supervisor</th>
-                        <th>Reg Number</th>
-                        <th>Sale Date</th>
-                        <th>Z Number</th>
-                        <th>Z Food</th>
-                        <th>Z Conf. Food</th>
-                        <th>Z Fruit Juice</th>
-                        <th>Z Minerals</th>
-                        <th>Z Confectionary</th>
-                        <th>Cash Count</th>
-                        <th>Credit Card</th>
-                        <th>Staff Card</th>
-                        <th>Total Receipts</th>
-                        <th>Z Read</th>
-                        <th>Variance</th>
-                        <th>Cash Purchase</th>
-                        <th>Credit Sale</th>
-                        <th>Over Ring</th>
-                        <th>Cash +/-</th>
-                        <th>Lodgement Cash</th>
-                        <th>Lodgement Coin</th>
-                        <th>Lodgement Total</th>
-                        <th>Lodgement Date</th>
-                        <th>Lodgement Number</th>
-                        <th>G4S Bag #</th>
-                        <th>Remarks</th>
-                        <th>Updated By</th>
-                        <th>Updated</th>
-                        <th class="text-align-center">Action</th>
-                    </tr>
-                    </thead>
-                    <tfoot>
-                    <tr>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th class="no-search"></th>
-                    </tr>
-                    </tfoot>
-                    <tbody>
-                    <!-- Datatables renders here. -->
-                    </tbody>
-                </table>
-            @endif
-        </section>
-    </section>
+			@if($isSuLevel)
+				<table id="example" class="display nowrap" cellspacing="0" width="100%">
+					<thead>
+					<tr>
+						<th class="text-align-center"><input type="checkbox" id="select_all"/></th>
+						<th>ID</th>
+						<th>Date of Entry</th>
+						<th>Unit Name</th>
+						<th>Supervisor</th>
+						<th>Reg Number</th>
+						<th>Sale Date</th>
+						<th>Z Number</th>
+						<th>Currency</th>
+						<th>Exchange Rate</th>
+						<th>Z Food</th>
+						<th>Z Conf. Food</th>
+						<th>Z Fruit Juice</th>
+						<th>Z Minerals</th>
+						<th>Z Confectionary</th>
+						<th>Cash Count</th>
+						<th>Credit Card</th>
+						<th>Staff Card</th>
+						<th>Total Receipts</th>
+						<th>Z Read</th>
+						<th>Variance</th>
+						<th>Cash Purchase</th>
+						<th>Credit Sale</th>
+						<th>Over Ring</th>
+						<th>Cash +/-</th>
+						<th>Lodgement Cash</th>
+						<th>Lodgement Coin</th>
+						<th>Lodgement Total</th>
+						<th>Lodgement Date</th>
+						<th>Lodgement Number</th>
+						<th>G4S Bag #</th>
+						<th>Remarks</th>
+						<th>Updated By</th>
+						<th>Updated</th>
+						<th class="text-align-center">Action</th>
+					</tr>
+					</thead>
+					<tfoot>
+					<tr>
+						<th class="no-search"></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th class="no-search"></th>
+					</tr>
+					</tfoot>
+					<tbody>
+					<!-- Datatables renders here. -->
+					</tbody>
+				</table>
+			@else
+				<table id="example" class="display nowrap" cellspacing="0" width="100%">
+					<thead>
+					<tr>
+						<th>ID</th>
+						<th>Date of Entry</th>
+						<th>Unit Name</th>
+						<th>Supervisor</th>
+						<th>Reg Number</th>
+						<th>Sale Date</th>
+						<th>Z Number</th>
+						<th>Currency</th>
+						<th>Exchange Rate</th>
+						<th>Z Food</th>
+						<th>Z Conf. Food</th>
+						<th>Z Fruit Juice</th>
+						<th>Z Minerals</th>
+						<th>Z Confectionary</th>
+						<th>Cash Count</th>
+						<th>Credit Card</th>
+						<th>Staff Card</th>
+						<th>Total Receipts</th>
+						<th>Z Read</th>
+						<th>Variance</th>
+						<th>Cash Purchase</th>
+						<th>Credit Sale</th>
+						<th>Over Ring</th>
+						<th>Cash +/-</th>
+						<th>Lodgement Cash</th>
+						<th>Lodgement Coin</th>
+						<th>Lodgement Total</th>
+						<th>Lodgement Date</th>
+						<th>Lodgement Number</th>
+						<th>G4S Bag #</th>
+						<th>Remarks</th>
+						<th>Updated By</th>
+						<th>Updated</th>
+						<th class="text-align-center">Action</th>
+					</tr>
+					</thead>
+					<tfoot>
+					<tr>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th></th>
+						<th class="no-search"></th>
+					</tr>
+					</tfoot>
+					<tbody>
+					<!-- Datatables renders here. -->
+					</tbody>
+				</table>
+			@endif
+		</section>
+	</section>
 @stop
 
 @section('scripts')
@@ -230,7 +238,7 @@
 
             @if($isSuLevel)
                 oTable = $('#example').DataTable({
-                scrollX: "true",
+                scrollX: true,
                 scrollCollapse: true,
                 dom: '<f<t>lBip>',
                 order: [[1, "desc"]],
@@ -264,14 +272,14 @@
                         bSortable: false
                     },
                     {
-                        targets: [0, 1, 2, 6, 26, -1], 
+                        targets: [0, 1, 2, 6, 28, -1], 
                         className: "text-align-center"
                     },
                     {
-                        targets: [7], className: "text-align-right"
+                        targets: [7, 9], className: "text-align-right"
                     },
                     {
-                        targets: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+                        targets: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27],
                         render: $.fn.dataTable.render.number('', '.', 2, ''),
                         className: "amount-cell",
                         searchable: false
@@ -318,7 +326,7 @@
                         title: 'Cash Sales Report',
                         filename: 'Excel_cash_sales_report_' + currentDate(),
                         exportOptions: {
-                            columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+                            columns: ':not(:first-child)'
                         }
                     },
                     {
@@ -326,7 +334,7 @@
                         title: 'Cash Sales Report',
                         filename: 'CSV_cash_sales_report_' + currentDate(),
                         exportOptions: {
-                            columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+                            columns: ':not(:first-child)'
                         }
                     },
                     {
@@ -343,7 +351,7 @@
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
-                    var colNumber = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
+                    var colNumber = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
 
                     var intVal = function (i) {
                         return typeof i === 'string' ?
@@ -359,14 +367,14 @@
                             .reduce(function (a, b) {
                                 return intVal(a) + intVal(b);
                             }, 0);
-                        $(api.column(colNo).footer()).html('€' + total2.toFixed(2));
+                        $(api.column(colNo).footer()).html('{{ $currencySymbol }}' + total2.toFixed(2));
                     }
                 },
                 bSortClasses: false
             });
             @else
                 oTable = $('#example').DataTable({
-                scrollX: "true",
+                scrollX: true,
                 scrollCollapse: true,
                 dom: '<f<t>Blip>',
                 order: [[0, "desc"]],
@@ -398,15 +406,15 @@
                         bSortable: false
                     },
                     {
-                        targets: [0, 1, 5, 25, -1], 
+                        targets: [0, 1, 5, 27, -1], 
                         className: "text-align-center"
                     },
                     {
-                        targets: [6], 
+                        targets: [6, 8], 
                         className: "text-align-right"
                     },
                     {
-                        targets: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+                        targets: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26],
                         render: $.fn.dataTable.render.number('', '.', 2, ''),
                         className: "amount-cell",
                         searchable: false
@@ -418,7 +426,7 @@
                         title: 'Cash Sales Report',
                         filename: 'Excel_cash_sales_report_' + currentDate(),
                         exportOptions: {
-                            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]
+                            columns: ':not(:last-child)'
                         }
                     },
                     {
@@ -426,7 +434,7 @@
                         title: 'Cash Sales Report',
                         filename: 'CSV_cash_sales_report_' + currentDate(),
                         exportOptions: {
-                            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]
+                            columns: ':not(:last-child)'
                         }
                     },
                     {
@@ -442,7 +450,7 @@
                 stateSave: false,
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
-                    var colNumber = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
+                    var colNumber = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26];
 
                     var intVal = function (i) {
                         return typeof i === 'string' ?
@@ -458,7 +466,7 @@
                             .reduce(function (a, b) {
                                 return intVal(a) + intVal(b);
                             }, 0);
-                        $(api.column(colNo).footer()).html('€' + total2.toFixed(2));
+                        $(api.column(colNo).footer()).html('{{ $currencySymbol }}' + total2.toFixed(2));
                     }
                 },
                 bSortClasses: false

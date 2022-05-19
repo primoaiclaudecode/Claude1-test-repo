@@ -191,6 +191,56 @@ CREATE TABLE `events` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `user_id` INT(11)
 CREATE TABLE `active_users` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `user_id` INT(11) UNSIGNED NOT NULL , `session_token` VARCHAR(255) NOT NULL , `ip_address` INT(11) NOT NULL , `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , `updated_at` TIMESTAMP on update CURRENT_TIMESTAMP NULL DEFAULT NULL , `expired_at` TIMESTAMP NULL DEFAULT NULL , PRIMARY KEY (`id`), INDEX `user_idx` (`user_id`), INDEX `session_token_idx` (`session_token`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
 
 
+/* ===================== Multi currency ================================= */
+
+CREATE TABLE `currencies` ( `currency_id` INT(3) NOT NULL AUTO_INCREMENT , `currency_name` VARCHAR(20) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `currency_code` VARCHAR(3) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `currency_symbol` VARCHAR(1) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , PRIMARY KEY (`currency_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+ALTER TABLE `currencies` ADD `is_default` TINYINT(1) NOT NULL DEFAULT '0' AFTER `currency_symbol`;
+
+CREATE TABLE `exchange_rates` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `domestic_currency_id` INT(3) UNSIGNED NOT NULL , `foreign_currency_id` INT(3) UNSIGNED NOT NULL , `exchange_rate` FLOAT(10,4) NOT NULL , `date` DATE NOT NULL , `user_id` INT(11) UNSIGNED NOT NULL , `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , `updated_at` TIMESTAMP on update CURRENT_TIMESTAMP NULL , PRIMARY KEY (`id`), INDEX `domestic_currency_idx` (`domestic_currency_id`), INDEX `foreign_currency_idx` (`foreign_currency_id`), INDEX `user_idx` (`user_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+ALTER TABLE `exchange_rates` ADD INDEX `date_idx` (`date`);
+
+ALTER TABLE `units` ADD `currency_id` INT(3) UNSIGNED NOT NULL AFTER `status_id`, ADD INDEX `currency_idx` (`currency_id`);
+ALTER TABLE `suppliers` ADD `currency_id` INT(3) UNSIGNED NOT NULL AFTER `suppliersunit`, ADD INDEX `currency_idx` (`currency_id`);
+ALTER TABLE `reg_management` ADD `currency_id` INT(3) UNSIGNED NOT NULL AFTER `reg_number`, ADD INDEX `currency_idx` (`currency_id`);
+ALTER TABLE `vend_management` ADD `currency_id` INT(3) UNSIGNED NOT NULL AFTER `machine_contents`, ADD INDEX `currency_idx` (`currency_id`);
+
+ALTER TABLE `purchases` ADD `currency_id` INT(3) UNSIGNED NOT NULL AFTER `purch_type`, ADD INDEX `currency_idx` (`currency_id`);
+ALTER TABLE `cash_sales` ADD `currency_id` INT(3) UNSIGNED NOT NULL AFTER `lodge_coin`, ADD INDEX `currency_idx` (`currency_id`);
+ALTER TABLE `credit_sales` ADD `currency_id` INT(3) UNSIGNED NOT NULL AFTER `unit_id`, ADD INDEX `currency_idx` (`currency_id`);
+ALTER TABLE `vending_sales` ADD `currency_id` INT(3) UNSIGNED NOT NULL AFTER `till_number_id`, ADD INDEX `currency_idx` (`currency_id`);
+
+/* Need update all purchases, cash/credit/vending sales and set currency to EUR */
+
+ALTER TABLE `cash_sales` ADD INDEX `supervisor_idx` (`supervisor_id`);
+ALTER TABLE `cash_sales` ADD INDEX `updated_by_idx` (`updated_by`);
+ALTER TABLE `cash_sales` ADD INDEX `unit_idx` (`unit_id`);
+ALTER TABLE `cash_sales` ADD INDEX `sale_date_idx` (`sale_date`);
+
+ALTER TABLE `credit_sales` ADD INDEX `unit_idx` (`unit_id`);
+ALTER TABLE `credit_sales` ADD INDEX `supervisor_idx` (`supervisor_id`);
+ALTER TABLE `credit_sales` ADD INDEX `sale_date_idx` (`sale_date`);
+
+ALTER TABLE `vending_sales` ADD INDEX `supervisor_idx` (`supervisor_id`);
+ALTER TABLE `vending_sales` ADD INDEX `unit_idx` (`unit_id`);
+ALTER TABLE `vending_sales` ADD INDEX `vending_management_idx` (`vend_id`);
+ALTER TABLE `vending_sales` ADD INDEX `sale_date_idx` (`sale_date`);
+
+DROP VIEW `summary_sales_report`;
+CREATE VIEW `summary_sales_report` AS 
+        SELECT cs.cash_sales_id as id, CONVERT('cash' USING utf8) as sale_type, cs.date as entry_date, un.unit_name, u.username as supervisor, cs.reg_number, '' as machine_name, cs.sale_date, cs.z_number, cs.z_food, cs.z_confect_food, cs.z_fruit, cs.z_minerals, cs.z_confect, cs.cash_count, cs.credit_card, cs.staff_cards, cs.cash_credit_card, cs.z_read, cs.cash_purchase, cs.credit_sales_id, cs.unit_id, cs.currency_id
+        FROM cash_sales AS cs
+        LEFT JOIN users as u ON cs.supervisor_id = u.user_id
+        LEFT JOIN units as un ON cs.unit_id = un.unit_id
+    UNION ALL
+        SELECT vs.vending_sales_id as id, CONVERT('vending' USING utf8) as sale_type, vs.date as entry_date, un.unit_name, u.username as supervisor, vs.till_number as reg_number, vm.vend_name as machine_name, vs.sale_date, 0 as 'z_number', 0 as 'z_food', 0 as 'z_confect_food', 0 as 'z_fruit', 0 as 'z_minerals', 0 as 'z_confect', 0 as 'cash_count', 0 as 'credit_card', 0 as 'staff_cards', 0 as 'cash_credit_card', vs.z_read, 0 as 'cash_purchase', '' as 'credit_sales_id', vs.unit_id, vs.currency_id
+        FROM vending_sales AS vs
+        LEFT JOIN users as u ON vs.supervisor_id = u.user_id
+        LEFT JOIN units as un ON vs.unit_id = un.unit_id
+        LEFT JOIN vend_management AS vm ON vs.vend_id = vm.vend_management_id;
+        
+CREATE TABLE `lodgement_costs` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `lodgement_id` INT(11) UNSIGNED NOT NULL , `currency_id` INT(3) UNSIGNED NOT NULL , `cash` FLOAT(8,2) NOT NULL , `coin` FLOAT(8,2) NOT NULL , PRIMARY KEY (`id`), INDEX `lodgement_idx` (`lodgement_id`), INDEX `currency_idx` (`currency_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;
+
+
 /* ===================== Favourites Menu ================================= */
 
 CREATE TABLE `user_menu_links` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `user_id` INT(11) UNSIGNED NOT NULL , `link` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL , `position` INT(3) NOT NULL , `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , PRIMARY KEY (`id`), INDEX `user_idx` (`user_id`)) ENGINE = InnoDB CHARSET=utf8 COLLATE utf8_general_ci;

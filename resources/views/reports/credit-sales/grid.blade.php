@@ -13,67 +13,71 @@
                 <div class="alert alert-success"><em> {!! session('flash_message') !!}</em></div>
             @endif
 
-            <table id="example" class="display nowrap" cellspacing="0" width="100%">
-                <thead>
-                <tr>
-                    @if($isSuLevel)
-                        <th class="text-align-center"><input type="checkbox" id="select_all"/></th>
-                    @endif
-                    <th>ID</th>
-                    <th>Date of Entry</th>
-                    <th>Unit Name</th>
-                    <th>Supervisor</th>
-                    <th>Docket Number</th>
-                    <th>Sale Date</th>
-                    <th>Credit Reference</th>
-                    <th>Cost Centre</th>
-                    @foreach($taxes as $tax)
-                        <th>Goods {{ $tax }}</th>
-                        <th>VAT {{ $tax }}</th>
-                        <th>Gross {{ $tax }}</th>
-                    @endforeach
-                    <th>Total Goods</th>
-                    <th>Total VAT</th>
-                    <th>Total Gross</th>
-                    <th>Visible</th>
-                    <th>Vis By</th>
-                    <th>Date Vis</th>
-                    <th class="text-align-center">Action</th>
-                </tr>
-                </thead>
-                <tfoot>
-                <tr>
-                    @if($isSuLevel)
-                        <th class="no-search"></th>
-                    @endif
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    @foreach($taxes as $taxe)
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                    @endforeach
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th></th>
-                    <th class="no-search"></th>
-                </tr>
-                </tfoot>
-                <tbody>
-                <!-- Datatables renders here. -->
-                </tbody>
-            </table>
-        </section>
-    </section>
+			<table id="example" class="display nowrap" cellspacing="0" width="100%">
+				<thead>
+				<tr>
+					@if($isSuLevel)
+						<th class="text-align-center"><input type="checkbox" id="select_all"/></th>
+					@endif
+					<th>ID</th>
+					<th>Date of Entry</th>
+					<th>Unit Name</th>
+					<th>Supervisor</th>
+					<th>Docket Number</th>
+					<th>Sale Date</th>
+					<th>Credit Reference</th>
+					<th>Cost Centre</th>
+					<th>Currency</th>
+					<th>Exchange Rate</th>
+					@foreach($taxes as $tax)
+						<th>Goods {{ $tax }}</th>
+						<th>VAT {{ $tax }}</th>
+						<th>Gross {{ $tax }}</th>
+					@endforeach
+					<th>Total Goods</th>
+					<th>Total VAT</th>
+					<th>Total Gross</th>
+					<th>Visible</th>
+					<th>Vis By</th>
+					<th>Date Vis</th>
+					<th class="text-align-center">Action</th>
+				</tr>
+				</thead>
+				<tfoot>
+				<tr>
+					@if($isSuLevel)
+						<th class="no-search"></th>
+					@endif
+					<th></th>
+					<th></th>
+					<th></th>
+					<th></th>
+					<th></th>
+					<th></th>
+					<th></th>
+					<th></th>
+					<th></th>
+					<th></th>
+					@foreach($taxes as $tax)
+						<th></th>
+						<th></th>
+						<th></th>
+					@endforeach
+					<th></th>
+					<th></th>
+					<th></th>
+					<th></th>
+					<th></th>
+					<th></th>
+					<th class="no-search"></th>
+				</tr>
+				</tfoot>
+				<tbody>
+				<!-- Datatables renders here. -->
+				</tbody>
+			</table>
+		</section>
+	</section>
 @stop
 
 @section('scripts')
@@ -131,7 +135,7 @@
 
             @if($isSuLevel)
                 oTable = $('#example').DataTable({
-                scrollX: "true",
+                scrollX: true,
                 scrollCollapse: true,
                 dom: '<f<t>lBip>',
                 order: [[1, "desc"]],
@@ -168,6 +172,10 @@
                     {
                         targets: [0, 1, 2, 6, -1, -2, -4], 
                         className: "text-align-center"
+                    },
+                    {
+                        targets: [10],
+                        className: "text-align-right"
                     },
                     {
                         targets: taxColumns, 
@@ -217,7 +225,7 @@
                         title: 'Credit Sales Report',
                         filename: 'Excel_credit_sales_report_' + currentDate(),
                         exportOptions: {
-                            columns: ':not(:last-child)'
+                            columns: ':not(:first-child)'
                         }
                     },
                     {
@@ -225,7 +233,7 @@
                         title: 'Credit Sales Report',
                         filename: 'CSV_credit_sales_report_' + currentDate(),
                         exportOptions: {
-                            columns: ':not(:last-child)'
+                            columns: ':not(:first-child)'
                         }
                     },
                     {
@@ -240,7 +248,6 @@
                 pageLength: 10,
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
                 stateSave: false,
-                //Credit Sales Total in Footer
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
                     var colNumber = taxColumns;
@@ -259,15 +266,14 @@
                             .reduce(function (a, b) {
                                 return intVal(a) + intVal(b);
                             }, 0);
-                        $(api.column(colNo).footer()).html('€' + total2.toFixed(2));
+                        $(api.column(colNo).footer()).html('{{ $currencySymbol }}' + total2.toFixed(2));
                     }
                 },
-                //Credit Sales Total in Footer
                 bSortClasses: false
             });
             @else
                 oTable = $('#example').DataTable({
-                scrollX: "true",
+                scrollX: true,
                 scrollCollapse: true,
                 dom: '<f<t>lBip>',
                 order: [[0, "desc"]],
@@ -306,6 +312,10 @@
                         className: "text-align-center"
                     },
                     {
+                        targets: [9],
+                        className: "text-align-right"
+                    },
+                    {
                         targets: taxColumns, 
                         render: $.fn.dataTable.render.number('', '.', 2, ''),
                         className: "amount-cell",
@@ -340,7 +350,6 @@
                 pageLength: 10,
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
                 stateSave: false,
-                //Credit Sales Total in Footer
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
                     var colNumber = taxColumns;
@@ -359,10 +368,9 @@
                             .reduce(function (a, b) {
                                 return intVal(a) + intVal(b);
                             }, 0);
-                        $(api.column(colNo).footer()).html('€' + total2.toFixed(2));
+                        $(api.column(colNo).footer()).html('{{ $currencySymbol }}' + total2.toFixed(2));
                     }
                 },
-                //Credit Sales Total in Footer
                 bSortClasses: false
             });
             @endif

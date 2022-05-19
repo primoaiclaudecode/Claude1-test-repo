@@ -20,6 +20,42 @@ var staffCards = document.getElementById('staff_cards');
 var errorMsg = document.getElementById('error_message');
 var all = document.getElementsByClassName("checkboxes");
 
+function getRegisterCurrency(regNumber) {
+	$.ajax({
+		type: 'GET',
+		url: "/register_currency/json",
+		data: {
+			reg_number: regNumber
+		},
+		dataType: 'json'
+	}).done(function (data) {
+		$('#currency_id').val(data.currencyId);
+		$('.currency-symbol').text(data.currencySymbol);
+
+		$('input[name="exchange_data"]').each(function() {
+			exchangeAmount($(this), data.currencyId);
+		});
+	});
+}
+
+function exchangeAmount(exchangeElement, currencyId) {
+	var exchangeArr = exchangeElement.val().split('_');
+	
+	$.ajax({
+		type: 'GET',
+		url: "/exchange_amount/json",
+		data: {
+			amount: exchangeArr[0],
+			domestic_currency_id: exchangeArr[1],
+			foreign_currency_id: currencyId,
+			date: exchangeArr[2],
+		},
+		dataType: 'json'
+	}).done(function (data) {
+		exchangeElement.parents('.checkbox-wrapper').find('.currency-amount').text(data);
+	});
+}
+
 $(document).ready(function() {
 	$("#cash_sales").on("submit", function () {
 		return validation();
@@ -31,6 +67,14 @@ $(document).ready(function() {
 		}
 	});
 
+	$('#reg_num').on("click", 'input[name="reg_number"]',function () {
+		var regNumber = parseInt($(this).val());
+		
+		if (!isNaN(regNumber) && regNumber > 0) {
+			getRegisterCurrency(regNumber);
+		}
+	});
+	
 	// Z and Cash / Credit fields displaying upto 2 decimals
 	zFood.value = addCommas((Math.round(zFood.value.replace(/,/g, "") * 100) / 100).toFixed(2));
 	zConfectFood.value = addCommas((Math.round(zConfectFood.value.replace(/,/g, "") * 100) / 100).toFixed(2));
@@ -43,6 +87,7 @@ $(document).ready(function() {
 
 	overRing.value = addCommas((Math.round(overRing.value * 100) / 100).toFixed(2));
 });
+
 document.onclick = function() {
 
 	// Z and Cash / Credit fields displaying upto 2 decimals
@@ -61,7 +106,7 @@ document.onclick = function() {
 	// Sales Total [ Starts ]
 	if(ztotal) {
 		$('.div_sales_total').show("slow");
-		$("#sales_total").html('&euro;' + (addCommas((Math.round(ztotal * 100) / 100).toFixed(2))));
+		$("#sales_total").html(addCommas((Math.round(ztotal * 100) / 100).toFixed(2)));
 	} else
 		$('.simple_table_small').hide("slow");
 	// Sales Total [ Ends ]
@@ -136,7 +181,7 @@ function calculate_zread_variance() {
 	// Sales Total [ Starts ]
 	if(ztotal) {
 		$('.div_sales_total').show("slow");
-		$("#sales_total").html('&euro;' + (addCommas((Math.round(ztotal * 100) / 100).toFixed(2))));
+		$("#sales_total").html(addCommas((Math.round(ztotal * 100) / 100).toFixed(2)));
 	} else
 		$('.simple_table_small').hide("slow");
 	// Sales Total [ Ends ]
@@ -235,12 +280,16 @@ function validation() {
 		$("#z_number").focus();
 		$("#z_number_span.error_message").html("Field can only contain numbers.");
 	}
-	/*else if($("#lodge_number").val() == '') {
-		$("#lodge_number").focus();
-		$("#lodge_number_span.error_message").html("Field can only contain numbers.");
-	}*/
-	else
+	else if ($('#currency_id').val() == 0) {
+		$('#reg_num').focus();
+		$('#reg_num')
+			.after(
+				$('<span />').addClass('error_message').text('This register has no currency assigned.')
+			);
+
+	} else {
 		validation_success = true;
+	}
 
 	return validation_success;
 }

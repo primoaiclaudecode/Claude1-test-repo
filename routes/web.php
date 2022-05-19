@@ -25,6 +25,7 @@ Route::group(['middleware' => 'auth'], function () {
 
 Route::get('/', 'HomeController@index');
 Route::get('/dashboard', 'HomeController@getDashboardData');
+Route::get('/dashboard/unit', 'HomeController@getUnitData');
 Route::get('/dashboard/reminder', 'HomeController@getReminderData');
 
 Auth::routes();
@@ -69,6 +70,11 @@ Route::post('sheets/purchases/{purch_type}/post','SheetController@purchasePost')
 Route::get('/unit_suppliers/json', 'SheetController@suppliersJson');
 Route::get('/supplier_invoice_no_unique/json', 'SheetController@supplierInvoiceNoUnique');
 Route::get('/unit_close_check/json', 'SheetController@unitCloseCheck');
+Route::get('/supplier_currency/json', 'SheetController@supplierCurrency');
+Route::get('/register_currency/json', 'SheetController@registerCurrency');
+Route::get('/unit_currency/json', 'SheetController@unitCurrency');
+Route::get('/machine_currency/json', 'SheetController@machineCurrency');
+Route::get('/exchange_amount/json', 'SheetController@exchangeAmount');
 
 
 Route::get('sheets/credit-sales/{id?}','SheetController@creditSales');
@@ -246,6 +252,18 @@ Route::post('files/add-file-user-group', 'FileController@addFileUserGroup');
 
 Route::get('/events', 'EventController@index');
 Route::get('/events/json', 'EventController@json');
+
+/* ==================== Currency ==================== */
+
+Route::resource('currencies','CurrencyController');
+Route::post('/currencies/default', 'CurrencyController@setDefault');
+Route::get('/currencies_data/json', 'CurrencyController@json');
+Route::get('/currency_data/json', 'CurrencyController@find');
+
+/* ==================== Exchange rate ==================== */
+
+Route::resource('exchange-rates','ExchangeRateController');
+Route::get('/exchange_rate_data/json', 'ExchangeRateController@json');
 
 Route::get('/profile-settings', 'ProfileSettingsController@index');
 Route::get('/profile-settings/user-menu/', 'ProfileSettingsController@getMenuLinks');

@@ -1,82 +1,89 @@
 @extends('layouts/dashboard_master')
 
 @section('content')
-	<section class="panel" id="purchases-report">
-		<header class="panel-heading">
-			<div class="row">
-				<div class="col-lg-6 col-md-6 col-sm-6 col-xs-6"><strong>Lodgements Report</strong></div>
-			</div>
-		</header>
+    <section class="panel" id="purchases-report">
+        <header class="panel-heading">
+            <div class="row">
+                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6"><strong>Lodgements Report</strong></div>
+            </div>
+        </header>
 
-		<section class="dataTables-padding">
-			@if(Session::has('flash_message'))
-				<div class="alert alert-success"><em> {!! session('flash_message') !!}</em></div>
-			@endif
+        <section class="dataTables-padding">
+            @if(Session::has('flash_message'))
+                <div class="alert alert-success"><em> {!! session('flash_message') !!}</em></div>
+            @endif
 
-			<table id="example" class="display nowrap" cellspacing="0" width="100%">
-				<thead>
-				<tr>
-					@if($isSuLevel)
-						<th class="text-align-center">
-							<input type="checkbox" id="select_all"/>
-						</th>
-					@endif
-					<th>ID</th>
-					<th>Date</th>
-					<th>Unit Name</th>
-					<th>Supervisor</th>
-					<th>Slip Number</th>
-					<th>G4S Bag Number</th>
-					<th>Cash</th>
-					<th>Coin</th>
+            <table id="example" class="display nowrap" cellspacing="0" width="100%">
+                <thead>
+                <tr>
+                    @if($isSuLevel)
+                        <th class="text-align-center">
+                            <input type="checkbox" id="select_all"/>
+                        </th>
+                    @endif
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>Unit Name</th>
+                    <th>Supervisor</th>
+                    <th>Slip Number</th>
+                    <th>G4S Bag Number</th>
+                    @foreach($currencies as $currency)
+                        <th data-symbol="{{ $currency->currency_symbol }}">Cash {{ $currency->currency_code }}</th>
+                        <th data-symbol="{{ $currency->currency_symbol }}">Coin {{ $currency->currency_code }}</th>
+                    @endforeach
+                    <th data-symbol="{{ $currencySymbol }}">Cash Total</th>
+                    <th data-symbol="{{ $currencySymbol }}">Coin Total</th>
                     <th>Remarks</th>
-					<th class="text-align-center">Action</th>
-				</tr>
-				</thead>
-				<tfoot>
-				<tr>
-					@if($isSuLevel)
-						<th class="no-search"></th>
-					@endif
-					<th></th>
-					<th></th>
-					<th></th>
-					<th></th>
+                    <th class="text-align-center">Action</th>
+                </tr>
+                </thead>
+                <tfoot>
+                <tr>
+                    @if($isSuLevel)
+                        <th class="no-search"></th>
+                    @endif
                     <th></th>
-					<th></th>
-					<th></th>
-					<th></th>
-					<th></th>
-					<th class="no-search"></th>
-				</tr>
-				</tfoot>
-				<tbody>
-				<!-- Datatables renders here. -->
-				</tbody>
-			</table>
-
-		</section>
-	</section>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    @foreach($currencies as $currency)
+                        <th></th>
+                        <th></th>
+                    @endforeach
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th class="no-search"></th>
+                </tr>
+                </tfoot>
+                <tbody>
+                <!-- Datatables renders here. -->
+                </tbody>
+            </table>
+        </section>
+    </section>
 @stop
 
 @section('scripts')
-	<style>
-		body {
-			border: 0
-		}
+    <style>
+        body {
+            border: 0
+        }
 
-		.dataTables_scroll {
-			position: relative
-		}
+        .dataTables_scroll {
+            position: relative
+        }
 
-		.dataTables_scrollHead {
-			margin-bottom: 40px;
-		}
+        .dataTables_scrollHead {
+            margin-bottom: 40px;
+        }
 
-		.dataTables_scrollFoot {
-			position: absolute;
-			top: 38px
-		}
+        .dataTables_scrollFoot {
+            position: absolute;
+            top: 38px
+        }
 
 		#select_all {
 			margin-top: 0;
@@ -109,10 +116,12 @@
                 var className = 'full-width';
                 $(this).html('<input type="text" placeholder="Search ' + title + '" class="' + className + '" />');
             });
+
+            var costColumns = {{ $costColumns }};
             
-			@if($isSuLevel)
+            @if($isSuLevel)
                 oTable = $('#example').DataTable({
-                scrollX: "true",
+                scrollX: true,
                 scrollCollapse: true,
                 dom: '<f<t>lBip>',
                 order: [[1, "desc"]],
@@ -153,7 +162,7 @@
                         className: "text-align-center"
                     },
                     {
-                        targets: [7, 8], 
+                        targets: costColumns, 
                         render: $.fn.dataTable.render.number('', '.', 2, ''),
                         className: "amount-cell",
                         searchable: false
@@ -176,7 +185,7 @@
                                         }
                                     });
                                     var ids_string = ids.toString();
-                                    
+
                                     $.ajax({
                                         type: "get",
                                         url: '{{ url('/lodgements/delete') }}' + '/' + ids_string,
@@ -226,7 +235,7 @@
                 stateSave: false,
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
-                    var colNumber = [7,8];
+                    var colNumber = costColumns;
 
                     var intVal = function (i) {
                         return typeof i === 'string' ?
@@ -242,14 +251,17 @@
                             .reduce(function (a, b) {
                                 return intVal(a) + intVal(b);
                             }, 0);
-                        $(api.column(colNo).footer()).html('€' + total2.toFixed(2));
+                        
+                        var currSymbol = $(api.column(colNo).header()).data('symbol');
+                        
+                        $(api.column(colNo).footer()).html(currSymbol + total2.toFixed(2));
                     }
                 },
                 bSortClasses: false
             });
-			@else
+            @else
                 oTable = $('#example').DataTable({
-                scrollX: "true",
+                scrollX: true,
                 scrollCollapse: true,
                 dom: '<f<t>lBip>',
                 order: [[0, "desc"]],
@@ -290,7 +302,7 @@
                         className: "text-align-center"
                     },
                     {
-                        targets: [6, 7], 
+                        targets: costColumns, 
                         render: $.fn.dataTable.render.number('', '.', 2, ''),
                         className: "amount-cell",
                         searchable: false
@@ -319,14 +331,14 @@
                     }
                 ],
                 language: {
-                    "search": "Find:"
+                    search: "Find:"
                 },
                 pageLength: 10,
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
                 stateSave: false,
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
-                    var colNumber = [6, 7];
+                    var colNumber = costColumns;
 
                     var intVal = function (i) {
                         return typeof i === 'string' ?
@@ -342,12 +354,15 @@
                             .reduce(function (a, b) {
                                 return intVal(a) + intVal(b);
                             }, 0);
-                        $(api.column(colNo).footer()).html('€' + total2.toFixed(2));
+
+                        var currSymbol = $(api.column(colNo).header()).data('symbol');
+                        
+                        $(api.column(colNo).footer()).html(currSymbol + total2.toFixed(2));
                     }
                 },
                 bSortClasses: false
             });
-			@endif
+            @endif
 
             // Apply the search
             oTable.columns().every(function () {
@@ -415,5 +430,5 @@
                 });
             }
         });
-	</script>
+    </script>
 @stop

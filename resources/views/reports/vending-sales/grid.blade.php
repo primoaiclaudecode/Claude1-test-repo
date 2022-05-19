@@ -29,6 +29,8 @@
 					<th>Closing</th>
 					<th>Reg Number</th>
 					<th>Z Read</th>
+					<th>Currency</th>
+					<th>Exchange Rate</th>
 					<th>Cash</th>
 					@foreach($goods as $good)
 						<th>{{ $good }}</th>
@@ -41,6 +43,8 @@
 					@if($isSuLevel)
 						<th class="no-search"></th>
 					@endif
+					<th></th>
+					<th></th>
 					<th></th>
 					<th></th>
 					<th></th>
@@ -119,7 +123,7 @@
             });
 
             var goodColumns = {{ $goodColumns }};
-            
+
 			@if($isSuLevel)
                 oTable = $('#example').DataTable({
                 scrollX: "true",
@@ -162,13 +166,7 @@
                         className: "text-align-center"
                     },
                     {
-                        targets: [10], className: "text-align-right"
-                    },
-                    {
-                        targets: [7, 8, 11], 
-                        render: $.fn.dataTable.render.number('', '.', 2, ''),
-                        className: "amount-cell",
-                        searchable: false
+                        targets: [10, 12], className: "text-align-right"
                     },
                     {
                         targets: goodColumns,
@@ -218,7 +216,7 @@
                         title: 'Vending Sales Report',
                         filename: 'Excel_vending_sales_report_' + currentDate(),
                         exportOptions: {
-                            columns: ':not(:last-child)'
+                            columns: ':not(:first-child)'
                         }
                     },
                     {
@@ -226,7 +224,7 @@
                         title: 'Vending Sales Report',
                         filename: 'CSV_vending_sales_report_' + currentDate(),
                         exportOptions: {
-                            columns: ':not(:last-child)'
+                            columns: ':not(:first-child)'
                         }
                     },
                     {
@@ -243,7 +241,7 @@
                 stateSave: false,
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
-                    var colNumber = [11].concat(goodColumns);
+                    var colNumber = [13].concat(goodColumns);
 
                     var intVal = function (i) {
                         return typeof i === 'string' ?
@@ -259,7 +257,7 @@
                             .reduce(function (a, b) {
                                 return intVal(a) + intVal(b);
                             }, 0);
-                        $(api.column(colNo).footer()).html('€' + total2.toFixed(2));
+                        $(api.column(colNo).footer()).html('{{ $currencySymbol }}' + total2.toFixed(2));
                     }
                 },
                 bSortClasses: false
@@ -306,13 +304,7 @@
                         className: "text-align-center"
                     },
                     {
-                        targets: [9], className: "text-align-right"
-                    },
-                    {
-                        targets: [6, 7, 10],
-                        render: $.fn.dataTable.render.number('', '.', 2, ''),
-                        className: "amount-cell",
-                        searchable: false
+                        targets: [9, 11], className: "text-align-right"
                     },
                     {
                         targets: goodColumns,
@@ -351,7 +343,7 @@
                 stateSave: false,
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
-                    var colNumber = [10].concat(goodColumns);
+                    var colNumber = [12].concat(goodColumns);
 
                     var intVal = function (i) {
                         return typeof i === 'string' ?
@@ -367,7 +359,7 @@
                             .reduce(function (a, b) {
                                 return intVal(a) + intVal(b);
                             }, 0);
-                        $(api.column(colNo).footer()).html('€' + total2.toFixed(2));
+                        $(api.column(colNo).footer()).html('{{ $currencySymbol }}' + total2.toFixed(2));
                     }
                 },
                 bSortClasses: false

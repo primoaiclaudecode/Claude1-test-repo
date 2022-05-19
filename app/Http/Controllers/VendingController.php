@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Currency;
 use App\Http\Controllers\Traits\UserUnits;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +75,7 @@ class VendingController extends Controller
 			->editColumn('unit_name', function ($vending) {
 				return '<a href="units/' . $vending->unit_id . '/edit">' . $vending->unit_name . '</a>';
 			})
-			->removeColumn('unit_id')			
+			->removeColumn('unit_id')
 			->make();
 	}
 
@@ -88,6 +89,7 @@ class VendingController extends Controller
 		// Unit Name Dropdown
 		$units = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
 
+		// Machine
 		$machine_brand_arr = array();
 		$machine_brand_arr['lucozade'] = 'Lucozade';
 		$machine_brand_arr['nestle'] = 'Nestle';
@@ -110,12 +112,16 @@ class VendingController extends Controller
 		$machine_contents_arr['lucozade'] = 'Lucozade';
 		$machine_contents_arr['coffee_bean'] = 'Coffee Bean (Bean to Cup)';
 
+		// Currencies
+		$currencies = Currency::pluck('currency_name', 'currency_id');
+
 		return view('vendings.create', [
 			'heading' => 'Create New Vending Machine',
 			'machine_brand_arr' => $machine_brand_arr,
 			'machine_contents_arr' => $machine_contents_arr,
 			'btn_caption' => 'Create Vending Machine',
-			'units' => $units
+			'units' => $units,
+			'currencies' => $currencies
 		]);
 	}
 
@@ -128,18 +134,22 @@ class VendingController extends Controller
 	public function store(Request $request)
 	{
 		$this->validate($request, [
-			'unit_name' => 'required',
-			'vend_name' => 'required'
+			'unit_id' => 'required',
+			'vend_name' => 'required',
+			'currency_id' => 'required|integer'
 		]);
 
 		$vending = new Vending;
-		$vending->unit_id = $request->unit_name;
+		$vending->unit_id = $request->unit_id;
 		$vending->unit_name = '';
 		$vending->vend_name = $request->vend_name;
 		$vending->machine_brand = $request->machine_brand;
 		$vending->machine_contents = $request->machine_contents;
+		$vending->currency_id = $request->currency_id;
 		$vending->save();
+
 		Session::flash('flash_message', 'Vending machine has been added successfully!'); //<--FLASH MESSAGE
+
 		return redirect('/vendings');
 	}
 
@@ -152,44 +162,46 @@ class VendingController extends Controller
 	public function edit($id)
 	{
 		$vending = Vending::find($id);
+
 		// Unit Name Dropdown
 		$units = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
-		$selectedUnit = $vending->unit_id;
-		$selectedMachineBrand = $vending->machine_brand;
-		$selectedMachineContents = $vending->machine_contents;
 
-		$machine_brand_arr = array();
-		$machine_brand_arr['lucozade'] = 'Lucozade';
-		$machine_brand_arr['nestle'] = 'Nestle';
-		$machine_brand_arr['coca_cola'] = 'Coca-Cola';
-		$machine_brand_arr['bewleys'] = 'Bewleys';
-		$machine_brand_arr['cereal_biscuits'] = 'Tabletop Sweets';
-		$machine_brand_arr['nestle_hot'] = 'Nestle Hot Drinks';
-		$machine_brand_arr['java'] = 'Java';
-		$machine_brand_arr['autobar'] = 'Autobar';
-		$machine_brand_arr['corp_cater'] = 'Corporate Catering';
+		// Machine
+		$machine_brand_arr = [
+			'lucozade' => 'Lucozade',
+			'nestle' => 'Nestle',
+			'coca_cola' => 'Coca-Cola',
+			'bewleys' => 'Bewleys',
+			'cereal_biscuits' => 'Tabletop Sweets',
+			'nestle_hot' => 'Nestle Hot Drinks',
+			'java' => 'Java',
+			'autobar' => 'Autobar',
+			'corp_cater' => 'Corporate Catering'
+		];
 
-		$machine_contents_arr = array();
-		$machine_contents_arr['cans'] = 'Cans';
-		$machine_contents_arr['bottles'] = 'Bottles';
-		$machine_contents_arr['cans_bottles'] = 'Cans & Bottles';
-		$machine_contents_arr['choc_crisps'] = 'Chocolate + Crisps';
-		$machine_contents_arr['coffee_tea'] = 'Coffee/Tea/Sugar/Cappuccino';
-		$machine_contents_arr['tabletop_sweets'] = 'Cereals/Fruits/Pot Noodle/Choc/Biscuits/Sandwiches';
-		$machine_contents_arr['nestle_hot'] = 'Nestle Hot Drinks';
-		$machine_contents_arr['lucozade'] = 'Lucozade';
-		$machine_contents_arr['coffee_bean'] = 'Coffee Bean (Bean to Cup)';
+		$machine_contents_arr = [
+			'cans' => 'Cans',
+			'bottles' => 'Bottles',
+			'cans_bottles' => 'Cans & Bottles',
+			'choc_crisps' => 'Chocolate + Crisps',
+			'coffee_tea' => 'Coffee/Tea/Sugar/Cappuccino',
+			'tabletop_sweets' => 'Cereals/Fruits/Pot Noodle/Choc/Biscuits/Sandwiches',
+			'nestle_hot' => 'Nestle Hot Drinks',
+			'lucozade' => 'Lucozade',
+			'coffee_bean' => 'Coffee Bean (Bean to Cup)'
+		];
+
+		// Currencies
+		$currencies = Currency::pluck('currency_name', 'currency_id');
 
 		return view('vendings.create', [
 			'heading' => 'Edit Vending Machine',
+			'btn_caption' => 'Edit Vending Machine',
+			'vending' => $vending,
+			'units' => $units,
 			'machine_brand_arr' => $machine_brand_arr,
 			'machine_contents_arr' => $machine_contents_arr,
-			'btn_caption' => 'Edit Vending Machine',
-			'units' => $units,
-			'selectedUnit' => $selectedUnit,
-			'selectedMachineBrand' => $selectedMachineBrand,
-			'selectedMachineContents' => $selectedMachineContents,
-			'vending' => $vending
+			'currencies' => $currencies
 		]);
 	}
 
@@ -203,18 +215,22 @@ class VendingController extends Controller
 	public function update(Request $request, $id)
 	{
 		$this->validate($request, [
-			'unit_name' => 'required',
-			'vend_name' => 'required'
+			'unit_id' => 'required',
+			'vend_name' => 'required',
+			'currency_id' => 'required|integer'
 		]);
 
 		$vending = Vending::find($id);
-		$vending->unit_id = $request->unit_name;
+		$vending->unit_id = $request->unit_id;
 		$vending->unit_name = '';
 		$vending->vend_name = $request->vend_name;
 		$vending->machine_brand = $request->machine_brand;
 		$vending->machine_contents = $request->machine_contents;
+		$vending->currency_id = $request->currency_id;
 		$vending->save();
+
 		Session::flash('flash_message', 'Vending machine has been updated successfully!'); //<--FLASH MESSAGE
+
 		return redirect('/vendings');
 	}
 

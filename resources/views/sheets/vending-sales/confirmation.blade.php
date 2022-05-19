@@ -9,11 +9,11 @@
 		<section class="dataTables-padding">
 			{!! Form::open(['url' => 'sheets/vending-sales/post', 'class' => 'form-horizontal form-bordered']) !!}
 			{{ Form::hidden('sheet_id', $sheetId, array('id' => 'sheet_id')) }}
+			{{ Form::hidden('currency_id', $currencyId, array('id' => 'sheet_id')) }}
 			{{ Form::hidden('good_items', $goodItems) }}
 
 			<div class="form-group margin-bottom-0 margin-left-0 margin-right-0">
 				<div class="clearfix"></div>
-
 				<div class="col-md-12 padding-left-0 padding-right-0 border-top-0">
 					<div class="responsive-content">
 						<table id="cash_purchases_tbl" class="table table-bordered table-striped table-small">
@@ -37,14 +37,14 @@
 								<td>
 									<label>Opening:</label>
 									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
+										<span class="input-group-addon">{{ $currencySymbol }}</span>
 										{{ Form::text('opening', $opening, array('class' => 'form-control text-right', 'readonly' => 'readonly')) }}
 									</div>
 								</td>
 								<td>
 									<label>Closing:</label>
 									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
+										<span class="input-group-addon">{{ $currencySymbol }}</span>
 										{{ Form::text('closing', $closing, array('class' => 'form-control text-right', 'readonly' => 'readonly')) }}
 									</div>
 								</td>
@@ -62,7 +62,7 @@
 								<td>
 									<label>Cash Count:</label>
 									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
+										<span class="input-group-addon">{{ $currencySymbol }}</span>
 										{{ Form::text('cash', $cash, array('class' => 'form-control text-right', 'readonly' => 'readonly')) }}
 									</div>
 								</td>
@@ -75,7 +75,7 @@
 									</td>
 									<td>
 										<div class="input-group">
-											<span class="input-group-addon">&euro;</span>
+											<span class="input-group-addon">{{ $currencySymbol }}</span>
 											{{ Form::text('taxes[]', number_format($tax['amount'], 2, '.', ','), array('class' => 'form-control auto_calc text-right', 'readonly' => 'readonly')) }}
 										</div>
 									</td>
@@ -88,7 +88,7 @@
 								</td>
 								<td>
 									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
+										<span class="input-group-addon">{{ $currencySymbol }}</span>
 										{{ Form::text('total', $total, array('class' => 'form-control auto_calc text-right', 'readonly' => 'readonly')) }}
 									</div>
 								</td>

@@ -26,8 +26,8 @@
 				{!! Form::text('unit_name',null,['class'=>'form-control','autofocus' => 'autofocus']) !!}
 			</div>
 			<div class="form-group">
-				{!! Form::label('status', 'Status:') !!}
-				{!! Form::select('status', $statuses, isset($selectedStatus) ? $selectedStatus : null, ['class'=>'form-control', 'id' => 'status', 'placeholder' => 'Select status']); !!}
+				{!! Form::label('status_id', 'Status:') !!}
+				{!! Form::select('status_id', $statuses, null, ['class'=>'form-control', 'id' => 'status_id', 'placeholder' => 'Select status']); !!}
 			</div>
 			<div class="form-group">
 				{!! Form::label('details', 'Details:') !!}
@@ -76,6 +76,10 @@
 			<div class="form-group">
 				{!! Form::label('unit_manager', 'Unit Manager:') !!}
 				{!! Form::select('unit_manager[]', $unitManager, isset($selectedUnitManager) ? $selectedUnitManager : null, ['class'=>'form-control', 'multiple' => true, 'size' => 7, 'id' => 'unit_manager']); !!}
+			</div>
+			<div class="form-group">
+				{!! Form::label('currency_id', 'Currency:') !!}
+				{!! Form::select('currency_id', $currencies, null, ['class'=>'form-control', 'id' => 'currency_id', 'placeholder' => 'Select currency']); !!}
 			</div>
 			@if(isset($associatedUsers))
 				<div class="form-group">
@@ -168,12 +172,12 @@
                 $('#asp').css('border', '1px solid #e2e2e4');
             }
         });
-        
-        $('#save_unit').on('submit', function() {
+
+        $('#save_unit').on('submit', function () {
             $('.error_message').remove();
-            
+
             var unitName = $('#unit_name').val();
-            
+
             if (unitName.length === 0) {
                 $('#unit_name').focus();
 
@@ -195,16 +199,27 @@
 
                 return false;
             }
-            
-            if (!$('#status').val()) {
-                $('#status').focus();
-                
-                $('#status')
-	                .after(
-	                    $('<span />').addClass('error_message').text('The Status field is required')
-	                )
-	            
-	            return false;
+
+            if (!$('#status_id').val()) {
+                $('#status_id').focus();
+
+                $('#status_id')
+                    .after(
+                        $('<span />').addClass('error_message').text('The Status field is required')
+                    )
+
+                return false;
+            }
+
+            if (!$('#currency_id').val()) {
+                $('#currency_id').focus();
+
+                $('#currency_id')
+                    .after(
+                        $('<span />').addClass('error_message').text('The Currency field is required')
+                    )
+
+                return false;
             }
 
 			// Prevent double submit

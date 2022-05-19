@@ -2,9 +2,9 @@
 
 @section('content')
 	@if(isset($supplier))
-		{!! Form::model($supplier, ['method' => 'PATCH', 'route' => ['suppliers.update', $supplier->suppliers_id]]) !!}
+		{!! Form::model($supplier, ['method' => 'PATCH', 'route' => ['suppliers.update', $supplier->suppliers_id], 'id' => 'save_supplier']) !!}
 	@else
-		{!! Form::open(['url' => 'suppliers']) !!}
+		{!! Form::open(['url' => 'suppliers', 'id' => 'save_supplier']) !!}
 	@endif
 
 	<section class="panel">
@@ -23,7 +23,7 @@
 			@endif
 			<div class="form-group">
 				{!! Form::label('supplier_name', 'Name:') !!}
-				{!! Form::text('supplier_name',null,['class'=>'form-control','autofocus' => 'autofocus']) !!}
+				{!! Form::text('supplier_name',null,['class'=>'form-control', 'id' => 'supplier_name', 'autofocus' => 'autofocus']) !!}
 			</div>
 			<div class="form-group">
 				{!! Form::label('supplier_address', 'Address:') !!}
@@ -62,6 +62,10 @@
 				{!! Form::text('remit_email',null,['class'=>'form-control']) !!}
 			</div>
 			<div class="form-group">
+				{!! Form::label('currency_id', 'Currency:') !!}
+				{!! Form::select('currency_id', $currencies, null, ['class'=>'form-control', 'id' => 'currency_id', 'placeholder' => 'Select currency']); !!}
+			</div>
+			<div class="form-group">
 				<div class="row">
 					<div class="col-xs-12 col-sm-2">
 						<a href="/suppliers" name="cancel_btn" class="btn btn-danger btn-block">Cancel</a>
@@ -82,15 +86,54 @@
 	</section>
 	{!!Form::close()!!}
 @stop
+
 @section('scripts')
 	<script type="text/javascript">
-		// Prevent double submit
-		$('form').on('submit', function () {
+        $('#save_supplier').on('submit', function () {
+            $('.error_message').remove();
+
+            var supplierName = $('#supplier_name').val();
+
+            if (supplierName.length === 0) {
+                $('#supplier_name').focus();
+
+                $('#supplier_name')
+                    .after(
+                        $('<span />').addClass('error_message').text('The Supplier Name field is required.')
+                    )
+
+                return false;
+            }
+
+            if (supplierName.length < 5) {
+                $('#supplier_name').focus();
+
+                $('#supplier_name')
+                    .after(
+                        $('<span />').addClass('error_message').text('The Supplier Name must be at least 5 characters')
+                    )
+
+                return false;
+            }
+
+            if (!$('#currency_id').val()) {
+                $('#currency_id').focus();
+
+                $('#currency_id')
+                    .after(
+                        $('<span />').addClass('error_message').text('The Currency field is required')
+                    )
+
+                return false;
+            }
+
 			if ($(this).hasClass('processing')) {
 				return false;
 			}
 
 			$(this).addClass('processing');
-		});
+
+            return true;
+        })
 	</script>
 @stop

@@ -37,6 +37,7 @@
                             <div class="mb-lg{{ $errors->has('password') ? ' has-error' : '' }}">
                                 <div class="clearfix">
                                     <label class="pull-left">Password</label>
+                                    <a href="{{ url('/password/reset') }}" class="pull-right" tabindex="5">Lost Password?</a>
                                 </div>
                                 <div class="input-group input-group-icon">
                                     <input name="password" type="password" class="form-control input-lg" tabindex="2" />

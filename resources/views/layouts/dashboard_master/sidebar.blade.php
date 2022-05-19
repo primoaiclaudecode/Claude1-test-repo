@@ -20,15 +20,21 @@
             @can('admin-user-group')
                 <li class="sub-menu">
                     <a href="javascript:;"
-                       class="{{ Helpers::getControllerName() == 'UserController' || Helpers::getControllerName() == 'UnitController' || Helpers::getControllerName() == 'RegionController' || Helpers::getControllerName() == 'SupplierController' ? 'active' : '' || Helpers::getControllerName() == 'RegisterController' ? 'active' : '' || Helpers::getControllerName() == 'VendingController' ? 'active' : '' || Helpers::getControllerName() == 'NetExtController' ? 'active' : '' || Helpers::getControllerName() == 'TaxCodeController' ? 'active' : '' || Helpers::getControllerName() == 'EventController' ? 'active' : '' }}">
+                       class="{{ Helpers::getControllerName() == 'UserController' || Helpers::getControllerName() == 'UnitController' || Helpers::getControllerName() == 'RegionController' || Helpers::getControllerName() == 'SupplierController' ? 'active' : '' || Helpers::getControllerName() == 'RegisterController' ? 'active' : '' || Helpers::getControllerName() == 'VendingController' ? 'active' : '' || Helpers::getControllerName() == 'NetExtController' ? 'active' : '' || Helpers::getControllerName() == 'TaxCodeController' ? 'active' : '' || Helpers::getControllerName() == 'EventController' ? 'active' : '' || Helpers::getControllerName() == 'CurrencyController' ? 'active' : '' || Helpers::getControllerName() == 'ExchangeRateController' ? 'active' : ''}}">
                         <i class="fa fa-user"></i>
                         <span>Administration</span>
                     </a>
                     <ul class="sub">
                         @can('su-user-group')
+		                    <li class="{{ Helpers::getActionName() == 'currencys.index' || Helpers::getActionName() == 'currencys.create' || Helpers::getActionName() == 'currencys.edit' ? 'active' : '' }}">
+			                    <a href="{{ url('/currencies') }}">Currency Management</a>
+		                    </li>
                             <li class="{{ Helpers::getActionName() == 'events.index' ? 'active' : '' }}">
                                 <a href="{{ url('/events') }}">Events</a>
                             </li>
+		                    <li class="{{ Helpers::getActionName() == 'exchangerates.index' || Helpers::getActionName() == 'exchangerates.create' || Helpers::getActionName() == 'exchangerates.edit' ? 'active' : '' }}">
+			                    <a href="{{ url('/exchange-rates') }}">Exchange Rate Management</a>
+		                    </li>
                             <li class="{{ Helpers::getActionName() == 'netexts.index' || Helpers::getActionName() == 'netexts.create' || Helpers::getActionName() == 'netexts.edit' ? 'active' : '' }}">
                                 <a href="{{ url('/netexts') }}">Net Ext Management</a>
                             </li>

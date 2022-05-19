@@ -29,6 +29,8 @@
 					<th>Inv / Rec Date</th>
 					<th>Purchase Details</th>
 					<th>Net Ext</th>
+					<th>Currency</th>
+					<th>Exchange Rate</th>
 					<th>Goods</th>
 					<th>VAT</th>
 					<th>Gross</th>
@@ -53,6 +55,8 @@
 					@if($isSuLevel)
 						<th class="no-search"></th>
 					@endif
+					<th></th>
+					<th></th>
 					<th></th>
 					<th></th>
 					<th></th>
@@ -182,7 +186,7 @@
                         className: "text-align-center"
                     },
                     {
-                        targets: [14, 23, 24], className: "text-align-right"
+                        targets: [12, 16, -4, -5], className: "text-align-right"
                     },
                     {
                         targets: [1, 2, 3, 4, 5, 6, 7], 
@@ -194,7 +198,7 @@
                         className: "ravindra"
                     },
                     {
-                        targets: [11, 12, 13, 16, 17, 18], 
+                        targets: [13, 14, 15, 18, 19, 20], 
                         render: $.fn.dataTable.render.number('', '.', 2, ''),
                         className: "amount-cell",
                         searchable: false
@@ -241,7 +245,7 @@
                         title: 'Cash / Credit Purchases Report',
                         filename: 'Excel_purchases_report_' + currentDate(),
                         exportOptions: {
-                            columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+                            columns: ':not(:first-child)'
                         }
                     },
                     {
@@ -249,7 +253,7 @@
                         title: 'Cash / Credit Purchases Report',
                         filename: 'CSV_purchases_report_' + currentDate(),
                         exportOptions: {
-                            columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+                            columns: ':not(:first-child)'
                         }
                     },
                     {
@@ -266,7 +270,7 @@
                 stateSave: false,
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
-                    var colNumber = [11, 12, 13, 16, 17, 18];
+                    var colNumber = [13, 14, 15, 18, 19, 20];
 
                     var intVal = function (i) {
                         return typeof i === 'string' ?
@@ -282,15 +286,8 @@
                             .reduce(function (a, b) {
                                 return intVal(a) + intVal(b);
                             }, 0);
-                        $(api.column(colNo).footer()).html('€' + total2.toFixed(2));
-                    }
-                },
-                createdRow: function (row, data, dataIndex) {
-                    if (data[24] == 1) {
-                        $(row).addClass('green-row');
-                    }
-                    if (data[23] == 1) {
-                        $(row).addClass('orange-row');
+
+                        $(api.column(colNo).footer()).html('{{ $currencySymbol }}' + total2.toFixed(2));
                     }
                 },
                 bSortClasses: false
@@ -323,14 +320,14 @@
                         visible: false,
                     },
                     {
-                        targets: [0, 1, 7, , -1, -2, -7, -8],
+                        targets: [0, 1, 7, -1, -2, -7, -8],
                         className: "text-align-center"
                     },
                     {
-                        targets: [13, 22, 23], className: "text-align-right"
+                        targets: [11, 15, -4, -5], className: "text-align-right"
                     },
                     {
-                        targets: [10, 11, 12, 15, 16, 17],
+                        targets: [12, 13, 14, 17, 18, 19],
                         render: $.fn.dataTable.render.number('', '.', 2, ''),
                         className: "amount-cell",
                         searchable: false
@@ -342,7 +339,7 @@
                         title: 'Cash / Credit Purchases Report',
                         filename: 'Excel_purchases_report_' + currentDate(),
                         exportOptions: {
-                            columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 ,24, 25]
+                            columns: ':not(:last-child)'
                         }
                     },
                     {
@@ -350,7 +347,7 @@
                         title: 'Cash / Credit Purchases Report',
                         filename: 'CSV_purchases_report_' + currentDate(),
                         exportOptions: {
-                            columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 ,24, 25]
+                            columns: ':not(:last-child)'
                         }
                     },
                     {
@@ -367,7 +364,7 @@
                 //Purchases Total in Footer
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
-                    var colNumber = [10, 11, 12, 15, 16, 17];
+                    var colNumber = [12, 13, 14, 17, 18, 19];
 
                     var intVal = function (i) {
                         return typeof i === 'string' ?
@@ -383,16 +380,8 @@
                             .reduce(function (a, b) {
                                 return intVal(a) + intVal(b);
                             }, 0);
-                        $(api.column(colNo).footer()).html('€' + total2.toFixed(2));
-                    }
-                },
-                //Purchases Total in Footer
-                createdRow: function (row, data, dataIndex) {
-                    if (data[23] == 1) {
-                        $(row).addClass('green-row');
-                    }
-                    if (data[22] == 1) {
-                        $(row).addClass('orange-row');
+
+                        $(api.column(colNo).footer()).html('{{ $currencySymbol }}' + total2.toFixed(2));
                     }
                 },
                 bSortClasses: false
@@ -448,7 +437,7 @@
                         title: 'Cash / Credit Purchases Report',
                         filename: 'Excel_purchases_report_' + currentDate(),
                         exportOptions: {
-                            columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+                            columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
                         }
                     },
                     {
@@ -456,13 +445,13 @@
                         title: 'Cash / Credit Purchases Report',
                         filename: 'CSV_purchases_report_' + currentDate(),
                         exportOptions: {
-                            columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+                            columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
                         }
                     },
                     {
                         extend: 'colvis',
                         collectionLayout: 'fixed three-column',
-                        columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26]
+                        columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28]
                     }
                 ],
                 language: {
@@ -474,7 +463,7 @@
                 //Purchases Total in Footer
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
-                    var colNumber = [10, 11, 12, 15, 16, 17];
+                    var colNumber = [12, 13, 14, 17, 18, 19];
 
                     var intVal = function (i) {
                         return typeof i === 'string' ?
@@ -490,16 +479,8 @@
                             .reduce(function (a, b) {
                                 return intVal(a) + intVal(b);
                             }, 0);
-                        $(api.column(colNo).footer()).html('€' + total2.toFixed(2));
-                    }
-                },
-                //Purchases Total in Footer
-                createdRow: function (row, data, dataIndex) {
-                    if (data[23] == 1) {
-                        $(row).addClass('green-row');
-                    }
-                    if (data[22] == 1) {
-                        $(row).addClass('orange-row');
+                        
+                        $(api.column(colNo).footer()).html('{{ $currencySymbol }}' + total2.toFixed(2));
                     }
                 },
                 bSortClasses: false

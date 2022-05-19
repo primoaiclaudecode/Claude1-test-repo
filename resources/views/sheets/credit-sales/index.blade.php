@@ -17,6 +17,7 @@
 
 			{!! Form::open(['url' => 'sheets/credit-sales/confirmation', 'class' => 'form-horizontal form-bordered', 'id' => 'credit_sales']) !!}
 			{{ Form::hidden('sheet_id', $sheetId) }}
+			{{ Form::hidden('currency_id', 0, ['id' => 'currency_id']) }}
 
 			<div class="form-group">
 				<label class="col-xs-12 col-sm-4 col-md-2 control-label custom-labels">Unit Name:</label>
@@ -50,7 +51,6 @@
 					<span id="docket_number_span" class="error_message"></span>
 				</div>
 			</div>
-				
 			<div class="form-group">
 				<label class="col-xs-12 col-sm-4 col-md-2 control-label custom-labels">Cost Centre/P.O.#:</label>
 				<div class="col-xs-12 col-sm-8 col-md-4">
@@ -68,7 +68,7 @@
 					<label class="col-xs-4 col-md-2 control-label custom-labels">Gross {{ $taxCode['tax'] }}:</label>
 					<div class="col-xs-8 col-md-2">
 						<div class="input-group margin-bottom-15">
-							<span class="input-group-addon">&euro;</span>
+							<span class="input-group-addon currency-symbol"></span>
 							{{ Form::text('gross[]', $taxCode['gross'], array('class' => 'form-control text-right currencyFields')) }}
 						</div>
 					</div>
@@ -76,15 +76,15 @@
 					<label class="col-xs-4 col-md-2 control-label custom-labels">Net {{ $taxCode['tax'] }}:</label>
 					<div class="col-xs-8 col-md-2">
 						<div class="input-group margin-bottom-15">
-							<span class="input-group-addon">&euro;</span>
+							<span class="input-group-addon currency-symbol"></span>
 							{{ Form::text('goods[]', 0, array('class' => 'form-control text-right auto_calc', 'readonly' => 'readonly')) }}
 						</div>
 					</div>
 
-					<label class="col-xs-4 col-md-2 control-label custom-labels">VAT {{ $taxCode['tax'] }}:</label>
-					<div class="col-xs-8 col-md-2">
-						<div class="input-group margin-bottom-15">
-							<span class="input-group-addon">&euro;</span>
+					<label class="col-xs-4 col-md-2 col-md-2 control-label custom-labels">VAT {{ $taxCode['tax'] }}:</label>
+					<div class="col-xs-8 col-md-2 margin-bottom-15">
+						<div class="input-group">
+							<span class="input-group-addon currency-symbol"></span>
 							{{ Form::text('vat[]', 0, array('class' => 'form-control text-right auto_calc', 'readonly' => 'readonly')) }}
 						</div>
 					</div>
@@ -95,7 +95,7 @@
 				<label class="col-xs-4 col-md-2 control-label custom-labels">Total Gross:</label>
 				<div class="col-xs-8 col-md-2">
 					<div class="input-group margin-bottom-15">
-						<span class="input-group-addon">&euro;</span>
+						<span class="input-group-addon currency-symbol"></span>
 						{{ Form::text('gross_total', null, array('class' => 'form-control text-right auto_calc', 'id' => 'gross_total', 'readonly' => 'readonly')) }}
 					</div>
 				</div>
@@ -103,7 +103,7 @@
 				<label class="col-xs-4 col-md-2 control-label custom-labels">Total Net:</label>
 				<div class="col-xs-8 col-md-2">
 					<div class="input-group margin-bottom-15">
-						<span class="input-group-addon">&euro;</span>
+						<span class="input-group-addon currency-symbol"></span>
 						{{ Form::text('goods_total', null, array('id' => 'goods_total', 'class' => 'form-control text-right auto_calc', 'readonly' => 'readonly')) }}
 					</div>
 				</div>
@@ -111,7 +111,7 @@
 				<label class="col-xs-4 col-md-2 control-label custom-labels">Total VAT:</label>
 				<div class="col-xs-8 col-md-2">
 					<div class="input-group margin-bottom-15">
-						<span class="input-group-addon">&euro;</span>
+						<span class="input-group-addon currency-symbol"></span>
 						{{ Form::text('vat_total', null, array('id' => 'vat_total', 'class' => 'form-control text-right auto_calc', 'readonly' => 'readonly')) }}
 					</div>
 				</div>
@@ -123,7 +123,8 @@
 								<h2>Sales Total</h2>
 							</td>
 							<td class="border-top-0 padding-0" align="right">
-								<h2>
+								<h2 id="sales_total_amount">
+									<span class="currency-symbol"></span>
 									<span id="sales_total"></span>
 								</h2>
 							</td>
@@ -142,7 +143,7 @@
 
 @section('scripts')
 	<style>
-		#sales_total {
+		#sales_total_amount {
 			margin-left: 10px;
 		}
 	</style>

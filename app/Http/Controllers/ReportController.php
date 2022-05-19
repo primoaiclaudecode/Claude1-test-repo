@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\ContactType;
 use App\ContractType;
 use App\CreditSaleGood;
+use App\Currency;
 use App\CreditSales;
 use App\CustomerFeedback;
 use App\Event;
 use App\FeedbackType;
 use App\Http\Controllers\Traits\UserUnits;
 use App\Lodgement;
+use App\LodgementCost;
 use App\OperationsScorecard;
 use App\PhasedBudgetUnitRow;
 use App\Problem;
@@ -55,50 +57,6 @@ class ReportController extends Controller
 	public function toggleColumnVisibility(Request $request)
 	{
 		$userId = session()->get('userId');
-		$column_name = $request->column_name;
-		$report_type = $request->report_type;
-		$action_type = $request->action_type;
-
-		switch ($report_type) {
-			case 'cash-sales':
-				$columns = ReportColumnVisible::$cashColumns;
-				$columnIndex = Gate::allows('su-user-group') ? $columns[$column_name] + 1 : $columns[$column_name];
-				break;
-			case 'credit-sales':
-				$columns = ReportColumnVisible::$creditColumns;
-				$columnIndex = Gate::allows('su-user-group') ? $columns[$column_name] + 1 : $columns[$column_name];
-				break;
-			case 'vending-sales':
-				$columns = ReportColumnVisible::$vendingColumns;
-				$columnIndex = Gate::allows('su-user-group') ? $columns[$column_name] + 1 : $columns[$column_name];
-				break;
-			case 'purchases':
-				$columns = ReportColumnVisible::$purchasesColumns;
-				$columnIndex = Gate::allows('su-user-group') ? $columns[$column_name] + 1 : $columns[$column_name];
-				break;
-			case 'labour-hours':
-				$columns = ReportColumnVisible::$labourHoursColumns;
-				$columnIndex = Gate::allows('su-user-group') ? $columns[$column_name] + 1 : $columns[$column_name];
-				break;
-			case 'stock-control':
-				$columns = ReportColumnVisible::$stockControlColumns;
-				$columnIndex = Gate::allows('su-user-group') ? $columns[$column_name] + 1 : $columns[$column_name];
-				break;
-			case 'problem':
-				$columns = ReportColumnVisible::$problemColumns;
-				$columnIndex = Gate::allows('su-user-group') ? $columns[$column_name] + 1 : $columns[$column_name];
-				break;
-			case 'operations-scorecard':
-				$columns = ReportColumnVisible::$operationsScorecardColumns;
-				$columnIndex = $columns[$column_name] + 1;
-				break;
-			case 'lodgements':
-				$columns = ReportColumnVisible::$lodgementsColumns;
-				$columnIndex = Gate::allows('su-user-group') ? $columns[$column_name] + 1 : $columns[$column_name];
-				break;
-			default:
-				$columns = [];
-		}
 
 		$columnVisibility = ReportHiddenColumn::where('user_id', $userId)
 			->where('report_name', $request->report_name)
@@ -163,6 +121,15 @@ class ReportController extends Controller
 			->get()
 			->implode('column_index', ',');
 
+		// Currency symbol
+		$unit = Unit::find($unitId);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+
+		$currencySymbol = $defaultCurrency->currency_symbol;
+		if (!is_null($unit) && !is_null($unit->currency)) {
+			$currencySymbol = $unit->currency->currency_symbol;
+		}
+
 		return view(
 			'reports.purchases.grid', [
 				'userId' => $userId,
@@ -174,6 +141,7 @@ class ReportController extends Controller
 				'notVisiable' => $hiddenColumns,
 				'isSuLevel' => Gate::allows('su-user-group'),
 				'isHqLevel' => Gate::allows('hq-user-group'),
+				'currencySymbol' => $currencySymbol
 			]
 		);
 	}
@@ -188,7 +156,13 @@ class ReportController extends Controller
 		$fromDate = $request->from_date;
 		$toDate = $request->to_date;
 
+		// Units
 		$userUnits = $this->getUserUnits()->pluck('unit_id');
+
+		// Currency
+		$unit = Unit::find($unitId);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+		$unitCurrency = !is_null($unit) ? $unit->currency_id : $defaultCurrency->currency_id;
 
 		if ($unitId == '' && Gate::allows('su-user-group')) {
 			if ($request->all_records) {
@@ -206,6 +180,8 @@ class ReportController extends Controller
 							'P.receipt_invoice_date',
 							'P.purchase_details',
 							'N.net_ext',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'P.goods',
 							'P.vat',
 							'P.gross',
@@ -230,6 +206,12 @@ class ReportController extends Controller
 					->leftJoin('units AS UN', 'P.unit_id', '=', 'UN.unit_id')
 					->leftJoin('nominal_codes AS N', 'P.net_ext_ID', '=', 'N.net_ext_ID')
 					->leftJoin('tax_codes AS TC', 'TC.tax_code_ID', '=', 'P.tax_code_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'P.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'P.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = P.date');
+					})
 					->where('P.deleted', 0);
 			} else {
 				$purchases = \DB::table('purchases AS P')
@@ -246,6 +228,8 @@ class ReportController extends Controller
 							'P.receipt_invoice_date',
 							'P.purchase_details',
 							'N.net_ext',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'P.goods',
 							'P.vat',
 							'P.gross',
@@ -270,6 +254,12 @@ class ReportController extends Controller
 					->leftJoin('units AS UN', 'P.unit_id', '=', 'UN.unit_id')
 					->leftJoin('nominal_codes AS N', 'P.net_ext_ID', '=', 'N.net_ext_ID')
 					->leftJoin('tax_codes AS TC', 'TC.tax_code_ID', '=', 'P.tax_code_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'P.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'P.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = P.date');
+					})
 					->whereBetween('P.receipt_invoice_date', [$fromDate, $toDate])
 					->where('P.deleted', 0);
 			}
@@ -288,6 +278,8 @@ class ReportController extends Controller
 							'P.receipt_invoice_date',
 							'P.purchase_details',
 							'N.net_ext',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'P.goods',
 							'P.vat',
 							'P.gross',
@@ -312,6 +304,12 @@ class ReportController extends Controller
 					->leftJoin('units AS UN', 'P.unit_id', '=', 'UN.unit_id')
 					->leftJoin('nominal_codes AS N', 'P.net_ext_ID', '=', 'N.net_ext_ID')
 					->leftJoin('tax_codes AS TC', 'TC.tax_code_ID', '=', 'P.tax_code_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'P.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'P.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = P.date');
+					})
 					->where('P.deleted', 0);
 			} else {
 				$purchases = \DB::table('purchases AS P')
@@ -327,6 +325,8 @@ class ReportController extends Controller
 							'P.receipt_invoice_date',
 							'P.purchase_details',
 							'N.net_ext',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'P.goods',
 							'P.vat',
 							'P.gross',
@@ -351,6 +351,12 @@ class ReportController extends Controller
 					->leftJoin('units AS UN', 'P.unit_id', '=', 'UN.unit_id')
 					->leftJoin('nominal_codes AS N', 'P.net_ext_ID', '=', 'N.net_ext_ID')
 					->leftJoin('tax_codes AS TC', 'TC.tax_code_ID', '=', 'P.tax_code_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'P.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'P.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = P.date');
+					})
 					->whereBetween('P.receipt_invoice_date', [$fromDate, $toDate])
 					->where('P.deleted', 0);
 			}
@@ -368,6 +374,8 @@ class ReportController extends Controller
 						'P.receipt_invoice_date',
 						'P.purchase_details',
 						'N.net_ext',
+						'C.currency_code',
+						'ER.exchange_rate',
 						'P.goods',
 						'P.vat',
 						'P.gross',
@@ -382,13 +390,21 @@ class ReportController extends Controller
 						'UU.username as updated_by',
 						'P.stmt_ok',
 						'P.stmnt_chk',
+						'U.username as stmnt_chk_user',
+						'P.date_stmnt_chk',
 						'P.purchase_id'
 					]
 				)
-				->leftJoin('users AS UU', 'P.updated_by', '=', 'UU.user_id')
+				->leftJoin('users AS U', 'P.stmnt_chk_user', '=', 'U.user_id')
 				->leftJoin('units AS UN', 'P.unit_id', '=', 'UN.unit_id')
 				->leftJoin('nominal_codes AS N', 'P.net_ext_ID', '=', 'N.net_ext_ID')
 				->leftJoin('tax_codes AS TC', 'TC.tax_code_ID', '=', 'P.tax_code_id')
+				->leftJoin('currencies AS C', 'C.currency_id', '=', 'P.currency_id')
+				->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+					$join->on('ER.domestic_currency_id', 'P.currency_id')
+						->where('ER.foreign_currency_id', $unitCurrency)
+						->whereRaw('ER.date = P.date');
+				})
 				->whereIn('P.unit_id', $userUnits)
 				->whereBetween('P.receipt_invoice_date', [$fromDate, $toDate])
 				->where('P.deleted', 0);
@@ -406,6 +422,8 @@ class ReportController extends Controller
 						'P.receipt_invoice_date',
 						'P.purchase_details',
 						'N.net_ext',
+						'C.currency_code',
+						'ER.exchange_rate',
 						'P.goods',
 						'P.vat',
 						'P.gross',
@@ -420,13 +438,22 @@ class ReportController extends Controller
 						'UU.username as updated_by',
 						'P.stmt_ok',
 						'P.stmnt_chk',
+						'U.username as stmnt_chk_user',
+						'P.date_stmnt_chk',
 						'P.purchase_id'
 					]
 				)
+				->leftJoin('users AS U', 'P.stmnt_chk_user', '=', 'U.user_id')
 				->leftJoin('users AS UU', 'P.updated_by', '=', 'UU.user_id')
 				->leftJoin('units AS UN', 'P.unit_id', '=', 'UN.unit_id')
 				->leftJoin('nominal_codes AS N', 'P.net_ext_ID', '=', 'N.net_ext_ID')
 				->leftJoin('tax_codes AS TC', 'TC.tax_code_ID', '=', 'P.tax_code_id')
+				->leftJoin('currencies AS C', 'C.currency_id', '=', 'P.currency_id')
+				->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+					$join->on('ER.domestic_currency_id', 'P.currency_id')
+						->where('ER.foreign_currency_id', $unitCurrency)
+						->whereRaw('ER.date = P.date');
+				})
 				->whereIn('P.unit_id', $userUnits)
 				->whereBetween('P.receipt_invoice_date', [$fromDate, $toDate])
 				->where('P.deleted', 0);
@@ -446,6 +473,8 @@ class ReportController extends Controller
 							'P.receipt_invoice_date',
 							'P.purchase_details',
 							'N.net_ext',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'P.goods',
 							'P.vat',
 							'P.gross',
@@ -470,6 +499,12 @@ class ReportController extends Controller
 					->leftJoin('units AS UN', 'P.unit_id', '=', 'UN.unit_id')
 					->leftJoin('nominal_codes AS N', 'P.net_ext_ID', '=', 'N.net_ext_ID')
 					->leftJoin('tax_codes AS TC', 'TC.tax_code_ID', '=', 'P.tax_code_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'P.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'P.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = P.date');
+					})
 					->where('P.unit_id', $unitId)
 					->where('P.deleted', 0);
 			} else {
@@ -487,6 +522,8 @@ class ReportController extends Controller
 							'P.receipt_invoice_date',
 							'P.purchase_details',
 							'N.net_ext',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'P.goods',
 							'P.vat',
 							'P.gross',
@@ -501,7 +538,7 @@ class ReportController extends Controller
 							'UU.username as updated_by',
 							'P.stmt_ok',
 							'P.stmnt_chk',
-							'U.username  as stmnt_chk_user',
+							'U.username as stmnt_chk_user',
 							'P.date_stmnt_chk',
 							'P.purchase_id'
 						]
@@ -511,6 +548,12 @@ class ReportController extends Controller
 					->leftJoin('units AS UN', 'P.unit_id', '=', 'UN.unit_id')
 					->leftJoin('nominal_codes AS N', 'P.net_ext_ID', '=', 'N.net_ext_ID')
 					->leftJoin('tax_codes AS TC', 'TC.tax_code_ID', '=', 'P.tax_code_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'P.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.foreign_currency_id', '=', 'P.currency_id')
+							->where('ER.domestic_currency_id', $unitCurrency)
+							->whereRaw('ER.date = P.date');
+					})
 					->where('P.unit_id', $unitId)
 					->whereBetween('P.receipt_invoice_date', [$fromDate, $toDate])
 					->where('P.deleted', 0);
@@ -530,6 +573,8 @@ class ReportController extends Controller
 							'P.receipt_invoice_date',
 							'P.purchase_details',
 							'N.net_ext',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'P.goods',
 							'P.vat',
 							'P.gross',
@@ -554,6 +599,12 @@ class ReportController extends Controller
 					->leftJoin('units AS UN', 'P.unit_id', '=', 'UN.unit_id')
 					->leftJoin('nominal_codes AS N', 'P.net_ext_ID', '=', 'N.net_ext_ID')
 					->leftJoin('tax_codes AS TC', 'TC.tax_code_ID', '=', 'P.tax_code_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'P.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'P.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = P.date');
+					})
 					->where('P.unit_id', $unitId)
 					->where('P.deleted', 0);
 			} else {
@@ -570,6 +621,8 @@ class ReportController extends Controller
 							'P.receipt_invoice_date',
 							'P.purchase_details',
 							'N.net_ext',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'P.goods',
 							'P.vat',
 							'P.gross',
@@ -594,6 +647,12 @@ class ReportController extends Controller
 					->leftJoin('units AS UN', 'P.unit_id', '=', 'UN.unit_id')
 					->leftJoin('nominal_codes AS N', 'P.net_ext_ID', '=', 'N.net_ext_ID')
 					->leftJoin('tax_codes AS TC', 'TC.tax_code_ID', '=', 'P.tax_code_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'P.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'P.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = P.date');
+					})
 					->where('P.unit_id', $unitId)
 					->whereBetween('P.receipt_invoice_date', [$fromDate, $toDate])
 					->where('P.deleted', 0);
@@ -612,6 +671,8 @@ class ReportController extends Controller
 						'P.receipt_invoice_date',
 						'P.purchase_details',
 						'N.net_ext',
+						'C.currency_code',
+						'ER.exchange_rate',
 						'P.goods',
 						'P.vat',
 						'P.gross',
@@ -626,13 +687,22 @@ class ReportController extends Controller
 						'UU.username as updated_by',
 						'P.stmt_ok',
 						'P.stmnt_chk',
+						'U.username as stmnt_chk_user',
+						'P.date_stmnt_chk',
 						'P.purchase_id'
 					]
 				)
+				->leftJoin('users AS U', 'P.stmnt_chk_user', '=', 'U.user_id')
 				->leftJoin('users AS UU', 'P.updated_by', '=', 'UU.user_id')
 				->leftJoin('units AS UN', 'P.unit_id', '=', 'UN.unit_id')
 				->leftJoin('nominal_codes AS N', 'P.net_ext_ID', '=', 'N.net_ext_ID')
 				->leftJoin('tax_codes AS TC', 'TC.tax_code_ID', '=', 'P.tax_code_id')
+				->leftJoin('currencies AS C', 'C.currency_id', '=', 'P.currency_id')
+				->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+					$join->on('ER.domestic_currency_id', 'P.currency_id')
+						->where('ER.foreign_currency_id', $unitCurrency)
+						->whereRaw('ER.date = P.date');
+				})
 				->where('P.unit_id', $unitId)
 				->whereBetween('P.receipt_invoice_date', [$fromDate, $toDate])
 				->where('P.deleted', 0);
@@ -642,6 +712,21 @@ class ReportController extends Controller
 			return Datatables::of($purchases)
 				->setRowId(function ($purchase) {
 					return 'tr_' . $purchase->purchase_id;
+				})
+				->setRowClass(function ($purchase) {
+					if ($purchase->stmt_ok == 1) {
+						return 'orange-row';
+					}
+
+					if ($purchase->stmnt_chk == 1) {
+						return 'green-row';
+					}
+
+					if ($purchase->exchange_rate != 1) {
+						return 'blue-row';
+					}
+
+					return '';
 				})
 				->addColumn('checkbox', function ($purchase) {
 					return '<input name="del_chks" type="checkbox" class="checkboxs" value="' . $purchase->purchase_id . '">';
@@ -677,17 +762,35 @@ class ReportController extends Controller
 				->editColumn('time_updated', function ($purchase) {
 					return !is_null($purchase->time_updated) ? Carbon::parse($purchase->time_updated)->format('d-m-Y H:i:s') : '';
 				})
+				->editColumn('goods', function ($purchase) {
+					return $purchase->goods * $purchase->exchange_rate;
+				})
+				->editColumn('vat', function ($purchase) {
+					return $purchase->vat * $purchase->exchange_rate;
+				})
+				->editColumn('gross', function ($purchase) {
+					return $purchase->gross * $purchase->exchange_rate;
+				})
+				->editColumn('goods_total', function ($purchase) {
+					return $purchase->goods_total * $purchase->exchange_rate;
+				})
+				->editColumn('vat_total', function ($purchase) {
+					return $purchase->vat_total * $purchase->exchange_rate;
+				})
+				->editColumn('gross_total', function ($purchase) {
+					return $purchase->gross_total * $purchase->exchange_rate;
+				})
 				->filterColumn('P.receipt_invoice_date', function ($query, $keyword) {
 					$query->whereRaw("DATE_FORMAT(receipt_invoice_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				})
 				->filterColumn('P.date_stmnt_chk', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(date_stmnt_chk,'%d-%m-%Y %H:%i:%s') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(P.date_stmnt_chk,'%d-%m-%Y %H:%i:%s') like ?", ["%$keyword%"]);
 				})
 				->filterColumn('P.time_inserted', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(time_inserted,'%d-%m-%Y %H:%i:%s') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(P.time_inserted,'%d-%m-%Y %H:%i:%s') like ?", ["%$keyword%"]);
 				})
 				->filterColumn('P.time_updated', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(time_updated,'%d-%m-%Y  %H:%i:%s') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(P.time_updated,'%d-%m-%Y  %H:%i:%s') like ?", ["%$keyword%"]);
 				})
 				->editColumn('record_status', function ($purchase) {
 					$unitId = Cookie::get('purchasesReportUnitIdCookie') != '' ? Cookie::get('purchasesReportUnitIdCookie') : 'All';
@@ -705,6 +808,21 @@ class ReportController extends Controller
 			return Datatables::of($purchases)
 				->setRowId(function ($purchase) {
 					return 'tr_' . $purchase->purchase_id;
+				})
+				->setRowClass(function ($purchase) {
+					if ($purchase->stmt_ok == 1) {
+						return 'orange-row';
+					}
+
+					if ($purchase->stmnt_chk == 1) {
+						return 'green-row';
+					}
+
+					if ($purchase->exchange_rate != 1) {
+						return 'blue-row';
+					}
+
+					return '';
 				})
 				->addColumn('action', function ($purchase) {
 					$purchasesData = \DB::table('purchases')->select('stmt_ok', 'stmnt_chk')->where('purchase_id', $purchase->purchase_id)->first();
@@ -737,17 +855,35 @@ class ReportController extends Controller
 				->editColumn('time_updated', function ($purchase) {
 					return !is_null($purchase->time_updated) ? Carbon::parse($purchase->time_updated)->format('d-m-Y H:i:s') : '';
 				})
+				->editColumn('goods', function ($purchase) {
+					return $purchase->goods * $purchase->exchange_rate;
+				})
+				->editColumn('vat', function ($purchase) {
+					return $purchase->vat * $purchase->exchange_rate;
+				})
+				->editColumn('gross', function ($purchase) {
+					return $purchase->gross * $purchase->exchange_rate;
+				})
+				->editColumn('goods_total', function ($purchase) {
+					return $purchase->goods_total * $purchase->exchange_rate;
+				})
+				->editColumn('vat_total', function ($purchase) {
+					return $purchase->vat_total * $purchase->exchange_rate;
+				})
+				->editColumn('gross_total', function ($purchase) {
+					return $purchase->gross_total * $purchase->exchange_rate;
+				})
 				->filterColumn('P.receipt_invoice_date', function ($query, $keyword) {
 					$query->whereRaw("DATE_FORMAT(receipt_invoice_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				})
 				->filterColumn('P.date_stmnt_chk', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(date_stmnt_chk,'%d-%m-%Y %H:%i:%s') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(P.date_stmnt_chk,'%d-%m-%Y %H:%i:%s') like ?", ["%$keyword%"]);
 				})
 				->filterColumn('P.time_inserted', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(time_inserted,'%d-%m-%Y %H:%i:%s') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(P.time_inserted,'%d-%m-%Y %H:%i:%s') like ?", ["%$keyword%"]);
 				})
 				->filterColumn('P.time_updated', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(time_updated,'%d-%m-%Y  %H:%i:%s') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(P.time_updated,'%d-%m-%Y  %H:%i:%s') like ?", ["%$keyword%"]);
 				})
 				->make();
 		} else {
@@ -755,10 +891,25 @@ class ReportController extends Controller
 				->setRowId(function ($purchase) {
 					return 'tr_' . $purchase->purchase_id;
 				})
-				->addColumn('user_stmnt_chk', function ($purchase) {
+				->setRowClass(function ($purchase) {
+					if ($purchase->stmt_ok == 1) {
+						return 'orange-row';
+					}
+
+					if ($purchase->stmnt_chk == 1) {
+						return 'green-row';
+					}
+
+					if ($purchase->exchange_rate != 1) {
+						return 'blue-row';
+					}
+
 					return '';
 				})
-				->addColumn('date_stmnt_chk', function ($purchase) {
+				->editColumn('stmnt_chk_user', function ($purchase) {
+					return '';
+				})
+				->editColumn('date_stmnt_chk', function ($purchase) {
 					return '';
 				})
 				->addColumn('action', function ($purchase) {
@@ -789,14 +940,32 @@ class ReportController extends Controller
 				->editColumn('time_updated', function ($purchase) {
 					return !is_null($purchase->time_updated) ? Carbon::parse($purchase->time_updated)->format('d-m-Y H:i:s') : '';
 				})
+				->editColumn('goods', function ($purchase) {
+					return $purchase->goods * $purchase->exchange_rate;
+				})
+				->editColumn('vat', function ($purchase) {
+					return $purchase->vat * $purchase->exchange_rate;
+				})
+				->editColumn('gross', function ($purchase) {
+					return $purchase->gross * $purchase->exchange_rate;
+				})
+				->editColumn('goods_total', function ($purchase) {
+					return $purchase->goods_total * $purchase->exchange_rate;
+				})
+				->editColumn('vat_total', function ($purchase) {
+					return $purchase->vat_total * $purchase->exchange_rate;
+				})
+				->editColumn('gross_total', function ($purchase) {
+					return $purchase->gross_total * $purchase->exchange_rate;
+				})
 				->filterColumn('P.receipt_invoice_date', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(receipt_invoice_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(P.receipt_invoice_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				})
 				->filterColumn('P.time_inserted', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(time_inserted,'%d-%m-%Y %H:%i:%s') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(P.time_inserted,'%d-%m-%Y %H:%i:%s') like ?", ["%$keyword%"]);
 				})
 				->filterColumn('P.time_updated', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(time_updated,'%d-%m-%Y  %H:%i:%s') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(P.time_updated,'%d-%m-%Y  %H:%i:%s') like ?", ["%$keyword%"]);
 				})
 				->make();
 		}
@@ -886,8 +1055,17 @@ class ReportController extends Controller
 			}
 		}
 
-		$goodColumns = range(20, 20 + count($goods) + 1);
+		$goodColumns = range(22, 22 + count($goods) + 1);
 
+		// Currency symbol
+		$unit = Unit::find($unitId);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+
+		$currencySymbol = $defaultCurrency->currency_symbol;
+		if (!is_null($unit) && !is_null($unit->currency)) {
+			$currencySymbol = $unit->currency->currency_symbol;
+		}
+		
 		return view(
 			'reports.sales-summary.grid', [
 				'userId' => $userId,
@@ -898,6 +1076,7 @@ class ReportController extends Controller
 				'notVisiable' => $hiddenColumns,
 				'goods' => $goods,
 				'goodColumns' => json_encode($goodColumns),
+				'currencySymbol' => $currencySymbol
 			]
 		);
 	}
@@ -909,30 +1088,43 @@ class ReportController extends Controller
 		$toDate = $request->to_date;
 		$allRecords = $request->all_records;
 
-		$sales = DB::table('summary_sales_report')
+		// Currencies
+		$unit = Unit::find($unitId);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+		$unitCurrency = !is_null($unit) ? $unit->currency_id : $defaultCurrency->currency_id;
+
+		$sales = DB::table('summary_sales_report as ss')
 			->select([
-				'sale_type',
-				'entry_date',
-				'unit_name',
-				'supervisor',
-				'reg_number',
-				'machine_name',
-				'sale_date',
-				'z_number',
-				'z_food',
-				'z_confect_food',
-				'z_fruit',
-				'z_minerals',
-				'z_confect',
-				'cash_count',
-				'credit_card',
-				'staff_cards',
-				'cash_credit_card',
-				'z_read',
-				'cash_purchase',
-				'credit_sales_id',
-				'id'
+				'ss.sale_type',
+				'ss.entry_date',
+				'ss.unit_name',
+				'ss.supervisor',
+				'ss.reg_number',
+				'ss.machine_name',
+				'ss.sale_date',
+				'ss.z_number',
+				'c.currency_code',
+				'er.exchange_rate',
+				DB::raw('ss.z_food * er.exchange_rate as z_food'),
+				DB::raw('ss.z_confect_food * er.exchange_rate as z_confect_food'),
+				DB::raw('ss.z_fruit * er.exchange_rate as z_fruit'),
+				DB::raw('ss.z_minerals * er.exchange_rate as z_minerals'),
+				DB::raw('ss.z_confect * er.exchange_rate as z_confect'),
+				DB::raw('ss.cash_count * er.exchange_rate as cash_count'),
+				DB::raw('ss.credit_card * er.exchange_rate as credit_card'),
+				DB::raw('ss.staff_cards * er.exchange_rate as staff_cards'),
+				DB::raw('ss.cash_credit_card * er.exchange_rate as cash_credit_card'),
+				DB::raw('ss.z_read * er.exchange_rate as z_read'),
+				DB::raw('ss.cash_purchase * er.exchange_rate as cash_purchase'),
+				'ss.credit_sales_id',
+				'ss.id'
 			])
+			->leftJoin('currencies as c', 'c.currency_id', '=', 'ss.currency_id')
+			->leftJoin('exchange_rates as er', function ($join) use ($unitCurrency) {
+				$join->on('er.domestic_currency_id', 'ss.currency_id')
+					->where('er.foreign_currency_id', $unitCurrency)
+					->whereRaw('er.date = ss.sale_date');
+			})
 			->when($unitId, function ($query) use ($unitId) {
 				return $query->where('unit_id', $unitId);
 			});
@@ -949,7 +1141,10 @@ class ReportController extends Controller
 		}
 
 		$dataTable = Datatables::of($sales)
-			->editColumn('credit_sales_id', function ($sale) {
+			->setRowClass(function ($sale) {
+				return $sale->exchange_rate != 1 ? 'blue-row' : '';
+			})
+			->editColumn('credit_sales_id', function ($sale) use ($unitCurrency) {
 				if ($sale->credit_sales_id == '') {
 					return 0;
 				}
@@ -957,9 +1152,14 @@ class ReportController extends Controller
 				$creditSales = DB::table('credit_sales as cs')
 					->select(
 						[
-							DB::raw('SUM(cs.gross_total) as grossTotal')
+							DB::raw('SUM(cs.gross_total * er.exchange_rate) as grossTotal')
 						]
 					)
+					->leftJoin('exchange_rates as er', function ($join) use ($unitCurrency) {
+						$join->on('er.domestic_currency_id', 'cs.currency_id')
+							->where('er.foreign_currency_id', $unitCurrency)
+							->whereRaw('er.date = cs.sale_date');
+					})
 					->whereIn('cs.credit_sales_id', explode(",", $sale->credit_sales_id))
 					->first();
 
@@ -968,14 +1168,14 @@ class ReportController extends Controller
 			->editColumn('entry_date', function ($sale) {
 				return $sale->entry_date ? Carbon::parse($sale->entry_date)->format('d-m-Y') : '';
 			})
-			->filterColumn('entry_date', function ($query, $keyword) {
-				$query->whereRaw("DATE_FORMAT(entry_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+			->filterColumn('ss.entry_date', function ($query, $keyword) {
+				$query->whereRaw("DATE_FORMAT(ss.entry_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 			})
 			->editColumn('sale_date', function ($sale) {
 				return $sale->sale_date ? Carbon::parse($sale->sale_date)->format('d-m-Y') : '';
 			})
-			->filterColumn('sale_date', function ($query, $keyword) {
-				$query->whereRaw("DATE_FORMAT(sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+			->filterColumn('ss.sale_date', function ($query, $keyword) {
+				$query->whereRaw("DATE_FORMAT(ss.sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 			});
 
 		// Goods columns
@@ -1002,10 +1202,10 @@ class ReportController extends Controller
 					return 0;
 				}
 
-				return $vendingSaleGood->amount;
+				return $vendingSaleGood->amount * $sale->exchange_rate;
 			});
 		}
-
+		
 		// Vend Total column
 		$dataTable->addColumn('Vend Total', function ($sale) {
 			return VendingSaleGood::where('vending_sales_id', $sale->id)->sum('amount');
@@ -1014,10 +1214,10 @@ class ReportController extends Controller
 		// Vend Total column
 		$dataTable->addColumn('Total Sales', function ($sale) {
 			$vendTotal = VendingSaleGood::where('vending_sales_id', $sale->id)->sum('amount');
-
+			
 			return $vendTotal + $sale->z_read;
 		});
-
+		
 		// Remove first columns, which contain ID
 		$dataTable->removeColumn('id');
 
@@ -1069,6 +1269,15 @@ class ReportController extends Controller
 			->get()
 			->implode('column_index', ',');
 
+		// Currency symbol
+		$unit = Unit::find($unitId);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+
+		$currencySymbol = $defaultCurrency->currency_symbol;
+		if (!is_null($unit) && !is_null($unit->currency)) {
+			$currencySymbol = $unit->currency->currency_symbol;
+		}
+
 		return view(
 			'reports.cash-sales.grid', [
 				'userId' => $userId,
@@ -1078,14 +1287,14 @@ class ReportController extends Controller
 				'allRecords' => $allRecords,
 				'sheetId' => $sheetId,
 				'notVisiable' => $hiddenColumns,
-				'isSuLevel' => Gate::allows('su-user-group')
+				'isSuLevel' => Gate::allows('su-user-group'),
+				'currencySymbol' => $currencySymbol
 			]
 		);
 	}
 
 	public function cashSalesGridJson(Request $request)
 	{
-		$userId = session()->get('userId');
 		$unitId = $request->unit_id;
 		$fromDate = $request->from_date;
 		$toDate = $request->to_date;
@@ -1093,13 +1302,14 @@ class ReportController extends Controller
 		// Get list of units for current user level
 		$userUnits = $this->getUserUnits(true)->pluck('unit_id');
 
+		// Currency
+		$unit = Unit::find($unitId);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+		$unitCurrency = !is_null($unit) ? $unit->currency_id : $defaultCurrency->currency_id;
+
 		if ($unitId == '' && Gate::allows('su-user-group')) {
 			if ($request->all_records) {
 				$cashSales = \DB::table('cash_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
 					->select(
 						[
 							'cs.cash_sales_id',
@@ -1110,6 +1320,8 @@ class ReportController extends Controller
 							'cs.reg_number',
 							'cs.sale_date',
 							'cs.z_number',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'cs.z_food',
 							'cs.z_confect_food',
 							'cs.z_fruit',
@@ -1125,52 +1337,9 @@ class ReportController extends Controller
 							'cs.credit_sales_id',
 							'cs.over_ring',
 							'cs.cash_var',
-							'l.cash',
-							'l.coin',
-							DB::raw('(l.cash + l.coin) as lodge_total'),
-							'l.date as lodge_date',
-							'l.slip_number',
-							'l.bag_number',
-							'cs.sale_details',
-							'cs.cash_sales_id',
-							'uu.username as update_by',
-							'cs.updated_at'
-						]
-					);
-			} else {
-				$cashSales = \DB::table('cash_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
-					->select(
-						[
-							'cs.cash_sales_id',
-							'cs.cash_sales_id',
-							'cs.date',
-							'un.unit_name',
-							'u.username',
-							'cs.reg_number',
-							'cs.sale_date',
-							'cs.z_number',
-							'cs.z_food',
-							'cs.z_confect_food',
-							'cs.z_fruit',
-							'cs.z_minerals',
-							'cs.z_confect',
-							'cs.cash_count',
-							'cs.credit_card',
-							'cs.staff_cards',
-							'cs.cash_credit_card',
-							'cs.z_read',
-							'cs.variance',
-							'cs.cash_purchase',
-							'cs.credit_sales_id',
-							'cs.over_ring',
-							'cs.cash_var',
-							'l.cash',
-							'l.coin',
-							DB::raw('(l.cash + l.coin) as lodge_total'),
+							'l.cash as lodge_cash',
+							'l.coin as lodge_coin',
+							DB::raw('(l.cash + l.coin) as lodge_amount'),
 							'l.date as lodge_date',
 							'l.slip_number',
 							'l.bag_number',
@@ -1180,15 +1349,72 @@ class ReportController extends Controller
 							'cs.updated_at'
 						]
 					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					});
+			} else {
+				$cashSales = \DB::table('cash_sales AS cs')
+					->select(
+						[
+							'cs.cash_sales_id',
+							'cs.cash_sales_id',
+							'cs.date',
+							'un.unit_name',
+							'u.username',
+							'cs.reg_number',
+							'cs.sale_date',
+							'cs.z_number',
+							'C.currency_code',
+							'ER.exchange_rate',
+							'cs.z_food',
+							'cs.z_confect_food',
+							'cs.z_fruit',
+							'cs.z_minerals',
+							'cs.z_confect',
+							'cs.cash_count',
+							'cs.credit_card',
+							'cs.staff_cards',
+							'cs.cash_credit_card',
+							'cs.z_read',
+							'cs.variance',
+							'cs.cash_purchase',
+							'cs.credit_sales_id',
+							'cs.over_ring',
+							'cs.cash_var',
+							'l.cash as lodge_cash',
+							'l.coin as lodge_coin',
+							DB::raw('(l.cash + l.coin) as lodge_amount'),
+							'l.date as lodge_date',
+							'l.slip_number',
+							'l.bag_number',
+							'cs.sale_details',
+							'cs.cash_sales_id',
+							'uu.username as update_by',
+							'cs.updated_at'
+						]
+					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					})
 					->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 			}
 		} elseif ($unitId == '' && Gate::allows('hq-user-group')) {
 			if ($request->all_records) {
 				$cashSales = \DB::table('cash_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
 					->select(
 						[
 							'cs.cash_sales_id',
@@ -1198,6 +1424,8 @@ class ReportController extends Controller
 							'cs.reg_number',
 							'cs.sale_date',
 							'cs.z_number',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'cs.z_food',
 							'cs.z_confect_food',
 							'cs.z_fruit',
@@ -1213,51 +1441,9 @@ class ReportController extends Controller
 							'cs.credit_sales_id',
 							'cs.over_ring',
 							'cs.cash_var',
-							'l.cash',
-							'l.coin',
-							DB::raw('(l.cash + l.coin) as lodge_total'),
-							'l.date as lodge_date',
-							'l.slip_number',
-							'l.bag_number',
-							'cs.sale_details',
-							'cs.cash_sales_id',
-							'uu.username as update_by',
-							'cs.updated_at'
-						]
-					);
-			} else {
-				$cashSales = \DB::table('cash_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
-					->select(
-						[
-							'cs.cash_sales_id',
-							'cs.date',
-							'un.unit_name',
-							'u.username',
-							'cs.reg_number',
-							'cs.sale_date',
-							'cs.z_number',
-							'cs.z_food',
-							'cs.z_confect_food',
-							'cs.z_fruit',
-							'cs.z_minerals',
-							'cs.z_confect',
-							'cs.cash_count',
-							'cs.credit_card',
-							'cs.staff_cards',
-							'cs.cash_credit_card',
-							'cs.z_read',
-							'cs.variance',
-							'cs.cash_purchase',
-							'cs.credit_sales_id',
-							'cs.over_ring',
-							'cs.cash_var',
-							'l.cash',
-							'l.coin',
-							DB::raw('(l.cash + l.coin) as lodge_total'),
+							'l.cash as lodge_cash',
+							'l.coin as lodge_coin',
+							DB::raw('(l.cash + l.coin) as lodge_amount'),
 							'l.date as lodge_date',
 							'l.slip_number',
 							'l.bag_number',
@@ -1267,14 +1453,70 @@ class ReportController extends Controller
 							'cs.updated_at'
 						]
 					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					});
+			} else {
+				$cashSales = \DB::table('cash_sales AS cs')
+					->select(
+						[
+							'cs.cash_sales_id',
+							'cs.date',
+							'un.unit_name',
+							'u.username',
+							'cs.reg_number',
+							'cs.sale_date',
+							'cs.z_number',
+							'C.currency_code',
+							'ER.exchange_rate',
+							'cs.z_food',
+							'cs.z_confect_food',
+							'cs.z_fruit',
+							'cs.z_minerals',
+							'cs.z_confect',
+							'cs.cash_count',
+							'cs.credit_card',
+							'cs.staff_cards',
+							'cs.cash_credit_card',
+							'cs.z_read',
+							'cs.variance',
+							'cs.cash_purchase',
+							'cs.credit_sales_id',
+							'cs.over_ring',
+							'cs.cash_var',
+							'l.cash as lodge_cash',
+							'l.coin as lodge_coin',
+							DB::raw('(l.cash + l.coin) as lodge_amount'),
+							'l.date as lodge_date',
+							'l.slip_number',
+							'l.bag_number',
+							'cs.sale_details',
+							'cs.cash_sales_id',
+							'uu.username as update_by',
+							'cs.updated_at'
+						]
+					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					})
 					->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 			}
 		} elseif ($unitId == '' && Gate::allows('operations-user-group')) {
 			$cashSales = \DB::table('cash_sales AS cs')
-				->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-				->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
-				->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-				->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
 				->select(
 					[
 						'cs.cash_sales_id',
@@ -1284,6 +1526,8 @@ class ReportController extends Controller
 						'cs.reg_number',
 						'cs.sale_date',
 						'cs.z_number',
+						'C.currency_code',
+						'ER.exchange_rate',
 						'cs.z_food',
 						'cs.z_confect_food',
 						'cs.z_fruit',
@@ -1299,9 +1543,9 @@ class ReportController extends Controller
 						'cs.credit_sales_id',
 						'cs.over_ring',
 						'cs.cash_var',
-						'l.cash',
-						'l.coin',
-						DB::raw('(l.cash + l.coin) as lodge_total'),
+						'l.cash as lodge_cash',
+						'l.coin as lodge_coin',
+						DB::raw('(l.cash + l.coin) as lodge_amount'),
 						'l.date as lodge_date',
 						'l.slip_number',
 						'l.bag_number',
@@ -1311,14 +1555,21 @@ class ReportController extends Controller
 						'cs.updated_at'
 					]
 				)
+				->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+				->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
+				->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+				->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
 				->whereIn('cs.unit_id', $userUnits)
+				->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+				->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+					$join->on('ER.domestic_currency_id', 'cs.currency_id')
+						->where('ER.foreign_currency_id', $unitCurrency)
+						->whereRaw('ER.date = cs.sale_date');
+				})
+				->whereIn('cs.unit_id', $userUnits->pluck('unit_id'))
 				->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 		} elseif ($unitId == '' && Gate::allows('unit-user-group')) {
 			$cashSales = \DB::table('cash_sales AS cs')
-				->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-				->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
-				->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-				->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
 				->select(
 					[
 						'cs.cash_sales_id',
@@ -1328,6 +1579,8 @@ class ReportController extends Controller
 						'cs.reg_number',
 						'cs.sale_date',
 						'cs.z_number',
+						'C.currency_code',
+						'ER.exchange_rate',
 						'cs.z_food',
 						'cs.z_confect_food',
 						'cs.z_fruit',
@@ -1343,9 +1596,9 @@ class ReportController extends Controller
 						'cs.credit_sales_id',
 						'cs.over_ring',
 						'cs.cash_var',
-						'l.cash',
-						'l.coin',
-						DB::raw('(l.cash + l.coin) as lodge_total'),
+						'l.cash as lodge_cash',
+						'l.coin as lodge_coin',
+						DB::raw('(l.cash + l.coin) as lodge_amount'),
 						'l.date as lodge_date',
 						'l.slip_number',
 						'l.bag_number',
@@ -1355,15 +1608,22 @@ class ReportController extends Controller
 						'cs.updated_at'
 					]
 				)
+				->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+				->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
+				->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+				->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
 				->whereIn('cs.unit_id', $userUnits)
+				->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+				->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+					$join->on('ER.domestic_currency_id', 'cs.currency_id')
+						->where('ER.foreign_currency_id', $unitCurrency)
+						->whereRaw('ER.date = cs.sale_date');
+				})
+				->whereIn('cs.unit_id', $userUnits->pluck('unit_id'))
 				->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 		} elseif ($unitId != '' && Gate::allows('su-user-group')) {
 			if ($request->all_records) {
 				$cashSales = \DB::table('cash_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
 					->select(
 						[
 							'cs.cash_sales_id',
@@ -1374,6 +1634,8 @@ class ReportController extends Controller
 							'cs.reg_number',
 							'cs.sale_date',
 							'cs.z_number',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'cs.z_food',
 							'cs.z_confect_food',
 							'cs.z_fruit',
@@ -1389,9 +1651,9 @@ class ReportController extends Controller
 							'cs.credit_sales_id',
 							'cs.over_ring',
 							'cs.cash_var',
-							'l.cash',
-							'l.coin',
-							DB::raw('(l.cash + l.coin) as lodge_total'),
+							'l.cash as lodge_cash',
+							'l.coin as lodge_coin',
+							DB::raw('(l.cash + l.coin) as lodge_amount'),
 							'l.date as lodge_date',
 							'l.slip_number',
 							'l.bag_number',
@@ -1401,13 +1663,19 @@ class ReportController extends Controller
 							'cs.updated_at'
 						]
 					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					})
 					->where('cs.unit_id', $unitId);
 			} else {
 				$cashSales = \DB::table('cash_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
 					->select(
 						[
 							'cs.cash_sales_id',
@@ -1418,6 +1686,8 @@ class ReportController extends Controller
 							'cs.reg_number',
 							'cs.sale_date',
 							'cs.z_number',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'cs.z_food',
 							'cs.z_confect_food',
 							'cs.z_fruit',
@@ -1433,9 +1703,9 @@ class ReportController extends Controller
 							'cs.credit_sales_id',
 							'cs.over_ring',
 							'cs.cash_var',
-							'l.cash',
-							'l.coin',
-							DB::raw('(l.cash + l.coin) as lodge_total'),
+							'l.cash as lodge_cash',
+							'l.coin as lodge_coin',
+							DB::raw('(l.cash + l.coin) as lodge_amount'),
 							'l.date as lodge_date',
 							'l.slip_number',
 							'l.bag_number',
@@ -1445,16 +1715,22 @@ class ReportController extends Controller
 							'cs.updated_at'
 						]
 					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					})
 					->where('cs.unit_id', $unitId)
 					->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 			}
 		} elseif ($unitId != '' && Gate::allows('hq-user-group')) {
 			if ($request->all_records) {
 				$cashSales = \DB::table('cash_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
 					->select(
 						[
 							'cs.cash_sales_id',
@@ -1464,6 +1740,8 @@ class ReportController extends Controller
 							'cs.reg_number',
 							'cs.sale_date',
 							'cs.z_number',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'cs.z_food',
 							'cs.z_confect_food',
 							'cs.z_fruit',
@@ -1479,9 +1757,9 @@ class ReportController extends Controller
 							'cs.credit_sales_id',
 							'cs.over_ring',
 							'cs.cash_var',
-							'l.cash',
-							'l.coin',
-							DB::raw('(l.cash + l.coin) as lodge_total'),
+							'l.cash as lodge_cash',
+							'l.coin as lodge_coin',
+							DB::raw('(l.cash + l.coin) as lodge_amount'),
 							'l.date as lodge_date',
 							'l.slip_number',
 							'l.bag_number',
@@ -1491,13 +1769,19 @@ class ReportController extends Controller
 							'cs.updated_at'
 						]
 					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					})
 					->where('cs.unit_id', $unitId);
 			} else {
 				$cashSales = \DB::table('cash_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
 					->select(
 						[
 							'cs.cash_sales_id',
@@ -1507,6 +1791,8 @@ class ReportController extends Controller
 							'cs.reg_number',
 							'cs.sale_date',
 							'cs.z_number',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'cs.z_food',
 							'cs.z_confect_food',
 							'cs.z_fruit',
@@ -1522,9 +1808,9 @@ class ReportController extends Controller
 							'cs.credit_sales_id',
 							'cs.over_ring',
 							'cs.cash_var',
-							'l.cash',
-							'l.coin',
-							DB::raw('(l.cash + l.coin) as lodge_total'),
+							'l.cash as lodge_cash',
+							'l.coin as lodge_coin',
+							DB::raw('(l.cash + l.coin) as lodge_amount'),
 							'l.date as lodge_date',
 							'l.slip_number',
 							'l.bag_number',
@@ -1534,15 +1820,21 @@ class ReportController extends Controller
 							'cs.updated_at'
 						]
 					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					})
 					->where('cs.unit_id', $unitId)
 					->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 			}
 		} else {
 			$cashSales = \DB::table('cash_sales AS cs')
-				->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-				->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
-				->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-				->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
 				->select(
 					[
 						'cs.cash_sales_id',
@@ -1552,6 +1844,8 @@ class ReportController extends Controller
 						'cs.reg_number',
 						'cs.sale_date',
 						'cs.z_number',
+						'C.currency_code',
+						'ER.exchange_rate',
 						'cs.z_food',
 						'cs.z_confect_food',
 						'cs.z_fruit',
@@ -1567,9 +1861,9 @@ class ReportController extends Controller
 						'cs.credit_sales_id',
 						'cs.over_ring',
 						'cs.cash_var',
-						'l.cash',
-						'l.coin',
-						DB::raw('(l.cash + l.coin) as lodge_total'),
+						'l.cash as lodge_cash',
+						'l.coin as lodge_coin',
+						DB::raw('(l.cash + l.coin) as lodge_amount'),
 						'l.date as lodge_date',
 						'l.slip_number',
 						'l.bag_number',
@@ -1579,6 +1873,16 @@ class ReportController extends Controller
 						'cs.updated_at'
 					]
 				)
+				->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+				->leftJoin('users AS uu', 'cs.updated_by', '=', 'uu.user_id')
+				->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+				->leftJoin('lodgements AS l', 'cs.lodgement_id', '=', 'l.lodgement_id')
+				->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+				->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+					$join->on('ER.domestic_currency_id', 'cs.currency_id')
+						->where('ER.foreign_currency_id', $unitCurrency)
+						->whereRaw('ER.date = cs.sale_date');
+				})
 				->where('cs.unit_id', $unitId)
 				->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 		}
@@ -1587,6 +1891,9 @@ class ReportController extends Controller
 			return Datatables::of($cashSales)
 				->setRowId(function ($cashSale) {
 					return 'tr_' . $cashSale->cash_sales_id;
+				})
+				->setRowClass(function ($cashSales) {
+					return $cashSales->exchange_rate != 1 ? 'blue-row' : '';
 				})
 				->addColumn('checkbox', function ($cashSale) {
 					$cashSalesData = \DB::table('cash_sales')->select('closed')->where('cash_sales_id', $cashSale->cash_sales_id)->first();
@@ -1599,7 +1906,37 @@ class ReportController extends Controller
 				->editColumn('cash_sales_id', function ($cashSale) {
 					return '<a target="_blank" href="/sheets/cash-sales/' . $cashSale->cash_sales_id . '">' . $cashSale->cash_sales_id . '</a>';
 				})
-				->editColumn('credit_sales_id', function ($cashSale) {
+				->editColumn('z_food', function ($cashSale) {
+					return $cashSale->z_food * $cashSale->exchange_rate;
+				})
+				->editColumn('z_confect_food', function ($cashSale) {
+					return $cashSale->z_confect_food * $cashSale->exchange_rate;
+				})
+				->editColumn('z_fruit', function ($cashSale) {
+					return $cashSale->z_fruit * $cashSale->exchange_rate;
+				})
+				->editColumn('z_minerals', function ($cashSale) {
+					return $cashSale->z_minerals * $cashSale->exchange_rate;
+				})
+				->editColumn('z_confect', function ($cashSale) {
+					return $cashSale->z_confect * $cashSale->exchange_rate;
+				})
+				->editColumn('cash_count', function ($cashSale) {
+					return $cashSale->cash_count * $cashSale->exchange_rate;
+				})
+				->editColumn('credit_card', function ($cashSale) {
+					return $cashSale->credit_card * $cashSale->exchange_rate;
+				})
+				->editColumn('staff_cards', function ($cashSale) {
+					return $cashSale->staff_cards * $cashSale->exchange_rate;
+				})
+				->editColumn('cash_credit_card', function ($cashSale) {
+					return $cashSale->cash_credit_card * $cashSale->exchange_rate;
+				})
+				->editColumn('z_read', function ($cashSale) {
+					return $cashSale->z_read * $cashSale->exchange_rate;
+				})
+				->editColumn('credit_sales_id', function ($cashSale) use ($unitCurrency) {
 					if ($cashSale->credit_sales_id == '') {
 						return 0;
 					}
@@ -1607,39 +1944,64 @@ class ReportController extends Controller
 					$creditSales = DB::table('credit_sales as cs')
 						->select(
 							[
-								DB::raw('SUM(cs.gross_total) as grossTotal')
+								DB::raw('SUM(cs.gross_total * er.exchange_rate) as grossTotal')
 							]
 						)
+						->leftJoin('exchange_rates as er', function ($join) use ($unitCurrency) {
+							$join->on('er.domestic_currency_id', 'cs.currency_id')
+								->where('er.foreign_currency_id', $unitCurrency)
+								->whereRaw('er.date = cs.sale_date');
+						})
 						->whereIn('cs.credit_sales_id', explode(",", $cashSale->credit_sales_id))
 						->first();
 
 					return $creditSales->grossTotal;
 				})
-				->editColumn('variance', function ($cashSale) {
-					$variance_total = 0;
-					$ztotal = $cashSale->z_food + $cashSale->z_confect_food + $cashSale->z_minerals + $cashSale->z_confect + $cashSale->z_fruit;
-
-					$cashCreditCardTotal = $cashSale->cash_count + $cashSale->credit_card + $cashSale->staff_cards;
-
+				->editColumn('variance', function ($cashSale) use ($unitCurrency) {
 					$returnCrSale = 0;
+
 					if ($cashSale->credit_sales_id != '') {
 						$creditSales = DB::table('credit_sales as cs')
 							->select(
 								[
-									DB::raw('SUM(cs.gross_total) as grossTotal')
+									DB::raw('SUM(cs.gross_total * er.exchange_rate) as grossTotal')
 								]
 							)
+							->leftJoin('exchange_rates as er', function ($join) use ($unitCurrency) {
+								$join->on('er.domestic_currency_id', 'cs.currency_id')
+									->where('er.foreign_currency_id', $unitCurrency)
+									->whereRaw('er.date = cs.sale_date');
+							})
 							->whereIn('cs.credit_sales_id', explode(",", $cashSale->credit_sales_id))
 							->first();
 
 						$returnCrSale = $creditSales->grossTotal;
 					}
 
-					if (!empty($ztotal) && !empty($cashCreditCardTotal)) {
-						$variance_total = $cashCreditCardTotal + $returnCrSale + $cashSale->cash_purchase - $ztotal;
-					}
+					$ztotal = $cashSale->z_food + $cashSale->z_confect_food + $cashSale->z_minerals + $cashSale->z_confect + $cashSale->z_fruit;
+					$cashCreditCardTotal = $cashSale->cash_count + $cashSale->credit_card + $cashSale->staff_cards;
+
+					$variance_total = ($cashCreditCardTotal + $cashSale->cash_purchase - $ztotal) * $cashSale->exchange_rate + $returnCrSale;
 
 					return (round($variance_total, 2));
+				})
+				->editColumn('cash_purchase', function ($cashSale) {
+					return $cashSale->cash_purchase * $cashSale->exchange_rate;
+				})
+				->editColumn('over_ring', function ($cashSale) {
+					return $cashSale->over_ring * $cashSale->exchange_rate;
+				})
+				->editColumn('cash_var', function ($cashSale) {
+					return $cashSale->cash_var * $cashSale->exchange_rate;
+				})
+				->editColumn('lodge_cash', function ($cashSale) {
+					return $cashSale->lodge_cash * $cashSale->exchange_rate;
+				})
+				->editColumn('lodge_coin', function ($cashSale) {
+					return $cashSale->lodge_coin * $cashSale->exchange_rate;
+				})
+				->editColumn('lodge_amount', function ($cashSale) {
+					return $cashSale->lodge_amount * $cashSale->exchange_rate;
 				})
 				->editColumn('update_by', function ($cashSale) {
 					if ($cashSale->update_by != NULL) {
@@ -1670,19 +2032,19 @@ class ReportController extends Controller
 				->editColumn('date', function ($cashSale) {
 					return $cashSale->date ? with(new Carbon($cashSale->date))->format('d-m-Y') : '';
 				})
-				->filterColumn('date', function ($query, $keyword) {
+				->filterColumn('cs.date', function ($query, $keyword) {
 					$query->whereRaw("DATE_FORMAT(cs.date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				})
 				->editColumn('sale_date', function ($cashSale) {
 					return $cashSale->sale_date ? with(new Carbon($cashSale->sale_date))->format('d-m-Y') : '';
 				})
-				->filterColumn('sale_date', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+				->filterColumn('cs.sale_date', function ($query, $keyword) {
+					$query->whereRaw("DATE_FORMAT(cs.sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				})
 				->editColumn('lodge_date', function ($cashSale) {
 					return $cashSale->lodge_date != '0000-00-00' ? with(new Carbon($cashSale->lodge_date))->format('d-m-Y') : '';
 				})
-				->filterColumn('lodge_date', function ($query, $keyword) {
+				->filterColumn('l.date', function ($query, $keyword) {
 					$query->whereRaw("DATE_FORMAT(l.date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				})
 				->make();
@@ -1691,10 +2053,43 @@ class ReportController extends Controller
 				->setRowId(function ($cashSale) {
 					return 'tr_' . $cashSale->cash_sales_id;
 				})
+				->setRowClass(function ($cashSales) {
+					return $cashSales->exchange_rate != 1 ? 'blue-row' : '';
+				})
 				->editColumn('cash_sales_id', function ($cashSale) {
 					return '<a target="_blank" href="/sheets/cash-sales/' . $cashSale->cash_sales_id . '">' . $cashSale->cash_sales_id . '</a>';
 				})
-				->editColumn('credit_sales_id', function ($cashSale) {
+				->editColumn('z_food', function ($cashSale) {
+					return $cashSale->z_food * $cashSale->exchange_rate;
+				})
+				->editColumn('z_confect_food', function ($cashSale) {
+					return $cashSale->z_confect_food * $cashSale->exchange_rate;
+				})
+				->editColumn('z_fruit', function ($cashSale) {
+					return $cashSale->z_fruit * $cashSale->exchange_rate;
+				})
+				->editColumn('z_minerals', function ($cashSale) {
+					return $cashSale->z_minerals * $cashSale->exchange_rate;
+				})
+				->editColumn('z_confect', function ($cashSale) {
+					return $cashSale->z_confect * $cashSale->exchange_rate;
+				})
+				->editColumn('cash_count', function ($cashSale) {
+					return $cashSale->cash_count * $cashSale->exchange_rate;
+				})
+				->editColumn('credit_card', function ($cashSale) {
+					return $cashSale->credit_card * $cashSale->exchange_rate;
+				})
+				->editColumn('staff_cards', function ($cashSale) {
+					return $cashSale->staff_cards * $cashSale->exchange_rate;
+				})
+				->editColumn('cash_credit_card', function ($cashSale) {
+					return $cashSale->cash_credit_card * $cashSale->exchange_rate;
+				})
+				->editColumn('z_read', function ($cashSale) {
+					return $cashSale->z_read * $cashSale->exchange_rate;
+				})
+				->editColumn('credit_sales_id', function ($cashSale) use ($unitCurrency) {
 					if ($cashSale->credit_sales_id == '') {
 						return 0;
 					}
@@ -1702,39 +2097,64 @@ class ReportController extends Controller
 					$creditSales = DB::table('credit_sales as cs')
 						->select(
 							[
-								DB::raw('SUM(cs.gross_total) as grossTotal')
+								DB::raw('SUM(cs.gross_total * er.exchange_rate) as grossTotal')
 							]
 						)
+						->leftJoin('exchange_rates as er', function ($join) use ($unitCurrency) {
+							$join->on('er.domestic_currency_id', 'cs.currency_id')
+								->where('er.foreign_currency_id', $unitCurrency)
+								->whereRaw('er.date = cs.sale_date');
+						})
 						->whereIn('cs.credit_sales_id', explode(",", $cashSale->credit_sales_id))
 						->first();
 
 					return $creditSales->grossTotal;
 				})
-				->editColumn('variance', function ($cashSale) {
-					$variance_total = 0;
-					$ztotal = $cashSale->z_food + $cashSale->z_confect_food + $cashSale->z_minerals + $cashSale->z_confect + $cashSale->z_fruit;
-
-					$cashCreditCardTotal = $cashSale->cash_count + $cashSale->credit_card + $cashSale->staff_cards;
-
+				->editColumn('variance', function ($cashSale) use ($unitCurrency) {
 					$returnCrSale = 0;
+
 					if ($cashSale->credit_sales_id != '') {
 						$creditSales = DB::table('credit_sales as cs')
 							->select(
 								[
-									DB::raw('SUM(cs.gross_total) as grossTotal')
+									DB::raw('SUM(cs.gross_total * er.exchange_rate) as grossTotal')
 								]
 							)
+							->leftJoin('exchange_rates as er', function ($join) use ($unitCurrency) {
+								$join->on('er.domestic_currency_id', 'cs.currency_id')
+									->where('er.foreign_currency_id', $unitCurrency)
+									->whereRaw('er.date = cs.sale_date');
+							})
 							->whereIn('cs.credit_sales_id', explode(",", $cashSale->credit_sales_id))
 							->first();
 
 						$returnCrSale = $creditSales->grossTotal;
 					}
 
-					if (!empty($ztotal) && !empty($cashCreditCardTotal)) {
-						$variance_total = $cashCreditCardTotal + $returnCrSale + $cashSale->cash_purchase - $ztotal;
-					}
+					$ztotal = $cashSale->z_food + $cashSale->z_confect_food + $cashSale->z_minerals + $cashSale->z_confect + $cashSale->z_fruit;
+					$cashCreditCardTotal = $cashSale->cash_count + $cashSale->credit_card + $cashSale->staff_cards;
+
+					$variance_total = ($cashCreditCardTotal + $cashSale->cash_purchase - $ztotal) * $cashSale->exchange_rate + $returnCrSale;
 
 					return (round($variance_total, 2));
+				})
+				->editColumn('cash_purchase', function ($cashSale) {
+					return $cashSale->cash_purchase * $cashSale->exchange_rate;
+				})
+				->editColumn('over_ring', function ($cashSale) {
+					return $cashSale->over_ring * $cashSale->exchange_rate;
+				})
+				->editColumn('cash_var', function ($cashSale) {
+					return $cashSale->cash_var * $cashSale->exchange_rate;
+				})
+				->editColumn('lodge_cash', function ($cashSale) {
+					return $cashSale->lodge_cash * $cashSale->exchange_rate;
+				})
+				->editColumn('lodge_coin', function ($cashSale) {
+					return $cashSale->lodge_coin * $cashSale->exchange_rate;
+				})
+				->editColumn('lodge_amount', function ($cashSale) {
+					return $cashSale->lodge_amount * $cashSale->exchange_rate;
 				})
 				->editColumn('update_by', function ($cashSale) {
 					if ($cashSale->update_by != NULL) {
@@ -1765,19 +2185,19 @@ class ReportController extends Controller
 				->editColumn('date', function ($cashSale) {
 					return $cashSale->date ? with(new Carbon($cashSale->date))->format('d-m-Y') : '';
 				})
-				->filterColumn('date', function ($query, $keyword) {
+				->filterColumn('cs.date', function ($query, $keyword) {
 					$query->whereRaw("DATE_FORMAT(cs.date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				})
 				->editColumn('sale_date', function ($cashSale) {
 					return $cashSale->sale_date ? with(new Carbon($cashSale->sale_date))->format('d-m-Y') : '';
 				})
-				->filterColumn('sale_date', function ($query, $keyword) {
+				->filterColumn('cs.sale_date', function ($query, $keyword) {
 					$query->whereRaw("DATE_FORMAT(cs.sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				})
 				->editColumn('lodge_date', function ($cashSale) {
 					return $cashSale->lodge_date != '0000-00-00' ? with(new Carbon($cashSale->lodge_date))->format('d-m-Y') : '';
 				})
-				->filterColumn('lodge_date', function ($query, $keyword) {
+				->filterColumn('l.date', function ($query, $keyword) {
 					$query->whereRaw("DATE_FORMAT(l.date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				})
 				->make();
@@ -1850,8 +2270,17 @@ class ReportController extends Controller
 			$taxes[] = $taxCode->tax_code_display_rate;
 		}
 
-		$startColumn = Gate::allows('su-user-group') ? 9 : 8;
+		$startColumn = Gate::allows('su-user-group') ? 11 : 10;
 		$taxColumns = range($startColumn, $startColumn + count($taxes) * 3 + 2);
+
+		// Currency symbol
+		$unit = Unit::find($unitId);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+
+		$currencySymbol = $defaultCurrency->currency_symbol;
+		if (!is_null($unit) && !is_null($unit->currency)) {
+			$currencySymbol = $unit->currency->currency_symbol;
+		}
 
 		return view(
 			'reports.credit-sales.grid', [
@@ -1865,7 +2294,8 @@ class ReportController extends Controller
 				'visible' => $request->visible,
 				'taxes' => $taxes,
 				'taxColumns' => json_encode($taxColumns),
-				'isSuLevel' => Gate::allows('su-user-group')
+				'isSuLevel' => Gate::allows('su-user-group'),
+				'currencySymbol' => $currencySymbol
 			]
 		);
 	}
@@ -1886,11 +2316,14 @@ class ReportController extends Controller
 		// Get list of units for current user level
 		$userUnits = $this->getUserUnits(true)->pluck('unit_id');
 
+		// Currency
+		$unit = Unit::find($unitId);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+		$unitCurrency = !is_null($unit) ? $unit->currency_id : $defaultCurrency->currency_id;
+
 		if ($unitId == '' && Gate::allows('su-user-group')) {
 			if ($request->all_records) {
 				$creditSales = \DB::table('credit_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
 					->select(
 						[
 							'cs.credit_sales_id',
@@ -1902,30 +2335,8 @@ class ReportController extends Controller
 							'cs.sale_date',
 							'cs.credit_reference',
 							'cs.cost_centre',
-							'cs.goods_total',
-							'cs.vat_total',
-							'cs.gross_total',
-							'cs.credit_sales_id',
-							'cs.cash_sale_vis',
-							'cs.vis_by',
-							'cs.date_vis'
-						]
-					);
-			} else {
-				$creditSales = \DB::table('credit_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-					->select(
-						[
-							'cs.credit_sales_id',
-							'cs.credit_sales_id',
-							'cs.date',
-							'un.unit_name',
-							'u.username',
-							'cs.docket_number',
-							'cs.sale_date',
-							'cs.credit_reference',
-							'cs.cost_centre',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'cs.goods_total',
 							'cs.vat_total',
 							'cs.gross_total',
@@ -1935,13 +2346,51 @@ class ReportController extends Controller
 							'cs.date_vis'
 						]
 					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					});
+			} else {
+				$creditSales = \DB::table('credit_sales AS cs')
+					->select(
+						[
+							'cs.credit_sales_id',
+							'cs.credit_sales_id',
+							'cs.date',
+							'un.unit_name',
+							'u.username',
+							'cs.docket_number',
+							'cs.sale_date',
+							'cs.credit_reference',
+							'cs.cost_centre',
+							'C.currency_code',
+							'ER.exchange_rate',
+							'cs.goods_total',
+							'cs.vat_total',
+							'cs.gross_total',
+							'cs.credit_sales_id',
+							'cs.cash_sale_vis',
+							'cs.vis_by',
+							'cs.date_vis'
+						]
+					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					})
 					->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 			}
 		} elseif ($unitId == '' && Gate::allows('hq-user-group')) {
 			if ($request->all_records) {
 				$creditSales = \DB::table('credit_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
 					->select(
 						[
 							'cs.credit_sales_id',
@@ -1952,29 +2401,8 @@ class ReportController extends Controller
 							'cs.sale_date',
 							'cs.credit_reference',
 							'cs.cost_centre',
-							'cs.goods_total',
-							'cs.vat_total',
-							'cs.gross_total',
-							'cs.credit_sales_id',
-							'cs.cash_sale_vis',
-							'cs.vis_by',
-							'cs.date_vis'
-						]
-					);
-			} else {
-				$creditSales = \DB::table('credit_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
-					->select(
-						[
-							'cs.credit_sales_id',
-							'cs.date',
-							'un.unit_name',
-							'u.username',
-							'cs.docket_number',
-							'cs.sale_date',
-							'cs.credit_reference',
-							'cs.cost_centre',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'cs.goods_total',
 							'cs.vat_total',
 							'cs.gross_total',
@@ -1984,12 +2412,49 @@ class ReportController extends Controller
 							'cs.date_vis'
 						]
 					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					});
+			} else {
+				$creditSales = \DB::table('credit_sales AS cs')
+					->select(
+						[
+							'cs.credit_sales_id',
+							'cs.date',
+							'un.unit_name',
+							'u.username',
+							'cs.docket_number',
+							'cs.sale_date',
+							'cs.credit_reference',
+							'cs.cost_centre',
+							'C.currency_code',
+							'ER.exchange_rate',
+							'cs.goods_total',
+							'cs.vat_total',
+							'cs.gross_total',
+							'cs.credit_sales_id',
+							'cs.cash_sale_vis',
+							'cs.vis_by',
+							'cs.date_vis'
+						]
+					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					})
 					->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 			}
 		} elseif ($unitId == '' && Gate::allows('operations-user-group')) {
 			$creditSales = \DB::table('credit_sales AS cs')
-				->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-				->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
 				->select(
 					[
 						'cs.credit_sales_id',
@@ -2000,6 +2465,8 @@ class ReportController extends Controller
 						'cs.sale_date',
 						'cs.credit_reference',
 						'cs.cost_centre',
+						'C.currency_code',
+						'ER.exchange_rate',
 						'cs.goods_total',
 						'cs.vat_total',
 						'cs.gross_total',
@@ -2009,12 +2476,18 @@ class ReportController extends Controller
 						'cs.date_vis'
 					]
 				)
+				->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+				->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+				->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+				->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+					$join->on('ER.domestic_currency_id', 'cs.currency_id')
+						->where('ER.foreign_currency_id', $unitCurrency)
+						->whereRaw('ER.date = cs.sale_date');
+				})
 				->whereIn('cs.unit_id', $userUnits)
 				->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 		} elseif ($unitId == '' && Gate::allows('unit-user-group')) {
 			$creditSales = \DB::table('credit_sales AS cs')
-				->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-				->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
 				->select(
 					[
 						'cs.credit_sales_id',
@@ -2025,6 +2498,8 @@ class ReportController extends Controller
 						'cs.sale_date',
 						'cs.credit_reference',
 						'cs.cost_centre',
+						'C.currency_code',
+						'ER.exchange_rate',
 						'cs.goods_total',
 						'cs.vat_total',
 						'cs.gross_total',
@@ -2034,13 +2509,19 @@ class ReportController extends Controller
 						'cs.date_vis'
 					]
 				)
+				->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+				->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+				->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+				->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+					$join->on('ER.domestic_currency_id', 'cs.currency_id')
+						->where('ER.foreign_currency_id', $unitCurrency)
+						->whereRaw('ER.date = cs.sale_date');
+				})
 				->whereIn('cs.unit_id', $userUnits)
 				->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 		} elseif ($unitId != '' && Gate::allows('su-user-group')) {
 			if ($request->all_records) {
 				$creditSales = \DB::table('credit_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
 					->select(
 						[
 							'cs.credit_sales_id',
@@ -2052,6 +2533,8 @@ class ReportController extends Controller
 							'cs.sale_date',
 							'cs.credit_reference',
 							'cs.cost_centre',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'cs.goods_total',
 							'cs.vat_total',
 							'cs.gross_total',
@@ -2061,11 +2544,17 @@ class ReportController extends Controller
 							'cs.date_vis'
 						]
 					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					})
 					->where('cs.unit_id', $unitId);
 			} else {
 				$creditSales = \DB::table('credit_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
 					->select(
 						[
 							'cs.credit_sales_id',
@@ -2077,6 +2566,8 @@ class ReportController extends Controller
 							'cs.sale_date',
 							'cs.credit_reference',
 							'cs.cost_centre',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'cs.goods_total',
 							'cs.vat_total',
 							'cs.gross_total',
@@ -2086,14 +2577,20 @@ class ReportController extends Controller
 							'cs.date_vis'
 						]
 					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					})
 					->where('cs.unit_id', $unitId)
 					->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 			}
 		} elseif ($unitId != '' && Gate::allows('hq-user-group')) {
 			if ($request->all_records) {
 				$creditSales = \DB::table('credit_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
 					->select(
 						[
 							'cs.credit_sales_id',
@@ -2104,6 +2601,8 @@ class ReportController extends Controller
 							'cs.sale_date',
 							'cs.credit_reference',
 							'cs.cost_centre',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'cs.goods_total',
 							'cs.vat_total',
 							'cs.gross_total',
@@ -2113,11 +2612,17 @@ class ReportController extends Controller
 							'cs.date_vis'
 						]
 					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					})
 					->where('cs.unit_id', $unitId);
 			} else {
 				$creditSales = \DB::table('credit_sales AS cs')
-					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
 					->select(
 						[
 							'cs.credit_sales_id',
@@ -2129,6 +2634,8 @@ class ReportController extends Controller
 							'cs.sale_date',
 							'cs.credit_reference',
 							'cs.cost_centre',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'cs.goods_total',
 							'cs.vat_total',
 							'cs.gross_total',
@@ -2138,13 +2645,19 @@ class ReportController extends Controller
 							'cs.date_vis'
 						]
 					)
+					->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'cs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = cs.sale_date');
+					})
 					->where('cs.unit_id', $unitId)
 					->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 			}
 		} else {
 			$creditSales = \DB::table('credit_sales AS cs')
-				->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
-				->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
 				->select(
 					[
 						'cs.credit_sales_id',
@@ -2156,6 +2669,8 @@ class ReportController extends Controller
 						'cs.sale_date',
 						'cs.credit_reference',
 						'cs.cost_centre',
+						'C.currency_code',
+						'ER.exchange_rate',
 						'cs.goods_total',
 						'cs.vat_total',
 						'cs.gross_total',
@@ -2165,6 +2680,14 @@ class ReportController extends Controller
 						'cs.date_vis'
 					]
 				)
+				->leftJoin('users AS u', 'cs.supervisor_id', '=', 'u.user_id')
+				->leftJoin('units AS un', 'cs.unit_id', '=', 'un.unit_id')
+				->leftJoin('currencies AS C', 'C.currency_id', '=', 'cs.currency_id')
+				->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+					$join->on('ER.domestic_currency_id', 'cs.currency_id')
+						->where('ER.foreign_currency_id', $unitCurrency)
+						->whereRaw('ER.date = cs.sale_date');
+				})
 				->where('cs.unit_id', $unitId)
 				->whereBetween('cs.sale_date', [$fromDate, $toDate]);
 		}
@@ -2173,6 +2696,9 @@ class ReportController extends Controller
 			$dataTable = Datatables::of($creditSales)
 				->setRowId(function ($creditSale) {
 					return 'tr_' . $creditSale->credit_sales_id;
+				})
+				->setRowClass(function ($creditSale) {
+					return $creditSale->exchange_rate != 1 ? 'blue-row' : '';
 				})
 				->addColumn('checkbox', function ($creditSale) {
 					$creditSalesData = \DB::table('credit_sales')->select('cash_sale_vis', 'closed')->where('credit_sales_id', $creditSale->credit_sales_id)->first();
@@ -2193,14 +2719,17 @@ class ReportController extends Controller
 				->editColumn('date', function ($creditSale) {
 					return $creditSale->date ? with(new Carbon($creditSale->date))->format('d-m-Y') : '';
 				})
-				->filterColumn('cs.date', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(date,'%d-%m-%Y') like ?", ["%$keyword%"]);
-				})
 				->editColumn('sale_date', function ($creditSale) {
 					return $creditSale->sale_date ? with(new Carbon($creditSale->sale_date))->format('d-m-Y') : '';
 				})
-				->filterColumn('cs.sale_date', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+				->editColumn('goods_total', function ($creditSale) {
+					return $creditSale->goods_total * $creditSale->exchange_rate;
+				})
+				->editColumn('vat_total', function ($creditSale) {
+					return $creditSale->goods_total * $creditSale->exchange_rate;
+				})
+				->editColumn('gross_total', function ($creditSale) {
+					return $creditSale->goods_total * $creditSale->exchange_rate;
 				})
 				->editColumn('cash_sale_vis', function ($creditSale) {
 					$unitId = Cookie::get('creditSalesReportUnitIdCookie') != '' ? Cookie::get('creditSalesReportUnitIdCookie') : 'All';
@@ -2223,13 +2752,22 @@ class ReportController extends Controller
 				->editColumn('date_vis', function ($creditSale) {
 					return $creditSale->vis_by != 0 && $creditSale->date_vis != '0000-00-00' ? with(new Carbon($creditSale->date_vis))->format('d-m-Y') : '';
 				})
+				->filterColumn('cs.date', function ($query, $keyword) {
+					$query->whereRaw("DATE_FORMAT(cs.date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+				})
+				->filterColumn('cs.sale_date', function ($query, $keyword) {
+					$query->whereRaw("DATE_FORMAT(cs.sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+				})
 				->filterColumn('cs.date_vis', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(date_vis,'%d-%m-%Y') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(cs.date_vis,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				});
 		} else {
 			$dataTable = Datatables::of($creditSales)
 				->setRowId(function ($creditSale) {
 					return 'tr_' . $creditSale->credit_sales_id;
+				})
+				->setRowClass(function ($creditSale) {
+					return $creditSale->exchange_rate != 1 ? 'blue-row' : '';
 				})
 				->editColumn('credit_sales_id', function ($creditSale) {
 					$creditSalesData = \DB::table('credit_sales')->select('cash_sale_vis', 'closed')->where('credit_sales_id', $creditSale->credit_sales_id)->first();
@@ -2242,14 +2780,17 @@ class ReportController extends Controller
 				->editColumn('date', function ($creditSale) {
 					return $creditSale->date ? with(new Carbon($creditSale->date))->format('d-m-Y') : '';
 				})
-				->filterColumn('cs.date', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(date,'%d-%m-%Y') like ?", ["%$keyword%"]);
-				})
 				->editColumn('sale_date', function ($creditSale) {
 					return $creditSale->sale_date ? with(new Carbon($creditSale->sale_date))->format('d-m-Y') : '';
 				})
-				->filterColumn('cs.sale_date', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+				->editColumn('goods_total', function ($creditSale) {
+					return $creditSale->goods_total * $creditSale->exchange_rate;
+				})
+				->editColumn('vat_total', function ($creditSale) {
+					return $creditSale->goods_total * $creditSale->exchange_rate;
+				})
+				->editColumn('gross_total', function ($creditSale) {
+					return $creditSale->goods_total * $creditSale->exchange_rate;
 				})
 				->editColumn('cash_sale_vis', function ($creditSale) {
 					$unitId = Cookie::get('creditSalesReportUnitIdCookie') != '' ? Cookie::get('creditSalesReportUnitIdCookie') : 'All';
@@ -2272,8 +2813,14 @@ class ReportController extends Controller
 				->editColumn('date_vis', function ($creditSale) {
 					return $creditSale->vis_by != 0 && $creditSale->date_vis != '0000-00-00' ? with(new Carbon($creditSale->date_vis))->format('d-m-Y') : '';
 				})
+				->filterColumn('cs.date', function ($query, $keyword) {
+					$query->whereRaw("DATE_FORMAT(cs.date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+				})
+				->filterColumn('cs.sale_date', function ($query, $keyword) {
+					$query->whereRaw("DATE_FORMAT(cs.sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+				})
 				->filterColumn('cs.date_vis', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(date_vis,'%d-%m-%Y') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(cs.date_vis,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				});
 		}
 
@@ -2281,7 +2828,7 @@ class ReportController extends Controller
 		$taxCodes = TaxCode::where('credit_sales', 1)->get();
 
 		// Add Good columns
-		$columnIndex = Gate::allows('su-user-group') ? 9 : 8;
+		$columnIndex = Gate::allows('su-user-group') ? 11 : 10;
 
 		foreach ($taxCodes as $taxCode) {
 			$dataTable->addColumn("Goods {$taxCode->tax_code_display_rate}", function ($creditSale) use ($taxCode) {
@@ -2292,7 +2839,9 @@ class ReportController extends Controller
 					return 0;
 				}
 
-				return $creditSaleGood->amount / (1 + $taxCode->tax_rate / 100);
+				$goods = $creditSaleGood->amount / (1 + $taxCode->tax_rate / 100);
+
+				return $goods * $creditSale->exchange_rate;
 			}, $columnIndex++);
 
 			$dataTable->addColumn("VAT {$taxCode->tax_code_display_rate}", function ($creditSale) use ($taxCode) {
@@ -2306,7 +2855,7 @@ class ReportController extends Controller
 				$goods = $creditSaleGood->amount / (1 + $taxCode->tax_rate / 100);
 				$vat = $goods * $taxCode->tax_rate / 100;
 
-				return $vat;
+				return $vat * $creditSale->exchange_rate;
 			}, $columnIndex++);
 
 			$dataTable->addColumn("Gross {$taxCode->tax_code_display_rate}", function ($creditSale) use ($taxCode) {
@@ -2317,7 +2866,7 @@ class ReportController extends Controller
 					return 0;
 				}
 
-				return $creditSaleGood->amount;
+				return $creditSaleGood->amount * $creditSale->exchange_rate;
 			}, $columnIndex++);
 		}
 
@@ -2364,7 +2913,7 @@ class ReportController extends Controller
 				// Delete Credit Sale
 				$CreditSales = CreditSales::findOrFail($creditSalesId);
 				$CreditSales->delete();
-
+				
 				// Delete Credit Sale Goods
 				CreditSaleGood::where('credit_sales_id', $creditSalesId)->delete();
 			}
@@ -2434,8 +2983,17 @@ class ReportController extends Controller
 			}
 		}
 
-		$startColumn = Gate::allows('su-user-group') ? 11 : 10;
+		$startColumn = Gate::allows('su-user-group') ? 13 : 12;
 		$goodColumns = range($startColumn, $startColumn + count($goods));
+
+		// Currency symbol
+		$unit = Unit::find($unitId);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+
+		$currencySymbol = $defaultCurrency->currency_symbol;
+		if (!is_null($unit) && !is_null($unit->currency)) {
+			$currencySymbol = $unit->currency->currency_symbol;
+		}
 
 		return view(
 			'reports.vending-sales.grid', [
@@ -2450,7 +3008,8 @@ class ReportController extends Controller
 				'visible' => $request->visible,
 				'goods' => $goods,
 				'goodColumns' => json_encode($goodColumns),
-				'isSuLevel' => Gate::allows('su-user-group')
+				'isSuLevel' => Gate::allows('su-user-group'),
+				'currencySymbol' => $currencySymbol
 			]
 		);
 	}
@@ -2465,12 +3024,14 @@ class ReportController extends Controller
 		// Get list of units for current user level
 		$userUnits = $this->getUserUnits(true)->pluck('unit_id');
 
+		// Currency
+		$unit = Unit::find($unitId);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+		$unitCurrency = !is_null($unit) ? $unit->currency_id : $defaultCurrency->currency_id;
+
 		if ($unitId == '' && Gate::allows('su-user-group')) {
 			if ($request->all_records) {
 				$vendingSales = \DB::table('vending_sales AS vs')
-					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
-					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
 					->select(
 						[
 							'vs.vending_sales_id',
@@ -2484,17 +3045,25 @@ class ReportController extends Controller
 							'vs.closing',
 							'vs.till_number',
 							'vs.z_read',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'vs.cash'
 						]
 					)
+					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
+					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'vs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'vs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = vs.sale_date');
+					})
 					->when($vendingMachine, function ($query) use ($vendingMachine) {
 						return $query->where('vend_id', $vendingMachine);
 					});
 			} else {
 				$vendingSales = \DB::table('vending_sales AS vs')
-					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
-					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
 					->select(
 						[
 							'vs.vending_sales_id',
@@ -2508,9 +3077,20 @@ class ReportController extends Controller
 							'vs.closing',
 							'vs.till_number',
 							'vs.z_read',
+							'C.currency_code',
+							'ER.exchange_rate',
 							'vs.cash',
 						]
 					)
+					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
+					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'vs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'vs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = vs.sale_date');
+					})
 					->when($vendingMachine, function ($query) use ($vendingMachine) {
 						return $query->where('vend_id', $vendingMachine);
 					})
@@ -2519,9 +3099,6 @@ class ReportController extends Controller
 		} elseif ($unitId == '' && Gate::allows('hq-user-group')) {
 			if ($request->all_records) {
 				$vendingSales = \DB::table('vending_sales AS vs')
-					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
-					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
 					->select(
 						[
 							'vs.vending_sales_id',
@@ -2534,19 +3111,25 @@ class ReportController extends Controller
 							'vs.closing',
 							'vs.till_number',
 							'vs.z_read',
-							'vs.cash',
-							'vs.cash',
-							'vs.vending_sales_id'
+							'C.currency_code',
+							'ER.exchange_rate',
+							'vs.cash'
 						]
 					)
+					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
+					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'vs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'vs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = vs.sale_date');
+					})
 					->when($vendingMachine, function ($query) use ($vendingMachine) {
 						return $query->where('vend_id', $vendingMachine);
 					});
 			} else {
 				$vendingSales = \DB::table('vending_sales AS vs')
-					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
-					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
 					->select(
 						[
 							'vs.vending_sales_id',
@@ -2559,11 +3142,20 @@ class ReportController extends Controller
 							'vs.closing',
 							'vs.till_number',
 							'vs.z_read',
-							'vs.cash',
-							'vs.cash',
-							'vs.vending_sales_id'
+							'C.currency_code',
+							'ER.exchange_rate',
+							'vs.cash'
 						]
 					)
+					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
+					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'vs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'vs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = vs.sale_date');
+					})
 					->when($vendingMachine, function ($query) use ($vendingMachine) {
 						return $query->where('vend_id', $vendingMachine);
 					})
@@ -2571,9 +3163,6 @@ class ReportController extends Controller
 			}
 		} elseif ($unitId == '' && Gate::allows('operations-user-group')) {
 			$vendingSales = \DB::table('vending_sales AS vs')
-				->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
-				->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
-				->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
 				->select(
 					[
 						'vs.vending_sales_id',
@@ -2586,11 +3175,20 @@ class ReportController extends Controller
 						'vs.closing',
 						'vs.till_number',
 						'vs.z_read',
-						'vs.cash',
-						'vs.cash',
-						'vs.vending_sales_id'
+						'C.currency_code',
+						'ER.exchange_rate',
+						'vs.cash'
 					]
 				)
+				->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
+				->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
+				->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
+				->leftJoin('currencies AS C', 'C.currency_id', '=', 'vs.currency_id')
+				->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+					$join->on('ER.domestic_currency_id', 'vs.currency_id')
+						->where('ER.foreign_currency_id', $unitCurrency)
+						->whereRaw('ER.date = vs.sale_date');
+				})
 				->when($vendingMachine, function ($query) use ($vendingMachine) {
 					return $query->where('vend_id', $vendingMachine);
 				})
@@ -2598,9 +3196,6 @@ class ReportController extends Controller
 				->whereBetween('vs.sale_date', [$fromDate, $toDate]);
 		} elseif ($unitId == '' && Gate::allows('unit-user-group')) {
 			$vendingSales = \DB::table('vending_sales AS vs')
-				->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
-				->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
-				->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
 				->select(
 					[
 						'vs.vending_sales_id',
@@ -2613,11 +3208,20 @@ class ReportController extends Controller
 						'vs.closing',
 						'vs.till_number',
 						'vs.z_read',
-						'vs.cash',
-						'vs.cash',
-						'vs.vending_sales_id'
+						'C.currency_code',
+						'ER.exchange_rate',
+						'vs.cash'
 					]
 				)
+				->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
+				->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
+				->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
+				->leftJoin('currencies AS C', 'C.currency_id', '=', 'vs.currency_id')
+				->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+					$join->on('ER.domestic_currency_id', 'vs.currency_id')
+						->where('ER.foreign_currency_id', $unitCurrency)
+						->whereRaw('ER.date = vs.sale_date');
+				})
 				->when($vendingMachine, function ($query) use ($vendingMachine) {
 					return $query->where('vend_id', $vendingMachine);
 				})
@@ -2626,9 +3230,6 @@ class ReportController extends Controller
 		} elseif ($unitId != '' && Gate::allows('su-user-group')) {
 			if ($request->all_records) {
 				$vendingSales = \DB::table('vending_sales AS vs')
-					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
-					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
 					->select(
 						[
 							'vs.vending_sales_id',
@@ -2642,20 +3243,26 @@ class ReportController extends Controller
 							'vs.closing',
 							'vs.till_number',
 							'vs.z_read',
-							'vs.cash',
-							'vs.cash',
-							'vs.vending_sales_id'
+							'C.currency_code',
+							'ER.exchange_rate',
+							'vs.cash'
 						]
 					)
+					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
+					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'vs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'vs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = vs.sale_date');
+					})
 					->when($vendingMachine, function ($query) use ($vendingMachine) {
 						return $query->where('vend_id', $vendingMachine);
 					})
 					->where('vs.unit_id', $unitId);
 			} else {
 				$vendingSales = \DB::table('vending_sales AS vs')
-					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
-					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
 					->select(
 						[
 							'vs.vending_sales_id',
@@ -2669,11 +3276,20 @@ class ReportController extends Controller
 							'vs.closing',
 							'vs.till_number',
 							'vs.z_read',
-							'vs.cash',
-							'vs.cash',
-							'vs.vending_sales_id'
+							'C.currency_code',
+							'ER.exchange_rate',
+							'vs.cash'
 						]
 					)
+					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
+					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'vs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'vs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = vs.sale_date');
+					})
 					->when($vendingMachine, function ($query) use ($vendingMachine) {
 						return $query->where('vend_id', $vendingMachine);
 					})
@@ -2683,9 +3299,6 @@ class ReportController extends Controller
 		} elseif ($unitId != '' && Gate::allows('hq-user-group')) {
 			if ($request->all_records) {
 				$vendingSales = \DB::table('vending_sales AS vs')
-					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
-					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
 					->select(
 						[
 							'vs.vending_sales_id',
@@ -2698,20 +3311,26 @@ class ReportController extends Controller
 							'vs.closing',
 							'vs.till_number',
 							'vs.z_read',
-							'vs.cash',
-							'vs.cash',
-							'vs.vending_sales_id'
+							'C.currency_code',
+							'ER.exchange_rate',
+							'vs.cash'
 						]
 					)
+					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
+					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'vs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'vs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = vs.sale_date');
+					})
 					->when($vendingMachine, function ($query) use ($vendingMachine) {
 						return $query->where('vend_id', $vendingMachine);
 					})
 					->where('vs.unit_id', $unitId);
 			} else {
 				$vendingSales = \DB::table('vending_sales AS vs')
-					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
-					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
-					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
 					->select(
 						[
 							'vs.vending_sales_id',
@@ -2724,11 +3343,20 @@ class ReportController extends Controller
 							'vs.closing',
 							'vs.till_number',
 							'vs.z_read',
-							'vs.cash',
-							'vs.cash',
-							'vs.vending_sales_id'
+							'C.currency_code',
+							'ER.exchange_rate',
+							'vs.cash'
 						]
 					)
+					->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
+					->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
+					->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
+					->leftJoin('currencies AS C', 'C.currency_id', '=', 'vs.currency_id')
+					->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+						$join->on('ER.domestic_currency_id', 'vs.currency_id')
+							->where('ER.foreign_currency_id', $unitCurrency)
+							->whereRaw('ER.date = vs.sale_date');
+					})
 					->when($vendingMachine, function ($query) use ($vendingMachine) {
 						return $query->where('vend_id', $vendingMachine);
 					})
@@ -2737,9 +3365,6 @@ class ReportController extends Controller
 			}
 		} else {
 			$vendingSales = \DB::table('vending_sales AS vs')
-				->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
-				->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
-				->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
 				->select(
 					[
 						'vs.vending_sales_id',
@@ -2752,11 +3377,20 @@ class ReportController extends Controller
 						'vs.closing',
 						'vs.till_number',
 						'vs.z_read',
-						'vs.cash',
-						'vs.cash',
-						'vs.vending_sales_id'
+						'C.currency_code',
+						'ER.exchange_rate',
+						'vs.cash'
 					]
 				)
+				->leftJoin('users AS u', 'vs.supervisor_id', '=', 'u.user_id')
+				->leftJoin('units AS un', 'vs.unit_id', '=', 'un.unit_id')
+				->leftJoin('vend_management AS vm', 'vs.vend_id', '=', 'vm.vend_management_id')
+				->leftJoin('currencies AS C', 'C.currency_id', '=', 'vs.currency_id')
+				->leftJoin('exchange_rates as ER', function ($join) use ($unitCurrency) {
+					$join->on('ER.domestic_currency_id', 'vs.currency_id')
+						->where('ER.foreign_currency_id', $unitCurrency)
+						->whereRaw('ER.date = vs.sale_date');
+				})
 				->when($vendingMachine, function ($query) use ($vendingMachine) {
 					return $query->where('vend_id', $vendingMachine);
 				})
@@ -2768,6 +3402,9 @@ class ReportController extends Controller
 			$dataTable = Datatables::of($vendingSales)
 				->setRowId(function ($vendingSale) {
 					return 'tr_' . $vendingSale->vending_sales_id;
+				})
+				->setRowClass(function ($vendingSale) {
+					return $vendingSale->exchange_rate != 1 ? 'blue-row' : '';
 				})
 				->addColumn('checkbox', function ($vendingSale) {
 					$vendingSalesData = \DB::table('vending_sales')->select('closed')->where('vending_sales_id', $vendingSale->vending_sales_id)->first();
@@ -2786,22 +3423,34 @@ class ReportController extends Controller
 						return '<a target="_blank" href="/sheets/vending-sales/' . $vendingSale->vending_sales_id . '">' . $vendingSale->vending_sales_id . '</a>';
 					}
 				})
+				->editColumn('opening', function ($vendingSale) {
+					return $vendingSale->opening * $vendingSale->exchange_rate;
+				})
+				->editColumn('closing', function ($vendingSale) {
+					return $vendingSale->closing * $vendingSale->exchange_rate;
+				})
+				->editColumn('cash', function ($vendingSale) {
+					return $vendingSale->cash * $vendingSale->exchange_rate;
+				})
 				->editColumn('date', function ($vendingSale) {
 					return $vendingSale->date ? with(new Carbon($vendingSale->date))->format('d-m-Y') : '';
 				})
 				->filterColumn('vs.date', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(vs.date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				})
 				->editColumn('sale_date', function ($vendingSale) {
 					return $vendingSale->sale_date ? with(new Carbon($vendingSale->sale_date))->format('d-m-Y') : '';
 				})
 				->filterColumn('vs.sale_date', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(vs.sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				});
 		} else {
 			$dataTable = Datatables::of($vendingSales)
 				->setRowId(function ($vendingSale) {
 					return 'tr_' . $vendingSale->vending_sales_id;
+				})
+				->setRowClass(function ($vendingSale) {
+					return $vendingSale->exchange_rate != 1 ? 'blue-row' : '';
 				})
 				->editColumn('vending_sales_id', function ($vendingSale) {
 					$vendingSalesData = \DB::table('vending_sales')->select('closed')->where('vending_sales_id', $vendingSale->vending_sales_id)->first();
@@ -2811,17 +3460,26 @@ class ReportController extends Controller
 						return '<a target="_blank" href="/sheets/vending-sales/' . $vendingSale->vending_sales_id . '">' . $vendingSale->vending_sales_id . '</a>';
 					}
 				})
+				->editColumn('opening', function ($vendingSale) {
+					return $vendingSale->opening * $vendingSale->exchange_rate;
+				})
+				->editColumn('closing', function ($vendingSale) {
+					return $vendingSale->closing * $vendingSale->exchange_rate;
+				})
+				->editColumn('cash', function ($vendingSale) {
+					return $vendingSale->cash * $vendingSale->exchange_rate;
+				})
 				->editColumn('date', function ($vendingSale) {
 					return $vendingSale->date ? with(new Carbon($vendingSale->date))->format('d-m-Y') : '';
 				})
 				->filterColumn('vs.date', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(vs.date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				})
 				->editColumn('sale_date', function ($vendingSale) {
 					return $vendingSale->sale_date ? with(new Carbon($vendingSale->sale_date))->format('d-m-Y') : '';
 				})
 				->filterColumn('vs.sale_date', function ($query, $keyword) {
-					$query->whereRaw("DATE_FORMAT(sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
+					$query->whereRaw("DATE_FORMAT(vs.sale_date,'%d-%m-%Y') like ?", ["%$keyword%"]);
 				});
 		}
 
@@ -2845,7 +3503,7 @@ class ReportController extends Controller
 					return 0;
 				}
 
-				return $vendingSaleGood->amount;
+				return $vendingSaleGood->amount * $vendingSale->exchange_rate;
 			});
 		}
 
@@ -2918,7 +3576,7 @@ class ReportController extends Controller
 				// Delete Vending Sale
 				$VendingSales = VendingSales::findOrFail($vendingSalesId);
 				$VendingSales->delete();
-
+				
 				// Delete Vending Sale Goods
 				VendingSaleGood::where('vending_sales_id', $vendingSalesId)->delete();
 			}
@@ -2949,14 +3607,12 @@ class ReportController extends Controller
 				'selectedUnit' => $unitId,
 				'fromDate' => $fromDate,
 				'toDate' => $toDate,
-				'budgetType' => '',
-				'backUrl' => session()->get('backUrl', '/'),
 				'head_count' => 0,
 				'trading_days' => 0,
-				'trading_days_pro_rata' => 0,
 				'weeks' => 0,
-				'weeks_pr' => 0,
-				'weeks_pro_rata' => 0,
+				'budgetType' => '',
+				'backUrl' => session()->get('backUrl', '/'),
+				'currency_symbol' => '',
 
 				'gross_sales_budget' => number_format(0, 2, '.', ','),
 				'gross_sales_actual' => number_format(0, 2, '.', ','),
@@ -3021,6 +3677,10 @@ class ReportController extends Controller
 		// Get list of units for current user level
 		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
+		// Currency
+		$unitCurrency = Unit::find($unitId)->currency_id;
+		$currencySymbol = Currency::find($unitCurrency)->currency_symbol;
+
 		// Budget Column
 		$tradingAccount = TradingAccount::where('unit_id', $unitId)
 			->where('budget_start_date', '<=', $end_date)
@@ -3029,9 +3689,6 @@ class ReportController extends Controller
 			->first();
 
 		if (!empty($tradingAccount)) {
-			$current_day = date("j"); // current day
-			$number_of_days_in_month = date("t"); // number of days in current month
-
 			// Budget type
 			$budgetType = $tradingAccount->budget_type_id;
 
@@ -3056,72 +3713,40 @@ class ReportController extends Controller
 				$budgetDate->addMonth();
 			}
 
-			// head counts
+			// Head counts
 			$head_count = $this->getTotal($tradingAccount, 'head_count_month', $budget_from, $budget_to);
-			$gross_sales_from_budget_sheet = $this->getTotal($tradingAccount, 'gross_sales_month', $budget_from, $budget_to);
-			$net_sales_from_budget_sheet = $this->getTotal($tradingAccount, 'net_sales_month', $budget_from, $budget_to);
-			$chemicals_cleaning = $this->getTotal($tradingAccount, 'chemicals_cleaning_month', $budget_from, $budget_to);
-			$disposables_month = $this->getTotal($tradingAccount, 'disposables_month', $budget_from, $budget_to);
-			$cost_of_sales_from_budget_sheet = $this->getTotal($tradingAccount, 'cost_of_sales_month', $budget_from, $budget_to);
 
-			$chem_disp_budget = ($chemicals_cleaning + $disposables_month);
+			// Trading days/weeks
+			$trading_days = $this->getTotal($tradingAccount, 'num_trading_days_month', $budget_from, $budget_to);
+			$weeks = $this->getTotal($tradingAccount, 'num_of_weeks_month', $budget_from, $budget_to);
 
-			$gross_sales_budget = $gross_sales_from_budget_sheet;
-			$net_sales_budget = $net_sales_from_budget_sheet;
-			$cost_of_sales_budget = $cost_of_sales_from_budget_sheet;
+			// Budget values
+			$gross_sales_budget = $this->getTotal($tradingAccount, 'gross_sales_month', $budget_from, $budget_to);
+			$net_sales_budget = $this->getTotal($tradingAccount, 'net_sales_month', $budget_from, $budget_to);
+			$cost_of_sales_budget = $this->getTotal($tradingAccount, 'cost_of_sales_month', $budget_from, $budget_to);
 
+			// Profit values
 			$gross_profit_gross_budget = $gross_sales_budget - $cost_of_sales_budget;
 			$gross_profit_net_budget = $net_sales_budget - $cost_of_sales_budget;
 
-			$gp_percent_gross_budget = 0;
-			if ($gross_sales_budget != 0) {
-				$gp_percent_gross_budget = ($gross_profit_gross_budget / $gross_sales_budget) * 100;
-			}
-
-			$gp_percent_net_budget = 0;
-			if ($net_sales_budget > 0) {
-				$gp_percent_net_budget = ($gross_profit_net_budget / $net_sales_budget) * 100;
-			}
-
-			$trading_days = $this->getTotal($tradingAccount, 'num_trading_days_month', $budget_from, $budget_to);
-
-			$trading_days_pr = 0;
-			if (isset($tradingAccount->{'num_trading_days_month_' . ($budget_to + 1)})) {
-				$trading_days_pr = $tradingAccount->{'num_trading_days_month_' . ($budget_to + 1)};
-			}
-
-			$trading_days_pro_rata = number_format($trading_days_pr * $current_day / $number_of_days_in_month, 2, '.', '');
-
-			$weeks = $this->getTotal($tradingAccount, 'num_of_weeks_month', $budget_from, $budget_to);
-
-			$weeks_pr = 0;
-			if (isset($tradingAccount->{'num_of_weeks_month_' . ($budget_to + 1)})) {
-				$weeks_pr = $tradingAccount->{'num_of_weeks_month_' . ($budget_to + 1)};
-			}
-
-			$weeks_pro_rata = number_format($weeks_pr * $current_day / $number_of_days_in_month, 2, '.', '');
-
-			$trading_days_val = $trading_days;
-			$trading_days_pro_rata = $trading_days + $trading_days_pro_rata;
-			$weeks_val = $weeks;
-			$weeks_pro_rata = $weeks + $weeks_pro_rata;
-
-			$labour_hours_from_budget_sheet = $this->getTotal($tradingAccount, 'labour_hours_month', $budget_from, $budget_to);
+			// GP % values
+			$gp_percent_gross_budget = $gross_sales_budget != 0 ? ($gross_profit_gross_budget / $gross_sales_budget) * 100 : 0;
+			$gp_percent_net_budget = $net_sales_budget != 0 ? ($gross_profit_net_budget / $net_sales_budget) * 100 : 0;
 
 			// Display rows from the Phased Budget
 			$allRows = PhasedBudgetUnitRow::$rows;
 
-			// Hidden rows for the Admin and Operation level
-			$hiddenRows = PhasedBudgetUnitRow::where('user_id', $userId)->where('unit_id', $unitId)->pluck('row_index')->toArray();
+			// Visible rows for the Unit level (show only Cleaning and Disposables)
+			$visibleRows = ['cleaning', 'disposables'];
 
-			// Hidden rows for the Unit level (show only Cleaning and Disposables)
-			if (Gate::allows('unit-user-group')) {
-				$hiddenRows = array_diff(array_keys($allRows), ['cleaning', 'disposables']);
+			// Visible rows for the Admin and Operation level
+			if (Gate::allows('operations-user-group')) {
+				$visibleRows = PhasedBudgetUnitRow::where('user_id', $userId)->where('unit_id', $unitId)->pluck('row_index')->toArray();
 			}
 
 			$phasedBudgetRows = [];
 			foreach ($allRows as $field => $title) {
-				if (in_array($field, $hiddenRows)) {
+				if (!in_array($field, $visibleRows)) {
 					continue;
 				}
 
@@ -3132,7 +3757,9 @@ class ReportController extends Controller
 			}
 
 		} else {
-			$chem_disp_budget = 0;
+			$head_count = 0;
+			$trading_days = 0;
+			$weeks = 0;
 			$gross_sales_budget = 0;
 			$net_sales_budget = 0;
 			$cost_of_sales_budget = 0;
@@ -3140,84 +3767,72 @@ class ReportController extends Controller
 			$gross_profit_net_budget = 0;
 			$gp_percent_gross_budget = 0;
 			$gp_percent_net_budget = 0;
-			$labour_hours_from_budget_sheet = 0;
 			$budgetType = 0;
 			$phasedBudgetRows = [];
 		}
 
-		/**
-		 * Actuals column
-		 */
-		$month_start_date = date("Y-m-01", strtotime($start_date));
-		$month_end_date = date("Y-m", strtotime($end_date)) . '-' . date("t", strtotime($end_date));
-
-		// Gross + Net
-		$cashSalesRow = DB::table('cash_sales')
+		// Actual column
+		$cash_sales_row = DB::table('cash_sales as cs')
 			->select(
 				[
-					DB::raw('SUM(z_read) AS zRead'),
-					DB::raw('SUM(over_ring) AS overRing'),
-					DB::raw('SUM(cash_credit_card) AS cashCreditCard'),
+					DB::raw('SUM(cs.z_read * er.exchange_rate) as z_read'),
+					DB::raw('SUM(cs.over_ring * er.exchange_rate) as over_ring'),
 				]
 			)
-			->whereBetween('sale_date', [$month_start_date, $month_end_date])
-			->where('unit_id', $unitId)
+			->leftJoin('exchange_rates as er', function ($join) use ($unitCurrency) {
+				$join->on('er.domestic_currency_id', 'cs.currency_id')
+					->where('er.foreign_currency_id', $unitCurrency)
+					->whereRaw('er.date = cs.sale_date');
+			})
+			->whereBetween('cs.sale_date', [$start_date, $end_date])
+			->where('cs.unit_id', $unitId)
 			->first();
 
-		$vendingSaleRow = DB::table('vending_sales')
+		$vending_sales_row = DB::table('vending_sales as vs')
 			->select(
 				[
-					DB::raw('SUM(total) AS vendingTotal'),
+					DB::raw('SUM(vs.total * er.exchange_rate) as total'),
 				]
 			)
-			->whereBetween('sale_date', [$month_start_date, $month_end_date])
-			->where('unit_id', $unitId)
+			->leftJoin('exchange_rates as er', function ($join) use ($unitCurrency) {
+				$join->on('er.domestic_currency_id', 'vs.currency_id')
+					->where('er.foreign_currency_id', $unitCurrency)
+					->whereRaw('er.date = vs.sale_date');
+			})
+			->whereBetween('vs.sale_date', [$start_date, $end_date])
+			->where('vs.unit_id', $unitId)
 			->first();
-
-		$gross_sales_actual = ($cashSalesRow->zRead - $cashSalesRow->overRing + $vendingSaleRow->vendingTotal);
+		
+		$gross_sales_actual = ($cash_sales_row->z_read - $cash_sales_row->over_ring + $vending_sales_row->total);
 		$net_sales_actual = (($gross_sales_actual * .9) / 1.09) + (($gross_sales_actual * .1) / 1.23);
 
-		// Cost of Sales + Chem Disp
-		$purchasesRow = DB::table('purchases')
+		$purchases_row = DB::table('purchases as p')
 			->select(
 				[
-					DB::raw('SUM(purchases.goods) AS goodsTotal'),
+					DB::raw('SUM(p.goods * er.exchange_rate) as goods_total'),
 				]
 			)
-			->join('nominal_codes', 'purchases.net_ext_ID', '=', 'nominal_codes.net_ext_ID')
-			->whereBetween('purchases.receipt_invoice_date', [$month_start_date, $month_end_date])
-			->where('purchases.unit_id', $unitId)
-			->where('purchases.deleted', 0)
-			->where('nominal_codes.cost_of_sales', 1)
+			->leftJoin('nominal_codes as nc', 'p.net_ext_ID', '=', 'nc.net_ext_ID')
+			->leftJoin('exchange_rates as er', function ($join) use ($unitCurrency) {
+				$join->on('er.domestic_currency_id', 'p.currency_id')
+					->where('er.foreign_currency_id', $unitCurrency)
+					->whereRaw('er.date = p.date');
+			})
+			->whereBetween('p.receipt_invoice_date', [$start_date, $end_date])
+			->where('p.unit_id', $unitId)
+			->where('p.deleted', 0)
+			->where('nc.cost_of_sales', 1)
 			->first();
 
-		$chemDispRow = DB::table('purchases')
-			->select(
-				[
-					DB::raw('SUM(goods) AS goodsCustom'),
-				]
-			)
-			->whereIn('net_ext_ID', [5, 6])
-			->whereBetween('receipt_invoice_date', [$month_start_date, $month_end_date])
-			->where('purchases.unit_id', $unitId)
-			->where('purchases.deleted', 0)
-			->first();
-
-		$chem_disp_actual = $chemDispRow->goodsCustom;
-		$cost_of_sales_actual = $purchasesRow->goodsTotal;
-
-		$chem_disp_percent_of_budget = $chem_disp_actual != 0 ? ($chem_disp_budget / $chem_disp_actual) * 100 : 0;
+		$cost_of_sales_actual = $purchases_row->goods_total;
 
 		$gross_profit_gross_actual = $gross_sales_actual - $cost_of_sales_actual;
 		$gross_profit_net_actual = $net_sales_actual - $cost_of_sales_actual;
 
-		$gp_percent_gross_actual = $gross_sales_actual > 0 ? ($gross_profit_gross_actual / $gross_sales_actual) * 100 : 0;
-		$gp_percent_net_actual = $net_sales_actual > 0 ? ($gross_profit_net_actual / $net_sales_actual) * 100 : 0;
+		$gp_percent_gross_actual = $gross_sales_actual != 0 ? ($gross_profit_gross_actual / $gross_sales_actual) * 100 : 0;
+		$gp_percent_net_actual = $net_sales_actual != 0 ? ($gross_profit_net_actual / $net_sales_actual) * 100 : 0;
 
-		/**
-		 * Variance
-		 */
-		$chem_disp_variance = ($chem_disp_budget - $chem_disp_actual);
+		// Variance column
 		$gross_sales_variance = $gross_sales_budget - $gross_sales_actual;
 		$net_sales_variance = $net_sales_budget - $net_sales_actual;
 		$cost_of_sales_variance = $cost_of_sales_budget - $cost_of_sales_actual;
@@ -3226,53 +3841,14 @@ class ReportController extends Controller
 		$gp_percent_gross_variance = $gp_percent_gross_budget - $gp_percent_gross_actual;
 		$gp_percent_net_variance = $gp_percent_net_budget - $gp_percent_net_actual;
 
-		// Percent of Budget
-		// -----------------
-		$gross_sales_percent_of_budget = 0;
-		if ($gross_sales_budget != 0) {
-			$gross_sales_percent_of_budget = ($gross_sales_actual / $gross_sales_budget) * 100;
-		}
-
-		$net_sales_percent_of_budget = 0;
-		if ($net_sales_budget != 0) {
-			$net_sales_percent_of_budget = ($net_sales_actual / $net_sales_budget) * 100;
-		}
-
-		$cost_of_sales_percent_of_budget = 0;
-		if ($cost_of_sales_budget != 0) {
-			$cost_of_sales_percent_of_budget = ($cost_of_sales_actual / $cost_of_sales_budget) * 100;
-		}
-
-		$gross_profit_gross_percent_of_budget = 0;
-		if ($gross_profit_gross_budget) {
-			$gross_profit_gross_percent_of_budget = ($gross_profit_gross_actual / $gross_profit_gross_budget) * 100;
-		}
-
-		$gross_profit_net_percent_of_budget = 0;
-		if ($gross_profit_net_budget != 0) {
-			$gross_profit_net_percent_of_budget = ($gross_profit_net_actual / $gross_profit_net_budget) * 100;
-		}
-
-		$gp_percent_gross_percent_of_budget = 0;
-		if ($gp_percent_gross_budget != 0) {
-			$gp_percent_gross_percent_of_budget = ($gp_percent_gross_actual / $gp_percent_gross_budget) * 100;
-		}
-
-		$gp_percent_net_percent_of_budget = 0;
-		if ($gp_percent_net_budget != 0) {
-			$gp_percent_net_percent_of_budget = ($gp_percent_net_actual / $gp_percent_net_budget) * 100;
-		}
-
-		$current_date = date("Y-m-d");
-		$labour_hours_actual = \DB::select("SELECT SUM(labour_hours) AS labour_hours FROM labour_hours WHERE labour_date BETWEEN '$start_date' AND '$current_date' AND unit_id = '$unitId'")[0]->labour_hours;
-
-		$labour_hours_budget = $labour_hours_from_budget_sheet;
-		$labour_hours_variance = $labour_hours_budget - $labour_hours_actual;
-
-		$labour_hours_percent_of_budget = 0;
-		if ($labour_hours_budget != 0) {
-			$labour_hours_percent_of_budget = ($labour_hours_actual / $labour_hours_budget) * 100;
-		}
+		// % of Budget column
+		$gross_sales_percent_of_budget = $gross_sales_budget != 0 ? ($gross_sales_actual / $gross_sales_budget) * 100 : 0;
+		$net_sales_percent_of_budget = $net_sales_budget != 0 ? ($net_sales_actual / $net_sales_budget) * 100 : 0;
+		$cost_of_sales_percent_of_budget = $cost_of_sales_budget != 0 ? ($cost_of_sales_actual / $cost_of_sales_budget) * 100 : 0;
+		$gross_profit_gross_percent_of_budget = $gross_profit_gross_budget != 0 ? ($gross_profit_gross_actual / $gross_profit_gross_budget) * 100 : 0;
+		$gross_profit_net_percent_of_budget = $gross_profit_net_budget != 0 ? ($gross_profit_net_actual / $gross_profit_net_budget) * 100 : 0;
+		$gp_percent_gross_percent_of_budget = $gp_percent_gross_budget != 0 ? ($gp_percent_gross_actual / $gp_percent_gross_budget) * 100 : 0;
+		$gp_percent_net_percent_of_budget = $gp_percent_net_budget != 0 ? ($gp_percent_net_actual / $gp_percent_net_budget) * 100 : 0;
 
 		return view(
 			'reports.unit-trading-account.index', [
@@ -3280,59 +3856,47 @@ class ReportController extends Controller
 				'selectedUnit' => $unitId,
 				'fromDate' => Carbon::parse($start_date)->format('d-m-Y'),
 				'toDate' => Carbon::parse($end_date)->format('d-m-Y'),
+				'head_count' => $head_count,
+				'trading_days' => $trading_days,
+				'weeks' => $weeks,
 				'budgetType' => $budgetType,
 				'backUrl' => session()->get('backUrl', '/'),
-				'head_count' => isset($head_count) ? $head_count : 0,
-				'trading_days' => isset($trading_days_val) ? $trading_days_val : 0,
-				'trading_days_pro_rata' => isset($trading_days_pro_rata) ? $trading_days_pro_rata : 0,
-				'weeks' => isset($weeks_val) ? $weeks_val : 0,
-				'weeks_pr' => isset($weeks_pr) ? $weeks_pr : 0,
-				'weeks_pro_rata' => isset($weeks_pro_rata) ? $weeks_pro_rata : 0,
+				'currency_symbol' => $currencySymbol,
 
-				'gross_sales_budget' => isset($gross_sales_budget) ? number_format($gross_sales_budget, 2, '.', ',') : 0.00,
-				'gross_sales_actual' => isset($gross_sales_actual) ? number_format($gross_sales_actual, 2, '.', ',') : 0.00,
-				'gross_sales_variance' => isset($gross_sales_variance) ? number_format($gross_sales_variance, 2, '.', ',') : 0.00,
-				'gross_sales_percent_of_budget' => isset($gross_sales_percent_of_budget) ? number_format($gross_sales_percent_of_budget, 2, '.', ',') : 0.00,
+				'gross_sales_budget' => number_format($gross_sales_budget, 2, '.', ','),
+				'gross_sales_actual' => number_format($gross_sales_actual, 2, '.', ','),
+				'gross_sales_variance' => number_format($gross_sales_variance, 2, '.', ','),
+				'gross_sales_percent_of_budget' => number_format($gross_sales_percent_of_budget, 2, '.', ','),
 
-				'net_sales_budget' => isset($net_sales_budget) ? number_format($net_sales_budget, 2, '.', ',') : 0.00,
-				'net_sales_actual' => isset($net_sales_actual) ? number_format($net_sales_actual, 2, '.', ',') : 0.00,
-				'net_sales_variance' => isset($net_sales_variance) ? number_format($net_sales_variance, 2, '.', ',') : 0.00,
-				'net_sales_percent_of_budget' => isset($net_sales_percent_of_budget) ? number_format($net_sales_percent_of_budget, 2, '.', ',') : 0.00,
+				'net_sales_budget' => number_format($net_sales_budget, 2, '.', ','),
+				'net_sales_actual' => number_format($net_sales_actual, 2, '.', ','),
+				'net_sales_variance' => number_format($net_sales_variance, 2, '.', ','),
+				'net_sales_percent_of_budget' => number_format($net_sales_percent_of_budget, 2, '.', ','),
 
-				'cost_of_sales_budget' => isset($cost_of_sales_budget) ? number_format($cost_of_sales_budget, 2, '.', ',') : 0.00,
-				'cost_of_sales_actual' => isset($cost_of_sales_actual) ? number_format($cost_of_sales_actual, 2, '.', ',') : 0.00,
-				'cost_of_sales_variance' => isset($cost_of_sales_variance) ? number_format($cost_of_sales_variance, 2, '.', ',') : 0.00,
-				'cost_of_sales_percent_of_budget' => isset($cost_of_sales_percent_of_budget) ? number_format($cost_of_sales_percent_of_budget, 2, '.', ',') : 0.00,
+				'cost_of_sales_budget' => number_format($cost_of_sales_budget, 2, '.', ','),
+				'cost_of_sales_actual' => number_format($cost_of_sales_actual, 2, '.', ','),
+				'cost_of_sales_variance' => number_format($cost_of_sales_variance, 2, '.', ','),
+				'cost_of_sales_percent_of_budget' => number_format($cost_of_sales_percent_of_budget, 2, '.', ','),
 
-				'gross_profit_gross_budget' => isset($gross_profit_gross_budget) ? number_format($gross_profit_gross_budget, 2, '.', ',') : 0.00,
-				'gross_profit_gross_actual' => isset($gross_profit_gross_actual) ? number_format($gross_profit_gross_actual, 2, '.', ',') : 0.00,
-				'gross_profit_gross_variance' => isset($gross_profit_gross_variance) ? number_format($gross_profit_gross_variance, 2, '.', ',') : 0.00,
-				'gross_profit_gross_percent_of_budget' => isset($gross_profit_gross_percent_of_budget) ? number_format($gross_profit_gross_percent_of_budget, 2, '.', ',') : 0.00,
+				'gross_profit_gross_budget' => number_format($gross_profit_gross_budget, 2, '.', ','),
+				'gross_profit_gross_actual' => number_format($gross_profit_gross_actual, 2, '.', ','),
+				'gross_profit_gross_variance' => number_format($gross_profit_gross_variance, 2, '.', ','),
+				'gross_profit_gross_percent_of_budget' => number_format($gross_profit_gross_percent_of_budget, 2, '.', ','),
 
-				'gross_profit_net_budget' => isset($gross_profit_net_budget) ? number_format($gross_profit_net_budget, 2, '.', ',') : 0.00,
-				'gross_profit_net_actual' => isset($gross_profit_net_actual) ? number_format($gross_profit_net_actual, 2, '.', ',') : 0.00,
-				'gross_profit_net_variance' => isset($gross_profit_net_variance) ? number_format($gross_profit_net_variance, 2, '.', ',') : 0.00,
-				'gross_profit_net_percent_of_budget' => isset($gross_profit_net_percent_of_budget) ? number_format($gross_profit_net_percent_of_budget, 2, '.', ',') : 0.00,
+				'gross_profit_net_budget' => number_format($gross_profit_net_budget, 2, '.', ','),
+				'gross_profit_net_actual' => number_format($gross_profit_net_actual, 2, '.', ','),
+				'gross_profit_net_variance' => number_format($gross_profit_net_variance, 2, '.', ','),
+				'gross_profit_net_percent_of_budget' => number_format($gross_profit_net_percent_of_budget, 2, '.', ','),
 
-				'gp_percent_gross_budget' => isset($gp_percent_gross_budget) ? number_format($gp_percent_gross_budget, 0, '.', ',') : 0,
-				'gp_percent_gross_actual' => isset($gp_percent_gross_actual) ? number_format($gp_percent_gross_actual, 0, '.', ',') : 0,
-				'gp_percent_gross_variance' => isset($gp_percent_gross_variance) ? number_format($gp_percent_gross_variance, 0, '.', ',') : 0,
-				'gp_percent_gross_percent_of_budget' => isset($gp_percent_gross_percent_of_budget) ? number_format($gp_percent_gross_percent_of_budget, 0, '.', ',') : 0,
+				'gp_percent_gross_budget' => number_format($gp_percent_gross_budget, 0, '.', ','),
+				'gp_percent_gross_actual' => number_format($gp_percent_gross_actual, 0, '.', ','),
+				'gp_percent_gross_variance' => number_format($gp_percent_gross_variance, 0, '.', ','),
+				'gp_percent_gross_percent_of_budget' => number_format($gp_percent_gross_percent_of_budget, 0, '.', ','),
 
-				'gp_percent_net_budget' => isset($gp_percent_net_budget) ? number_format($gp_percent_net_budget, 0, '.', ',') : 0,
-				'gp_percent_net_actual' => isset($gp_percent_net_actual) ? number_format($gp_percent_net_actual, 0, '.', ',') : 0,
-				'gp_percent_net_variance' => isset($gp_percent_net_variance) ? number_format($gp_percent_net_variance, 0, '.', ',') : 0,
-				'gp_percent_net_percent_of_budget' => isset($gp_percent_net_percent_of_budget) ? number_format($gp_percent_net_percent_of_budget, 0, '.', ',') : 0,
-
-				'chem_disp_budget' => isset($chem_disp_budget) ? number_format($chem_disp_budget, 2, '.', ',') : 0.00,
-				'chem_disp_actual' => isset($chem_disp_actual) ? number_format($chem_disp_actual, 2, '.', ',') : 0.00,
-				'chem_disp_variance' => isset($chem_disp_variance) ? number_format($chem_disp_variance, 2, '.', ',') : 0.00,
-				'chem_disp_percent_of_budget' => isset($chem_disp_percent_of_budget) ? number_format($chem_disp_percent_of_budget, 2, '.', ',') : 0.00,
-
-				'labour_hours_budget' => isset($labour_hours_budget) ? number_format($labour_hours_budget, 2, '.', ',') : 0.00,
-				'labour_hours_actual' => isset($labour_hours_actual) ? number_format($labour_hours_actual, 2, '.', ',') : 0.00,
-				'labour_hours_variance' => isset($labour_hours_variance) ? number_format($labour_hours_variance, 2, '.', ',') : 0.00,
-				'labour_hours_percent_of_budget' => isset($labour_hours_percent_of_budget) ? number_format($labour_hours_percent_of_budget, 2, '.', ',') : 0.00,
+				'gp_percent_net_budget' => number_format($gp_percent_net_budget, 0, '.', ','),
+				'gp_percent_net_actual' => number_format($gp_percent_net_actual, 0, '.', ','),
+				'gp_percent_net_variance' => number_format($gp_percent_net_variance, 0, '.', ','),
+				'gp_percent_net_percent_of_budget' => number_format($gp_percent_net_percent_of_budget, 0, '.', ','),
 
 				'phasedBudgetRows' => $phasedBudgetRows
 			]
@@ -3358,14 +3922,12 @@ class ReportController extends Controller
 				'selectedUnit' => $unitId,
 				'fromDate' => $fromDate,
 				'toDate' => $toDate,
-				'budgetType' => '',
-				'backUrl' => session()->get('backUrl', '/'),
 				'head_count' => 0,
 				'trading_days' => 0,
-				'trading_days_pro_rata' => 0,
 				'weeks' => 0,
-				'weeks_pr' => 0,
-				'weeks_pro_rata' => 0,
+				'budgetType' => '',
+				'backUrl' => session()->get('backUrl', '/'),
+				'currency_symbol' => '',
 
 				'gross_sales_budget' => number_format(0, 2, '.', ','),
 				'gross_sales_actual' => number_format(0, 2, '.', ','),
@@ -3432,9 +3994,11 @@ class ReportController extends Controller
 		// Get list of units for current user level
 		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
-		/**
-		 * Budget Column
-		 */
+		// Currency
+		$unitCurrency = Unit::find($unitId)->currency_id;
+		$currencySymbol = Currency::find($unitCurrency)->currency_symbol;
+
+		// Budget Column
 		$tradingAccount = TradingAccount::where('unit_id', $unitId)
 			->where('budget_start_date', '<=', $end_date)
 			->where('budget_end_date', '>=', $start_date)
@@ -3442,9 +4006,6 @@ class ReportController extends Controller
 			->first();
 
 		if (!empty($tradingAccount)) {
-			$current_day = date("j"); // current day
-			$number_of_days_in_month = date("t"); // number of days in current month
-
 			// Budget type
 			$budgetType = $tradingAccount->budget_type_id;
 
@@ -3471,66 +4032,38 @@ class ReportController extends Controller
 
 			// head counts
 			$head_count = $this->getTotal($tradingAccount, 'head_count_month', $budget_from, $budget_to);
-			$gross_sales_from_budget_sheet = $this->getTotal($tradingAccount, 'gross_sales_month', $budget_from, $budget_to);
-			$net_sales_from_budget_sheet = $this->getTotal($tradingAccount, 'net_sales_month', $budget_from, $budget_to);
 
-			$gross_sales_budget = $gross_sales_from_budget_sheet;
-			$net_sales_budget = $net_sales_from_budget_sheet;
+			// Trading days/weeks
+			$trading_days = $this->getTotal($tradingAccount, 'num_trading_days_month', $budget_from, $budget_to);
+			$weeks = $this->getTotal($tradingAccount, 'num_of_weeks_month', $budget_from, $budget_to);
 
-			$cost_of_sales_from_budget_sheet = $this->getTotal($tradingAccount, 'cost_of_sales_month', $budget_from, $budget_to);
-			$cost_of_sales_budget = $cost_of_sales_from_budget_sheet;
+			// Budget values
+			$gross_sales_budget = $this->getTotal($tradingAccount, 'gross_sales_month', $budget_from, $budget_to);
+			$net_sales_budget = $this->getTotal($tradingAccount, 'net_sales_month', $budget_from, $budget_to);
+			$cost_of_sales_budget = $this->getTotal($tradingAccount, 'cost_of_sales_month', $budget_from, $budget_to);
 
+			// Profit values
 			$gross_profit_gross_budget = $gross_sales_budget - $cost_of_sales_budget;
 			$gross_profit_net_budget = $net_sales_budget - $cost_of_sales_budget;
 
-			$gp_percent_gross_budget = 0;
-
-			if ($gross_sales_budget != 0) {
-				$gp_percent_gross_budget = ($gross_profit_gross_budget / $gross_sales_budget) * 100;
-			}
-
-			$gp_percent_net_budget = 0;
-			if ($net_sales_budget > 0) {
-				$gp_percent_net_budget = ($gross_profit_net_budget / $net_sales_budget) * 100;
-			}
-
-			$trading_days = $this->getTotal($tradingAccount, 'num_trading_days_month', $budget_from, $budget_to);
-
-			$trading_days_pr = 0;
-			if (isset($tradingAccount->{'num_trading_days_month_' . ($budget_to + 1)})) {
-				$trading_days_pr = $tradingAccount->{'num_trading_days_month_' . ($budget_to + 1)};
-			}
-
-			$trading_days_pro_rata = number_format($trading_days_pr * $current_day / $number_of_days_in_month, 2, '.', '');
-
-			$weeks = $this->getTotal($tradingAccount, 'num_of_weeks_month', $budget_from, $budget_to);
-
-			$weeks_pr = 0;
-			if (isset($tradingAccount->{'num_of_weeks_month_' . ($budget_to + 1)})) {
-				$weeks_pr = $tradingAccount->{'num_of_weeks_month_' . ($budget_to + 1)};
-			}
-
-			$weeks_pro_rata = number_format($weeks_pr * $current_day / $number_of_days_in_month, 2, '.', '');
-
-			$trading_days_val = $trading_days;
-			$trading_days_pro_rata = $trading_days + $trading_days_pro_rata;
-			$weeks_val = $weeks;
-			$weeks_pro_rata = $weeks + $weeks_pro_rata;
+			// GP % values
+			$gp_percent_gross_budget = $gross_sales_budget != 0 ? ($gross_profit_gross_budget / $gross_sales_budget) * 100 : 0;
+			$gp_percent_net_budget = $net_sales_budget != 0 ? ($gross_profit_net_budget / $net_sales_budget) * 100 : 0;
 
 			// Display rows from the Phased Budget
 			$allRows = PhasedBudgetUnitRow::$rows;
 
-			// Hidden rows for the Admin and Operation level
-			$hiddenRows = PhasedBudgetUnitRow::where('user_id', $userId)->where('unit_id', $unitId)->pluck('row_index')->toArray();
+			// Visible rows for the Unit level (show only Cleaning and Disposables)
+			$visibleRows = ['cleaning', 'disposables'];
 
-			// Hidden rows for the Unit level (show only Cleaning and Disposables)
-			if (Gate::allows('unit-user-group')) {
-				$hiddenRows = array_diff(array_keys($allRows), ['cleaning', 'disposables']);
+			// Visible rows for the Admin and Operation level
+			if (Gate::allows('operations-user-group')) {
+				$visibleRows = PhasedBudgetUnitRow::where('user_id', $userId)->where('unit_id', $unitId)->pluck('row_index')->toArray();
 			}
 
 			$phasedBudgetRows = [];
 			foreach ($allRows as $field => $title) {
-				if (in_array($field, $hiddenRows)) {
+				if (!in_array($field, $visibleRows)) {
 					continue;
 				}
 
@@ -3541,6 +4074,9 @@ class ReportController extends Controller
 			}
 
 		} else {
+			$head_count = 0;
+			$trading_days = 0;
+			$weeks = 0;
 			$gross_sales_budget = 0;
 			$net_sales_budget = 0;
 			$cost_of_sales_budget = 0;
@@ -3552,92 +4088,80 @@ class ReportController extends Controller
 			$phasedBudgetRows = [];
 		}
 
-		/**
-		 * Actuals column
-		 */
-		$month_start_date = date("Y-m-01", strtotime($start_date));
-		$month_end_date = date("Y-m", strtotime($end_date)) . '-' . date("t", strtotime($end_date));
-
-		// Gross + Net
-		$cashSalesRow = DB::table('cash_sales')
+		// Actual column
+		$cash_sales_row = DB::table('cash_sales as cs')
 			->select(
 				[
-					DB::raw('SUM(z_read) AS zRead'),
-					DB::raw('SUM(over_ring) AS overRing'),
-					DB::raw('SUM(cash_credit_card) AS cashCreditCard'),
+					DB::raw('SUM(cs.z_read * er.exchange_rate) as z_read'),
+					DB::raw('SUM(cs.over_ring * er.exchange_rate) as over_ring'),
 				]
 			)
-			->whereBetween('sale_date', [$month_start_date, $month_end_date])
-			->where('unit_id', $unitId)
+			->leftJoin('exchange_rates as er', function ($join) use ($unitCurrency) {
+				$join->on('er.domestic_currency_id', 'cs.currency_id')
+					->where('er.foreign_currency_id', $unitCurrency)
+					->whereRaw('er.date = cs.sale_date');
+			})
+			->whereBetween('cs.sale_date', [$start_date, $end_date])
+			->where('cs.unit_id', $unitId)
 			->first();
 
-		$vendingSaleRow = DB::table('vending_sales')
+		$vending_sales_row = DB::table('vending_sales as vs')
 			->select(
 				[
-					DB::raw('SUM(total) AS vendingTotal'),
+					DB::raw('SUM(vs.total * er.exchange_rate) as total'),
 				]
 			)
-			->whereBetween('sale_date', [$month_start_date, $month_end_date])
-			->where('unit_id', $unitId)
+			->leftJoin('exchange_rates as er', function ($join) use ($unitCurrency) {
+				$join->on('er.domestic_currency_id', 'vs.currency_id')
+					->where('er.foreign_currency_id', $unitCurrency)
+					->whereRaw('er.date = vs.sale_date');
+			})
+			->whereBetween('vs.sale_date', [$start_date, $end_date])
+			->where('vs.unit_id', $unitId)
 			->first();
-
-		$gross_sales_actual = ($cashSalesRow->zRead - $cashSalesRow->overRing + $vendingSaleRow->vendingTotal);
+		
+		$gross_sales_actual = ($cash_sales_row->z_read - $cash_sales_row->over_ring + $vending_sales_row->total);
 		$net_sales_actual = (($gross_sales_actual * .9) / 1.09) + (($gross_sales_actual * .1) / 1.23);
 
-		// Cost of Sales + Chem Disp + Stock control
-		$purchasesRow = DB::table('purchases')
+		$purchases_row = DB::table('purchases as p')
 			->select(
 				[
-					DB::raw('SUM(purchases.goods) AS goodsTotal'),
+					DB::raw('SUM(p.goods * er.exchange_rate) as goods_total'),
 				]
 			)
-			->join('nominal_codes', 'purchases.net_ext_ID', '=', 'nominal_codes.net_ext_ID')
-			->whereBetween('purchases.receipt_invoice_date', [$month_start_date, $month_end_date])
-			->where('purchases.unit_id', $unitId)
-			->where('purchases.deleted', 0)
-			->where('nominal_codes.cost_of_sales', 1)
+			->leftJoin('nominal_codes as nc', 'p.net_ext_ID', '=', 'nc.net_ext_ID')
+			->leftJoin('exchange_rates as er', function ($join) use ($unitCurrency) {
+				$join->on('er.domestic_currency_id', 'p.currency_id')
+					->where('er.foreign_currency_id', $unitCurrency)
+					->whereRaw('er.date = p.date');
+			})
+			->whereBetween('p.receipt_invoice_date', [$start_date, $end_date])
+			->where('p.unit_id', $unitId)
+			->where('p.deleted', 0)
+			->where('nc.cost_of_sales', 1)
 			->first();
 
-		$chemDispRow = DB::table('purchases')
+		$stock_control_row = DB::table('stock_control')
 			->select(
 				[
-					DB::raw('SUM(goods) AS goodsCustom'),
+					DB::raw('SUM(foods_delta + minerals_delta + choc_snacks_delta + vending_delta) as stock_delta'),
 				]
 			)
-			->whereIn('net_ext_ID', [5, 6])
-			->whereBetween('receipt_invoice_date', [$month_start_date, $month_end_date])
-			->where('purchases.unit_id', $unitId)
-			->where('purchases.deleted', 0)
-			->first();
-
-		$stockControlRow = DB::table('stock_control')
-			->select(
-				[
-					DB::raw('SUM(foods_delta) AS foods_delta'),
-					DB::raw('SUM(minerals_delta) AS minerals_delta'),
-					DB::raw('SUM(choc_snacks_delta) AS choc_snacks_delta'),
-					DB::raw('SUM(vending_delta) AS vending_delta'),
-				]
-			)
-			->whereBetween('stock_take_date', [$month_start_date, $month_end_date])
 			->where('unit_id', $unitId)
+			->whereBetween('stock_take_date', [$start_date, $end_date])
 			->first();
 
-		$purchases_goods_total = !is_null($purchasesRow) ? $purchasesRow->goodsTotal : 0;
-
-		$stock_delta = $stockControlRow->foods_delta + $stockControlRow->minerals_delta + $stockControlRow->choc_snacks_delta + $stockControlRow->vending_delta;
-
-		$cost_of_sales_actual = $purchasesRow->goodsTotal + $stock_delta;
+		$purchases_goods_total = $purchases_row->goods_total;
+		$stock_delta = $stock_control_row->stock_delta;
+		$cost_of_sales_actual = $purchases_goods_total + $stock_delta;
 
 		$gross_profit_gross_actual = $gross_sales_actual - $cost_of_sales_actual;
 		$gross_profit_net_actual = $net_sales_actual - $cost_of_sales_actual;
 
-		$gp_percent_gross_actual = $gross_sales_actual > 0 ? ($gross_profit_gross_actual / $gross_sales_actual) * 100 : 0;
-		$gp_percent_net_actual = $net_sales_actual > 0 ? ($gross_profit_net_actual / $net_sales_actual) * 100 : 0;
+		$gp_percent_gross_actual = $gross_sales_actual != 0 ? ($gross_profit_gross_actual / $gross_sales_actual) * 100 : 0;
+		$gp_percent_net_actual = $net_sales_actual != 0 ? ($gross_profit_net_actual / $net_sales_actual) * 100 : 0;
 
-		/**
-		 * Variance
-		 */
+		// Variance column
 		$gross_sales_variance = $gross_sales_budget - $gross_sales_actual;
 		$net_sales_variance = $net_sales_budget - $net_sales_actual;
 		$cost_of_sales_variance = $cost_of_sales_budget - $cost_of_sales_actual;
@@ -3646,42 +4170,14 @@ class ReportController extends Controller
 		$gp_percent_gross_variance = $gp_percent_gross_budget - $gp_percent_gross_actual;
 		$gp_percent_net_variance = $gp_percent_net_budget - $gp_percent_net_actual;
 
-		// Percent of Budget
-		// -----------------
-		$gross_sales_percent_of_budget = 0;
-		if ($gross_sales_budget != 0) {
-			$gross_sales_percent_of_budget = ($gross_sales_actual / $gross_sales_budget) * 100;
-		}
-
-		$net_sales_percent_of_budget = 0;
-		if ($net_sales_budget != 0) {
-			$net_sales_percent_of_budget = ($net_sales_actual / $net_sales_budget) * 100;
-		}
-
-		$cost_of_sales_percent_of_budget = 0;
-		if ($cost_of_sales_budget != 0) {
-			$cost_of_sales_percent_of_budget = ($cost_of_sales_actual / $cost_of_sales_budget) * 100;
-		}
-
-		$gross_profit_gross_percent_of_budget = 0;
-		if ($gross_profit_gross_budget) {
-			$gross_profit_gross_percent_of_budget = ($gross_profit_gross_actual / $gross_profit_gross_budget) * 100;
-		}
-
-		$gross_profit_net_percent_of_budget = 0;
-		if ($gross_profit_net_budget != 0) {
-			$gross_profit_net_percent_of_budget = ($gross_profit_net_actual / $gross_profit_net_budget) * 100;
-		}
-
-		$gp_percent_gross_percent_of_budget = 0;
-		if ($gp_percent_gross_budget != 0) {
-			$gp_percent_gross_percent_of_budget = ($gp_percent_gross_actual / $gp_percent_gross_budget) * 100;
-		}
-
-		$gp_percent_net_percent_of_budget = 0;
-		if ($gp_percent_net_budget != 0) {
-			$gp_percent_net_percent_of_budget = ($gp_percent_net_actual / $gp_percent_net_budget) * 100;
-		}
+		// % of Budget column
+		$gross_sales_percent_of_budget = $gross_sales_budget != 0 ? ($gross_sales_actual / $gross_sales_budget) * 100 : 0;
+		$net_sales_percent_of_budget = $net_sales_budget != 0 ? ($net_sales_actual / $net_sales_budget) * 100 : 0;
+		$cost_of_sales_percent_of_budget = $cost_of_sales_budget != 0 ? ($cost_of_sales_actual / $cost_of_sales_budget) * 100 : 0;
+		$gross_profit_gross_percent_of_budget = $gross_profit_gross_budget != 0 ? ($gross_profit_gross_actual / $gross_profit_gross_budget) * 100 : 0;
+		$gross_profit_net_percent_of_budget = $gross_profit_net_budget != 0 ? ($gross_profit_net_actual / $gross_profit_net_budget) * 100 : 0;
+		$gp_percent_gross_percent_of_budget = $gp_percent_gross_budget != 0 ? ($gp_percent_gross_actual / $gp_percent_gross_budget) * 100 : 0;
+		$gp_percent_net_percent_of_budget = $gp_percent_net_budget != 0 ? ($gp_percent_net_actual / $gp_percent_net_budget) * 100 : 0;
 
 		return view(
 			'reports.unit-trading-account-stock.index', [
@@ -3689,51 +4185,49 @@ class ReportController extends Controller
 				'selectedUnit' => $unitId,
 				'fromDate' => $start_date,
 				'toDate' => $end_date,
+				'head_count' => $head_count,
+				'trading_days' => $trading_days,
+				'weeks' => $weeks,
 				'budgetType' => $budgetType,
 				'backUrl' => session()->get('backUrl', '/'),
-				'head_count' => isset($head_count) ? $head_count : 0,
-				'trading_days' => isset($trading_days_val) ? $trading_days_val : 0,
-				'trading_days_pro_rata' => isset($trading_days_pro_rata) ? $trading_days_pro_rata : 0,
-				'weeks' => isset($weeks_val) ? $weeks_val : 0,
-				'weeks_pr' => isset($weeks_pr) ? $weeks_pr : 0,
-				'weeks_pro_rata' => isset($weeks_pro_rata) ? $weeks_pro_rata : 0,
+				'currency_symbol' => $currencySymbol,
 
-				'gross_sales_budget' => isset($gross_sales_budget) ? number_format($gross_sales_budget, 2, '.', ',') : 0.00,
-				'gross_sales_actual' => isset($gross_sales_actual) ? number_format($gross_sales_actual, 2, '.', ',') : 0.00,
-				'gross_sales_variance' => isset($gross_sales_variance) ? number_format($gross_sales_variance, 2, '.', ',') : 0.00,
-				'gross_sales_percent_of_budget' => isset($gross_sales_percent_of_budget) ? number_format($gross_sales_percent_of_budget, 2, '.', ',') : 0.00,
+				'gross_sales_budget' => number_format($gross_sales_budget, 2, '.', ','),
+				'gross_sales_actual' => number_format($gross_sales_actual, 2, '.', ','),
+				'gross_sales_variance' => number_format($gross_sales_variance, 2, '.', ','),
+				'gross_sales_percent_of_budget' => number_format($gross_sales_percent_of_budget, 2, '.', ','),
 
-				'net_sales_budget' => isset($net_sales_budget) ? number_format($net_sales_budget, 2, '.', ',') : 0.00,
-				'net_sales_actual' => isset($net_sales_actual) ? number_format($net_sales_actual, 2, '.', ',') : 0.00,
-				'net_sales_variance' => isset($net_sales_variance) ? number_format($net_sales_variance, 2, '.', ',') : 0.00,
-				'net_sales_percent_of_budget' => isset($net_sales_percent_of_budget) ? number_format($net_sales_percent_of_budget, 2, '.', ',') : 0.00,
+				'net_sales_budget' => number_format($net_sales_budget, 2, '.', ','),
+				'net_sales_actual' => number_format($net_sales_actual, 2, '.', ','),
+				'net_sales_variance' => number_format($net_sales_variance, 2, '.', ','),
+				'net_sales_percent_of_budget' => number_format($net_sales_percent_of_budget, 2, '.', ','),
 
-				'cost_of_sales_budget' => isset($cost_of_sales_budget) ? number_format($cost_of_sales_budget, 2, '.', ',') : 0.00,
-				'cost_of_sales_actual' => isset($cost_of_sales_actual) ? number_format($cost_of_sales_actual, 2, '.', ',') : 0.00,
-				'cost_of_sales_purchases' => isset($purchases_goods_total) ? number_format($purchases_goods_total, 2, '.', ',') : 0.00,
-				'cost_of_sales_stock_delta' => isset($stock_delta) ? number_format($stock_delta, 2, '.', ',') : 0.00,
-				'cost_of_sales_variance' => isset($cost_of_sales_variance) ? number_format($cost_of_sales_variance, 2, '.', ',') : 0.00,
-				'cost_of_sales_percent_of_budget' => isset($cost_of_sales_percent_of_budget) ? number_format($cost_of_sales_percent_of_budget, 2, '.', ',') : 0.00,
+				'cost_of_sales_budget' => number_format($cost_of_sales_budget, 2, '.', ','),
+				'cost_of_sales_actual' => number_format($cost_of_sales_actual, 2, '.', ','),
+				'cost_of_sales_purchases' => number_format($purchases_goods_total, 2, '.', ','),
+				'cost_of_sales_stock_delta' => number_format($stock_delta, 2, '.', ','),
+				'cost_of_sales_variance' => number_format($cost_of_sales_variance, 2, '.', ','),
+				'cost_of_sales_percent_of_budget' => number_format($cost_of_sales_percent_of_budget, 2, '.', ','),
 
-				'gross_profit_gross_budget' => isset($gross_profit_gross_budget) ? number_format($gross_profit_gross_budget, 2, '.', ',') : 0.00,
-				'gross_profit_gross_actual' => isset($gross_profit_gross_actual) ? number_format($gross_profit_gross_actual, 2, '.', ',') : 0.00,
-				'gross_profit_gross_variance' => isset($gross_profit_gross_variance) ? number_format($gross_profit_gross_variance, 2, '.', ',') : 0.00,
-				'gross_profit_gross_percent_of_budget' => isset($gross_profit_gross_percent_of_budget) ? number_format($gross_profit_gross_percent_of_budget, 2, '.', ',') : 0.00,
+				'gross_profit_gross_budget' => number_format($gross_profit_gross_budget, 2, '.', ','),
+				'gross_profit_gross_actual' => number_format($gross_profit_gross_actual, 2, '.', ','),
+				'gross_profit_gross_variance' => number_format($gross_profit_gross_variance, 2, '.', ','),
+				'gross_profit_gross_percent_of_budget' => number_format($gross_profit_gross_percent_of_budget, 2, '.', ','),
 
-				'gross_profit_net_budget' => isset($gross_profit_net_budget) ? number_format($gross_profit_net_budget, 2, '.', ',') : 0.00,
-				'gross_profit_net_actual' => isset($gross_profit_net_actual) ? number_format($gross_profit_net_actual, 2, '.', ',') : 0.00,
-				'gross_profit_net_variance' => isset($gross_profit_net_variance) ? number_format($gross_profit_net_variance, 2, '.', ',') : 0.00,
-				'gross_profit_net_percent_of_budget' => isset($gross_profit_net_percent_of_budget) ? number_format($gross_profit_net_percent_of_budget, 2, '.', ',') : 0.00,
+				'gross_profit_net_budget' => number_format($gross_profit_net_budget, 2, '.', ','),
+				'gross_profit_net_actual' => number_format($gross_profit_net_actual, 2, '.', ','),
+				'gross_profit_net_variance' => number_format($gross_profit_net_variance, 2, '.', ','),
+				'gross_profit_net_percent_of_budget' => number_format($gross_profit_net_percent_of_budget, 2, '.', ','),
 
-				'gp_percent_gross_budget' => isset($gp_percent_gross_budget) ? number_format($gp_percent_gross_budget, 0, '.', ',') : 0,
-				'gp_percent_gross_actual' => isset($gp_percent_gross_actual) ? number_format($gp_percent_gross_actual, 0, '.', ',') : 0,
-				'gp_percent_gross_variance' => isset($gp_percent_gross_variance) ? number_format($gp_percent_gross_variance, 0, '.', ',') : 0,
-				'gp_percent_gross_percent_of_budget' => isset($gp_percent_gross_percent_of_budget) ? number_format($gp_percent_gross_percent_of_budget, 0, '.', ',') : 0,
+				'gp_percent_gross_budget' => number_format($gp_percent_gross_budget, 0, '.', ','),
+				'gp_percent_gross_actual' => number_format($gp_percent_gross_actual, 0, '.', ','),
+				'gp_percent_gross_variance' => number_format($gp_percent_gross_variance, 0, '.', ','),
+				'gp_percent_gross_percent_of_budget' => number_format($gp_percent_gross_percent_of_budget, 0, '.', ','),
 
-				'gp_percent_net_budget' => isset($gp_percent_net_budget) ? number_format($gp_percent_net_budget, 0, '.', ',') : 0,
-				'gp_percent_net_actual' => isset($gp_percent_net_actual) ? number_format($gp_percent_net_actual, 0, '.', ',') : 0,
-				'gp_percent_net_variance' => isset($gp_percent_net_variance) ? number_format($gp_percent_net_variance, 0, '.', ',') : 0,
-				'gp_percent_net_percent_of_budget' => isset($gp_percent_net_percent_of_budget) ? number_format($gp_percent_net_percent_of_budget, 0, '.', ',') : 0,
+				'gp_percent_net_budget' => number_format($gp_percent_net_budget, 0, '.', ','),
+				'gp_percent_net_actual' => number_format($gp_percent_net_actual, 0, '.', ','),
+				'gp_percent_net_variance' => number_format($gp_percent_net_variance, 0, '.', ','),
+				'gp_percent_net_percent_of_budget' => number_format($gp_percent_net_percent_of_budget, 0, '.', ','),
 
 				'phasedBudgetRows' => $phasedBudgetRows
 			]
@@ -4758,12 +5252,31 @@ class ReportController extends Controller
 		Cookie::queue('lodgementsReportToDateCookie', $request->to_date, time() + (10 * 365 * 24 * 60 * 60));
 
 		// Columns visibility 
-		$vendingSalesVisData = DB::table('report_column_visible')
-			->select('column_name')
-			->where('report_type', 'lodgements')
+		$hiddenColumns = ReportHiddenColumn::where('report_name', 'lodgements')
 			->where('user_id', $userId)
-			->implode('column_name', ',');
+			->get()
+			->implode('column_index', ',');
 
+		// Currency symbol
+		$unit = Unit::find($unitId);
+		$defaultCurrency = Currency::where('is_default', 1)->first();
+
+		$currencySymbol = $defaultCurrency->currency_symbol;
+		if (!is_null($unit) && !is_null($unit->currency)) {
+			$currencySymbol = $unit->currency->currency_symbol;
+		}
+		
+		// Currencies
+		$currencies = Currency::all();
+
+		// Cost columns
+		$startColumn = Gate::allows('su-user-group') ? 7 : 6;
+		$costColumns = range($startColumn, $startColumn + count($currencies) * 2 + 1);
+		
+		// Columns currency symbols
+		$columnSymbols = [];
+		
+		
 		return view(
 			'reports.lodgements.grid', [
 				'unitId' => $unitId,
@@ -4771,8 +5284,11 @@ class ReportController extends Controller
 				'fromDate' => $fromDate,
 				'toDate' => $toDate,
 				'allRecords' => $allRecords,
-				'notVisiable' => $vendingSalesVisData,
-				'isSuLevel' => Gate::allows('su-user-group')
+				'notVisiable' => $hiddenColumns,
+				'isSuLevel' => Gate::allows('su-user-group'),
+				'costColumns' => json_encode($costColumns),
+				'currencies' => $currencies,
+				'currencySymbol' => $currencySymbol
 			]
 		);
 	}
@@ -4846,6 +5362,36 @@ class ReportController extends Controller
 			}, 0);
 		}
 
+		// Add Lodgement Costs
+		$currencies = Currency::all();
+		$columnIndex = Gate::allows('su-user-group') ? 7 : 6;
+		
+		foreach ($currencies as $currency) {
+			$dataTable->addColumn("Cash {$currency->currency_code}", function ($lodgement) use ($currency) {
+				$lodgementCost = LodgementCost::where('lodgement_id', $lodgement->lodgement_id)
+					->where('currency_id', $currency->currency_id)
+					->first();
+
+				if (is_null($lodgementCost)) {
+					return 0;
+				}
+
+				return $lodgementCost->cash;
+			}, $columnIndex++);
+
+			$dataTable->addColumn("Coin {$currency->currency_code}", function ($lodgement) use ($currency) {
+				$lodgementCost = LodgementCost::where('lodgement_id', $lodgement->lodgement_id)
+					->where('currency_id', $currency->currency_id)
+					->first();
+
+				if (is_null($lodgementCost)) {
+					return 0;
+				}
+
+				return $lodgementCost->coin;
+			}, $columnIndex++);
+		}
+			
 		return $dataTable->make();
 	}
 
@@ -4853,32 +5399,41 @@ class ReportController extends Controller
 	{
 		$lodgementIds = explode(',', $id);
 
-		foreach ($lodgementIds as $lodgementId) {
-			// Detach lodgement from Cash Sales
-			CashSales::where('lodgement_id', $lodgementId)
-				->update(
-					[
-						'lodgement_id' => null
-					]
-				);
+		DB::beginTransaction();
+		
+		try {
+			foreach ($lodgementIds as $lodgementId) {
+				// Remove lodgement
+				$lodgement = Lodgement::findOrFail($lodgementId);
 
-			// Detach lodgement from Vending Sales
-			VendingSales::where('lodgement_id', $lodgementId)
-				->update(
-					[
-						'lodgement_id' => null
-					]
-				);
-
-			// Remove lodgement
-			$lodgement = Lodgement::find($lodgementId);
-
-			if (!is_null($lodgement)) {
 				$lodgement->delete();
-			}
-		}
 
-		echo $id;
+				// Delete  Lodgement costs
+				LodgementCost::where('lodgement_id', $lodgementId)->delete();
+
+				// Detach lodgement from Cash Sales
+				CashSales::where('lodgement_id', $lodgementId)
+					->update(
+						[
+							'lodgement_id' => null
+						]
+					);
+
+				// Detach lodgement from Vending Sales
+				VendingSales::where('lodgement_id', $lodgementId)
+					->update(
+						[
+							'lodgement_id' => null
+						]
+					);
+			}
+
+			DB::commit();
+			
+			echo $id;
+		} catch (\Exception $e) {
+			DB::rollBack();
+		}
 	}
 
 	/**
@@ -5025,6 +5580,10 @@ class ReportController extends Controller
 	 */
 	public function operationsScorecard()
 	{
+		if (Gate::denies('admin-user-group') && Gate::denies('management-user-group')) {
+			abort(403, 'Access denied');
+		}
+
 		// Get list of units for current user level
 		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
 
@@ -5052,6 +5611,10 @@ class ReportController extends Controller
 	 */
 	public function operationsScorecardGrid(Request $request)
 	{
+		if (Gate::denies('admin-user-group') && Gate::denies('management-user-group')) {
+			abort(403, 'Access denied');
+		}
+
 		// Get list of units for current user level
 		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 

@@ -85,7 +85,8 @@ function getVendingMachines() {
                     $('<input />').addClass('form-control').attr({id: 'empty_number', type: 'text', tabindex: 7 })
                 )
         }
-        
+
+        getClosing();
         setTabbing();
     });
 }
@@ -94,6 +95,11 @@ function getClosing() {
     // Do not search closing if we edit Sale
     if ($('#sheet_id').val() > 0) {
         return;    
+    }
+
+    if ($('#unit_id').val() == 0 || $('#vend_machine_id').val() == 0) {
+        $('#opening').val('0.00');
+        return;
     }
     
     $.ajax({
@@ -106,14 +112,6 @@ function getClosing() {
         dataType: 'json',
     }).done(function (data) {
         $('#opening').val(addCommas((Math.round(data.closing * 100) / 100).toFixed(2)));
-
-        if (data.closing) {
-            $('#opening').addClass("auto_calc numeric_val_right_aligned");
-            $('#opening').prop('readonly', true);
-        } else {
-            $('#opening').removeClass("auto_calc");
-            $('#opening').prop('readonly', false);
-        }
     });
 }
 
@@ -146,7 +144,7 @@ function validation() {
         return false;
     }
 
-    // Validate machine
+    // Validate machine and currency
     var machine = $("#vend_machine_id");
 
     if (!machine.val() || machine.val() == 0) {
@@ -159,6 +157,16 @@ function validation() {
         return false;
     }
 
+    if ($('#currency_id').val() == 0) {
+        scrollToElement(machine);
+        machine
+            .after(
+                $('<span />').addClass('error_message').text('This machine has no currency assigned.')
+            );
+
+        return false;
+    }
+    
     // Validate sale date
     var saleDate = $("#sale_date");
 
@@ -259,6 +267,20 @@ function calculations() {
     $('#total').val(addCommas(total.toFixed(2)));
 }
 
+function getMachineCurrency() {
+    $.ajax({
+        type: 'GET',
+        url: "/machine_currency/json",
+        data: {
+            vend_machine_id: $('#vend_machine_id').val()
+        },
+        dataType: 'json'
+    }).done(function (data) {
+        $('#currency_id').val(data.currencyId)
+        $('.currency-symbol').text(data.currencySymbol)
+    });
+}
+
 $(document).ready(function () {
     // Check if unit is open
     unitCloseCheck();
@@ -266,6 +288,9 @@ $(document).ready(function () {
     // Check closing
     getClosing();
 
+    // Currency
+    getMachineCurrency();
+    
     // Calculate totals
     calculations();
 
@@ -280,7 +305,9 @@ $(document).ready(function () {
 
     // Vending machine
     $('#vend_machine_id').on('change', function() {
-        getClosing();    
+        getClosing();
+        
+        getMachineCurrency();
     });
     
     // Number format

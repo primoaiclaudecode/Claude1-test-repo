@@ -9,6 +9,7 @@
 		<section class="dataTables-padding">
 			{!! Form::open(['url' => 'sheets/credit-sales/post', 'class' => 'form-horizontal form-bordered']) !!}
 			{{ Form::hidden('sheet_id', $sheetId) }}
+			{{ Form::hidden('currency_id', $currencyId) }}
 			{{ Form::hidden('sale_items', $saleItems) }}
 
 			<div class="form-group margin-bottom-0 margin-left-0 margin-right-0">
@@ -46,21 +47,21 @@
 								<td>
 									<label>Total Goods:</label>
 									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
+										<span class="input-group-addon">{{ $currencySymbol }}</span>
 										{{ Form::text('total_goods', $goodsTotal, array('class' => 'form-control auto_calc text-right', 'readonly' => 'readonly')) }}
 									</div>
 								</td>
 								<td>
 									<label>Total VAT:</label>
 									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
+										<span class="input-group-addon">{{ $currencySymbol }}</span>
 										{{ Form::text('total_vat', $vatTotal, array('class' => 'form-control auto_calc text-right', 'readonly' => 'readonly')) }}
 									</div>
 								</td>
 								<td>
 									<label>Total Gross:</label>
 									<div class="input-group">
-										<span class="input-group-addon">&euro;</span>
+										<span class="input-group-addon">{{ $currencySymbol }}</span>
 										{{ Form::text('total_gross', $grossTotal, array('class' => 'form-control auto_calc text-right', 'readonly' => 'readonly')) }}
 									</div>
 								</td>
