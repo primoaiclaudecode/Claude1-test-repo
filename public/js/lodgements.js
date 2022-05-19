@@ -160,23 +160,13 @@ function validation() {
 
     var cash = $('input[name="cash[]"]', lastRow);
 
-    if (parseFloat(cash.val()) === 0) {
-        scrollToElement(cash);
-        cash
-            .after(
-                $('<span />').addClass('error_message').text('Please enter a value for Cash')
-            );
-
-        return false;
-    }
-
     var coin = $('input[name="coin[]"]', lastRow);
 
-    if (parseFloat(coin.val()) == 0) {
+    if (parseFloat(coin.val()) === 0 && parseFloat(cash.val()) === 0) {
         scrollToElement(coin);
         coin
             .after(
-                $('<span />').addClass('error_message').text('Please enter a value for Coin')
+                $('<span />').addClass('error_message').text('Please enter a value for Coin or Cash')
             );
 
         return false;
