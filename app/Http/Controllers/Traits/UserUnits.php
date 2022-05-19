@@ -30,13 +30,18 @@ trait UserUnits
 			return $query->get();
 		}
 
+    $unitMembersIds = explode(",", $user->unit_member);
+
 		// Operations level
-		if (Gate::allows('operations-user-group')) {
-			return $query->where('ops_manager_user_id', $user->user_id)->get();
-		}
+      if (Gate::allows('operations-user-group')) {
+          return $query->where(function ($query) use ($user, $unitMembersIds)
+          {
+              $query->where('ops_manager_user_id', $user->user_id)
+                  ->orWhereIn('unit_id', $unitMembersIds);
+          })->get();
+      }
 
 		// Units level
-		$unitMembersIds = explode(",", $user->unit_member);
 
 		return $query->whereIn('unit_id', $unitMembersIds)->get();
 	}
