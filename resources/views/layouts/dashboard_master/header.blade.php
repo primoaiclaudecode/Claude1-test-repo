@@ -19,6 +19,7 @@
                               </li>
                           @endforeach
                       </ul>
+                      <div style="display: none" favourites="{{ json_encode($favouritesMenu) }} " id="favourites-menu-json"></div>
                   </li>
               </ul>
           </div>

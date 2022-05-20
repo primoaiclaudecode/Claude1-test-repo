@@ -5722,3 +5722,19 @@ a.guest-on i {
     margin-right: 5px;
     color: #a9d96c;
 }
+
+.fav-sidebar-icon {
+    position: absolute;
+    top: 17px;
+    left: 11px;
+    color: #36404d;
+}
+.fav-sidebar-icon.active {
+    color: #FF6C60!important;
+}
+.fav-sidebar-icon:hover {
+    color: #FF6C60;
+}
+.fav-sidebar-icon.active:hover {
+    color: #36404d!important;
+}

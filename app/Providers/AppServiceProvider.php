@@ -21,15 +21,16 @@ class AppServiceProvider extends ServiceProvider
 
 			try {
 				$menuLinkTitles = \Helpers::menuLinkTitles();
-				$userMenuLinks = UserMenuLink::where('user_id', $loggedUser->user_id)->orderBy('position')->pluck('link');
+				$userMenuLinks = UserMenuLink::where('user_id', $loggedUser->user_id)->orderBy('position')->get();
 
 				$favouritesMenu = [];
-
-				foreach ($menuLinkTitles as $link => $title) {
-					if ($userMenuLinks->contains($link)) {
+				foreach ($userMenuLinks as $item) {
+					if (isset($menuLinkTitles[$item->link])) {
 						$favouritesMenu[] = [
-							'link' => $link,
-							'title' => $title
+							'link' => $item->link,
+							'title' => $menuLinkTitles[$item->link],
+              'id'=>$item->id,
+              'position'=>$item->position,
 						];
 					}
 				}

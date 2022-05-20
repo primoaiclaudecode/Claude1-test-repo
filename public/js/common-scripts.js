@@ -183,3 +183,152 @@ function isTextSelected(input){
    }
    return false;
 }
+
+$(document).ready(function () {
+    let favJson = $('#favourites-menu-json').attr('favourites')
+    favJson = JSON.parse(favJson)
+    getSidebarFavs(favJson);
+    $('.fav-sidebar-icon').on('click', function () {
+        let thisV = $(this)
+        let link = $(this).attr('link');
+        let data = {
+            _token: $('meta[name="csrf-token"]').attr('content'),
+            link: link,
+            position: 1
+        }
+        let url = '/profile-settings/user-menu/add';
+        let success = function () {
+            thisV.addClass('active')
+            getLinks()
+        }
+        if($(this).hasClass('active')){
+            url = '/profile-settings/user-menu/delete';
+            data.id = $(this).attr('favId');
+            success = function () {
+                thisV.removeClass('active')
+                getLinks()
+            }
+        }
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: data,
+            success: success,
+            error: function (jqXHR) {
+                $('#error_message').text(jqXHR.responseJSON.errorMessage);
+                $('#error_message').removeClass('hidden');
+            }
+        });
+    });
+})
+
+function getLinks() {
+    clearError();
+
+    $.ajax({
+        type: "GET",
+        url: '/profile-settings/user-menu/',
+        data: {},
+        success: function (data) {
+            $('#link').val('');
+
+            // Update menu links list
+            $('#user_menu').empty();
+            $('.dropdown-menu.favourite-menu').empty();
+            $('#link option').prop('disabled', false).removeClass('added');
+
+            $.each(data, function (index, menuLink) {
+                $('#link').find('option[value="' + menuLink.link + '"]').prop('disabled', true).addClass('added');
+
+                $('#user_menu')
+                    .append(
+                        $('<li />')
+                            .addClass('list-group-item')
+                            .attr('id', menuLink.id)
+                            .append(
+                                $('<span />')
+                                    .addClass('label label-success link-position')
+                                    .text(menuLink.position)
+                            )
+                            .append(
+                                $('<span />')
+                                    .addClass('link-title')
+                                    .text(menuLink.title)
+                            )
+                            .append(
+                                $('<i />').addClass('fa fa-trash delete-link')
+                            )
+                    )
+
+                $('.dropdown-menu.favourite-menu')
+                    .append(
+                        $('<li />')
+                            .append(
+                                $('<a />')
+                                    .attr('href', menuLink.link)
+                                    .text(menuLink.title)
+                            )
+                    )
+            });
+
+            // Update positions dropdown
+            $('#position').empty();
+
+            for (var i = 1; i <= data.length + 1; i++) {
+                $('#position')
+                    .append(
+                        $('<option />')
+                            .val(i)
+                            .text(i)
+                    )
+            }
+
+            $('#position').val(i - 1);
+
+            // Update new positions dropdown
+            $('#new_position').empty();
+
+            for (var i = 1; i <= data.length; i++) {
+                $('#new_position')
+                    .append(
+                        $('<option />')
+                            .val(i)
+                            .text(i)
+                    )
+            }
+            getSidebarFavs(data);
+        },
+        error: function (jqXHR) {
+            $('#error_message').text(jqXHR.responseJSON.errorMessage);
+            $('#error_message').removeClass('hidden');
+        }
+    });
+};
+
+function getSidebarFavs(menuLinks) {
+    let baseUrl = window.location.protocol + "//" + window.location.host + "/";
+    $('.sidebar-menu .sub-menu .sub a').each(function () {
+        console.log($(this).prev().hasClass('fav-sidebar-icon'));
+        let href = $(this).attr('href')
+        let link = "/" + href.split(baseUrl)[1]
+        let favId = '';
+        let active = '';
+        menuLinks.forEach(function (item) {
+            if (item.link === link) {
+                active = 'active';
+                favId = item.id
+            }
+        })
+        if ($(this).prev().hasClass('fav-sidebar-icon')) {
+            if (active === '') {
+                $(this).prev().removeClass('active')
+            } else {
+
+                $(this).prev().addClass('active')
+            }
+        } else {
+            $(this).parent().prepend('<i class="fa fa-star fav-sidebar-icon ' + active + '" link="' + link + '" favId="' + favId + '"></i>')
+        }
+
+    })
+}
