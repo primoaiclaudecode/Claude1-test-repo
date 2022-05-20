@@ -9,6 +9,7 @@ services:
     volumes:
       - ./:/var/www/html
       - ./logs:/var/www/logs
+      -  ./images/php/php.ini:/usr/local/etc/php/php.ini
     ports:
       - 9000:9000
     networks:
