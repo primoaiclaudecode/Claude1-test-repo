@@ -52,7 +52,7 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
-	'fpath' => env('APP_FPATH', '/home/andriy/Git/bitnami'),
+	'fpath' => env('APP_FPATH', '/opt/bitnami/apache2/htdocs/'),
 
     /*
     |--------------------------------------------------------------------------

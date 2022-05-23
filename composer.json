@@ -13,7 +13,8 @@
         "zanysoft/laravel-zip": "^1.0",
         "chumper/zipper": "^1.0",
         "unisharp/laravel-filemanager": "^1.9",
-		"mgallegos/laravel-jqgrid": "^1.2"
+        "mgallegos/laravel-jqgrid": "^1.2",
+        "koolphp/koolreport": "^3.25"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",

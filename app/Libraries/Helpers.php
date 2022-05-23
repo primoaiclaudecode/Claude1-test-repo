@@ -30,7 +30,7 @@ class Helpers
 
 	public static function rootDirNames()
 	{
-		$userId = Session::get('userId');
+		$userId = auth()->user()->user_id;
 
 		$groupId = DB::table('users')->select('user_group_member')->where('user_id', '=', $userId)->value('user_group_member');
 		
