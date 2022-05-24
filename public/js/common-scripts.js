@@ -296,6 +296,7 @@ function getLinks() {
                             .text(i)
                     )
             }
+            console.log(data);
             getSidebarFavs(data);
         },
         error: function (jqXHR) {
@@ -308,7 +309,6 @@ function getLinks() {
 function getSidebarFavs(menuLinks) {
     let baseUrl = window.location.protocol + "//" + window.location.host + "/";
     $('.sidebar-menu .sub-menu .sub a').each(function () {
-        console.log($(this).prev().hasClass('fav-sidebar-icon'));
         let href = $(this).attr('href')
         let link = "/" + href.split(baseUrl)[1]
         let favId = '';
@@ -325,6 +325,7 @@ function getSidebarFavs(menuLinks) {
             } else {
 
                 $(this).prev().addClass('active')
+                $(this).prev().attr('favId', favId)
             }
         } else {
             $(this).parent().prepend('<i class="fa fa-star fav-sidebar-icon ' + active + '" link="' + link + '" favId="' + favId + '"></i>')
