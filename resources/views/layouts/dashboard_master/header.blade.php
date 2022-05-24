@@ -25,7 +25,7 @@
           </div>
 
           <a class="logo">
-              {!! Html::image('/img/CCSL-logo-mainABM-small.jpg', 'S.A.M', array('class' => 'ccsl-logo')) !!}
+              {!! Html::image('/img/logo-square.png', 'S.A.M', array('class' => 'ccsl-logo')) !!}
           </a>
 
           <div class="top-nav">
