@@ -7,7 +7,6 @@
 /files
 /bootstrap
 /storage
-/public/build
 Homestead.json
 Homestead.yaml
 .env

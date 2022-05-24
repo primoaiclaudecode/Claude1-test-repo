@@ -13,7 +13,27 @@ require('laravel-elixir-vue');
  |
  */
 
-elixir(mix => {
-    mix.sass('app.scss')
-       .webpack('app.js');
+elixir(function(mix) {
+    mix.version(
+        [
+            'js/common-scripts.js',
+            'js/format_number.js',
+            'js/dashboard.js',
+            'js/purchases.js',
+            'js/cash_sales_js.js',
+            'js/customer_feedback.js',
+            'js/problem_report.js',
+            'js/cred_sales_js.js',
+            'js/labour_hours_js.js',
+            'js/lodgements.js',
+            'js/operations-scorecard.js',
+            'js/trading_account_js.js',
+            'js/stock_control_js.js',
+            'js/vend_sales_js.js',
+            'css/style.css',
+            'css/style-responsive.css',
+            'css/custom.css',
+            'css/dashboard.css'
+        ]
+    );
 });

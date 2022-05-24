@@ -1,0 +1,20 @@
+{
+  "css/custom.css": "css/custom-c2d340f0df.css",
+  "css/dashboard.css": "css/dashboard-799fa9a3d6.css",
+  "css/style-responsive.css": "css/style-responsive-f5772824ce.css",
+  "css/style.css": "css/style-d1564e6c33.css",
+  "js/cash_sales_js.js": "js/cash_sales_js-7097e6929b.js",
+  "js/common-scripts.js": "js/common-scripts-add87dd50b.js",
+  "js/cred_sales_js.js": "js/cred_sales_js-3ce720e5dc.js",
+  "js/customer_feedback.js": "js/customer_feedback-7fffcc0bfa.js",
+  "js/dashboard.js": "js/dashboard-5a95e0e903.js",
+  "js/format_number.js": "js/format_number-58d9479070.js",
+  "js/labour_hours_js.js": "js/labour_hours_js-8714cbf7e1.js",
+  "js/lodgements.js": "js/lodgements-f608c7d837.js",
+  "js/operations-scorecard.js": "js/operations-scorecard-0f8a8cdb32.js",
+  "js/problem_report.js": "js/problem_report-40d5e27422.js",
+  "js/purchases.js": "js/purchases-0bc24d61b5.js",
+  "js/stock_control_js.js": "js/stock_control_js-ef22565509.js",
+  "js/trading_account_js.js": "js/trading_account_js-44a6e9cf4a.js",
+  "js/vend_sales_js.js": "js/vend_sales_js-1c81e4c70d.js"
+}
