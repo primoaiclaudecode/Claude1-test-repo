@@ -523,21 +523,24 @@ $(document).ready(function () {
         return validation();
     });
 
+    let purchType =  $("#unit_id").attr('purchType');
     $("#unit_id").on("change", function () {
         let currencies = $(this).attr('currencies');
         let val = $(this).val();
         currencies = JSON.parse(currencies);
         if (typeof currencies[val] !== 'undefined' && typeof currencies[val][0] !== 'undefined'){
-            $("#currency_id").val(currencies[val][0]).trigger('change');
             if (currencies[val].length === 1){
+                $("#currency_id").val(currencies[val][0]).trigger('change');
                 $("#currency_id").attr('disabled','disabled');
-            } else {
+            } else if(purchType === 'cash') {
+                $("#currency_id").val(currencies[val][0]).trigger('change');
                 $("#currency_id").removeAttr('disabled');
+            } else {
+                $("#currency_id").val(0).trigger('change');
             }
         }
     });
     $("#currency_id").on("change", function () {
-        let purchType =  $("#unit_id").attr('purchType');
         let val = $(this).val();
         $.ajax({
             type: "GET",
@@ -553,7 +556,6 @@ $(document).ready(function () {
                     let thisV = $(this);
                     $(this).empty(); // remove old options
                     $.each(result, function(key,value) {
-                        console.log(value,thisV);
                         thisV.append($("<option></option>")
                             .attr("value", value.tax_code_ID).text(value.tax_code_display_rate));
                     });

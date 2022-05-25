@@ -812,12 +812,15 @@ class SheetController extends Controller
     public function getTaxCodesByCurrency(Request $request)
     {
         $dbField = $request->purchType . '_purch';
-        $taxCodes = TaxCode::select('tax_code_display_rate', 'tax_code_ID'  )
-            ->where($dbField, 1)
-            ->where('currency_id', $request->currency_id)
-            ->get();
+        $taxCodes = TaxCode::select('tax_code_display_rate', 'tax_code_ID')
+            ->where($dbField, 1);
 
-        return $taxCodes;
+        $taxCodes->when(!empty($request->currency_id), function ($q) use ($request)
+        {
+            return $q->where('currency_id', $request->currency_id);
+        });
+
+        return $taxCodes->get();
     }
     public function purchaseConfirmation(Request $request, $purchType)
 	{
