@@ -34,6 +34,10 @@
 				{!! Form::text('tax_code_display_rate',null,['class'=>'form-control']) !!}
 			</div>
 			<div class="form-group">
+				{!! Form::label('tax_code_display_rate', 'Tax Code Display Rate:') !!}
+				{!! Form::select('currency_id', $currencies, null, ['class'=>'form-control', 'placeholder' => 'Choose',]) !!}
+			</div>
+			<div class="form-group">
 				<label class="normal-font-weight margin-bottom-3">{!! Form::checkbox('cash_purch', 1, isset($taxCode->cash_purch) && $taxCode->cash_purch == 1 ? true : !isset($taxCode->cash_purch) ? true : false) !!}
 					Cash Purch
 				</label>

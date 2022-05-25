@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Currency;
 use App\NetExt;
 use App\ReportHiddenColumn;
 use Illuminate\Http\Request;
@@ -214,12 +215,14 @@ class TaxCodeController extends Controller
 				'selected' => false
 			];
 		}
+      $currencies = Currency::pluck('currency_name', 'currency_id');
 
-		return view('taxcodes.create', [
-			'heading' => 'Create New Tax Code',
-			'btn_caption' => 'Create Tax Code',
-			'vendingSalesGoods' => $vendingSalesGoods
-		]);
+      return view('taxcodes.create', [
+          'heading'           => 'Create New Tax Code',
+          'btn_caption'       => 'Create Tax Code',
+          'vendingSalesGoods' => $vendingSalesGoods,
+          'currencies'       => $currencies,
+      ]);
 	}
 
 	/**
@@ -233,7 +236,8 @@ class TaxCodeController extends Controller
 		$this->validate($request, [
 			'tax_code_title' => 'required|string|unique:tax_codes,tax_code_title',
 			'tax_rate' => 'required|numeric',
-			'tax_code_display_rate' => 'required|string'
+			'tax_code_display_rate' => 'required|string',
+			'currency_id' => 'required|numeric',
 		]);
 
 		$taxCode = new TaxCode;
@@ -244,6 +248,7 @@ class TaxCodeController extends Controller
 		$taxCode->credit_purch = $request->input('credit_purch', 0);
 		$taxCode->credit_sales = $request->input('credit_sales', 0);
 		$taxCode->vending_sales = $request->input('vending_sales', 0);
+		$taxCode->currency_id = $request->input('currency_id', 1);
 		$taxCode->save();
 
 		// If Vending Sales is selected, save net ext for the current tax code
@@ -290,12 +295,14 @@ class TaxCodeController extends Controller
 				'selected' => $netExtList->contains($item->net_ext_ID)
 			];
 		}
+      $currencies = Currency::pluck('currency_name', 'currency_id');
 
 		return view('taxcodes.create', [
 			'heading' => 'Edit Tax Code',
 			'btn_caption' => 'Edit Tax Code',
 			'taxCode' => $taxCode,
-			'vendingSalesGoods' => $vendingSalesGoods
+			'vendingSalesGoods' => $vendingSalesGoods,
+      'currencies'       => $currencies,
 		]);
 	}
 
@@ -312,7 +319,8 @@ class TaxCodeController extends Controller
 		$this->validate($request, [
 			'tax_code_title' => 'required',
 			'tax_rate' => 'required',
-			'tax_code_display_rate' => 'required'
+			'tax_code_display_rate' => 'required',
+      'currency_id' => 'required|numeric',
 		]);
 
 		$taxCode = TaxCode::find($id);
@@ -328,6 +336,7 @@ class TaxCodeController extends Controller
 		$taxCode->credit_purch = $request->input('credit_purch', 0);
 		$taxCode->credit_sales = $request->input('credit_sales', 0);
 		$taxCode->vending_sales = $request->input('vending_sales', 0);
+      $taxCode->currency_id = $request->input('currency_id', 1);
 		$taxCode->save();
 
 		// If Vending sales is selected, save net ext for the current tax code

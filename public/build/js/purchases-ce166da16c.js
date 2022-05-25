@@ -527,18 +527,14 @@ $(document).ready(function () {
         let currencies = $(this).attr('currencies');
         let val = $(this).val();
         currencies = JSON.parse(currencies);
-        if (typeof currencies[val] !== 'undefined'){
-            console.log(currencies[val]);
+        if (typeof currencies[val] !== 'undefined' && typeof currencies[val][0] !== 'undefined'){
+            $("#currency_id").val(currencies[val][0]).trigger('change');
             if (currencies[val].length === 1){
-                $("#currency_id").val(currencies[val][0]).trigger('change').attr('disabled','disabled');
-
-
-
+                $("#currency_id").attr('disabled','disabled');
             } else {
                 $("#currency_id").removeAttr('disabled');
             }
         }
-        console.log(currencies);
     });
     $("#currency_id").on("change", function () {
         let purchType =  $("#unit_id").attr('purchType');
