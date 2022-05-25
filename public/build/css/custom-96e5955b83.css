@@ -446,3 +446,8 @@ label.checkbox-inline.checked, label.checkbox.checked {
 .table-medium {
 	min-width: 1015px;
 }
+.auth-logo {
+	bottom: 13px;
+	left: 33px;
+	position: relative;
+}

@@ -4,8 +4,8 @@
 <div id="sheet">
         <section class="body-sign">
             <div class="center-sign login_white_bg">
-                <a href="/" class="logo pull-left">
-                    {!! Html::image('/img/CCSL-logo-mainABM.jpg', 'S.A.M', array('height' => 65)) !!}
+                <a href="/" class="logo pull-left auth-logo">
+                    {!! Html::image('/img/logo-square.png', 'S.A.M', array('height' => 80)) !!}
                 </a>
 
                 <div class="panel panel-sign">
