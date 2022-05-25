@@ -22,7 +22,14 @@
 			<div class="form-group">
 				<label class="col-xs-12 col-sm-3 col-md-2 control-label custom-labels">Unit Name:</label>
 				<div class="col-xs-12 col-sm-9 col-md-4">
-					{!! Form::select('unit_id', $userUnits, $selectedUnit, ['id' => 'unit_id', 'class'=>'form-control margin-bottom-15', 'placeholder' => 'Select Unit', 'tabindex' => 1, 'autofocus']) !!}
+					{!! Form::select('unit_id', $userUnits, $selectedUnit, [
+    						'id' => 'unit_id',
+							 	'class'=>'form-control margin-bottom-15',
+								'placeholder' => 'Select Unit',
+								'tabindex' => 1, 'autofocus',
+								'purchType' => $purchType, 'autofocus',
+								'currencies'=> json_encode($userUnitsCurrencies),
+  					]) !!}
 				</div>
 
 				@if ($purchType == 'cash')
@@ -122,7 +129,7 @@
 									</td>
 
 									<td width="17%">
-										{!! Form::select('tax_rate[]', $taxCodeTitles, $purchaseItem['tax'], ['class'=>'form-control', 'placeholder' => 'Choose', 'dir' => 'rtl', 'onchange' => 'calculations()']) !!}
+										{!! Form::select('tax_rate[]', $taxCodeTitles, $purchaseItem['tax'], ['class'=>'form-control tax_rate', 'placeholder' => 'Choose', 'dir' => 'rtl', 'onchange' => 'calculations()']) !!}
 									</td>
 
 									<td width="17%">
@@ -154,7 +161,7 @@
 											{{ Form::text('goods[]', '0.00', array('class' => 'form-control text-right currencyFields', 'onchange' => 'calculations()')) }}
 										</div>
 									<td width="17%">
-									{!! Form::select('tax_rate[]', $taxCodeTitles, null, ['class'=>'form-control', 'placeholder' => 'Choose', 'dir' => 'rtl', 'onchange' => 'calculations()']) !!}
+									{!! Form::select('tax_rate[]', $taxCodeTitles, null, ['class'=>'form-control tax_rate', 'placeholder' => 'Choose', 'dir' => 'rtl', 'onchange' => 'calculations()']) !!}
 									<td width="17%">
 										<div class="input-group">
 											<span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>

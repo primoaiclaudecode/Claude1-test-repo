@@ -63,6 +63,7 @@ Route::post('/taxcodes_data/net-ext-settings/save', 'TaxCodeController@saveNetEx
 
 Route::get('sheets/unit/close-check', 'SheetController@checkUnitClose');
 
+Route::get('sheets/get-tax-codes-by-currency','SheetController@getTaxCodesByCurrency');
 Route::get('sheets/purchases/{purch_type}/{sheet_id?}','SheetController@purchase');
 Route::post('sheets/purchases/{purch_type}','SheetController@purchase');
 Route::post('sheets/purchases/{purch_type}/confirmation','SheetController@purchaseConfirmation');

@@ -79,7 +79,7 @@
 			</div>
 			<div class="form-group">
 				{!! Form::label('currency_id', 'Currency:') !!}
-				{!! Form::select('currency_id', $currencies, null, ['class'=>'form-control', 'id' => 'currency_id', 'placeholder' => 'Select currency']); !!}
+				{!! Form::select('currency_id[]', $currencies, isset($selectedCurrencies) ? $selectedCurrencies : null, ['class'=>'form-control', 'multiple' => true, 'size' => 7, 'id' => 'currency_id', 'placeholder' => 'Select currency']); !!}
 			</div>
 			@if(isset($associatedUsers))
 				<div class="form-group">
@@ -160,6 +160,7 @@
         $('#operations_group').select2();
         $('#unit_manager').select2();
         $('#operation_manager').select2();
+        $('#currency_id').select2();
 
         $("#asp").focusin(function () {
             if ($(this).has(document.activeElement).length != 0) {
