@@ -273,3 +273,9 @@ ALTER TABLE `ops_scorecard` ADD `attached_files` VARCHAR(255) CHARACTER SET utf8
 /* ===================== New user group ================================= */
 
 INSERT INTO `user_groups`(`user_group_name`) VALUES ('Limited Access');
+
+
+/* ===================== Limit the tax codes ================================= */
+ALTER TABLE `tax_codes` ADD `currency_id` INT(11) UNSIGNED NOT NULL AFTER `tax_code_display_rate`;
+UPDATE `tax_codes` SET `currency_id` = 1;
+ALTER TABLE `units` CHANGE `currency_id` `currency_id` VARCHAR(255) NOT NULL DEFAULT '1';
