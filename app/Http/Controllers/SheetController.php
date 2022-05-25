@@ -744,10 +744,7 @@ class SheetController extends Controller
 		}
 
 		// Get list of units for current user level
-		$userUnitsQ = $this->getUserUnits(true);
-		$userUnits = $userUnitsQ->pluck('unit_name', 'unit_id');
-		$userUnitsCurrencies = $userUnitsQ->pluck('currency_id', 'unit_id')->toArray();
-    $userUnitsCurrencies = array_map(function($item){ return explode(',',$item); }, $userUnitsCurrencies);
+		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
 
 		// Suppliers
 		$suppliers = [];
@@ -803,23 +800,12 @@ class SheetController extends Controller
 				'taxCodeRates' => $taxCodeRates,
 				'currencies' => $currencies,
 				'selectedCurrency' => $currencyId,
-				'currencySymbol' => $currencySymbol,
-        'userUnitsCurrencies'=>$userUnitsCurrencies,
+				'currencySymbol' => $currencySymbol
 			]
 		);
 	}
 
-    public function getTaxCodesByCurrency(Request $request)
-    {
-        $dbField = $request->purchType . '_purch';
-        $taxCodes = TaxCode::select('tax_code_display_rate', 'tax_code_ID'  )
-            ->where($dbField, 1)
-            ->where('currency_id', $request->currency_id)
-            ->get();
-
-        return $taxCodes;
-    }
-    public function purchaseConfirmation(Request $request, $purchType)
+	public function purchaseConfirmation(Request $request, $purchType)
 	{
 		// Unit
 		$selectedUnit = Unit::find($request->unit_id);

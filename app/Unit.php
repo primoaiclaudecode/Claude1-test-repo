@@ -22,5 +22,13 @@ class Unit extends Model
 	{
 		return $this->belongsTo('App\Status');
 	}
+
+	/**
+	 * Get currency.
+	 */
+	public function currency()
+	{
+		return $this->belongsTo('App\Currency');
+	}
 	
 }

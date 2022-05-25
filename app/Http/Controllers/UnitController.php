@@ -153,7 +153,7 @@ class UnitController extends Controller
 		$this->validate($request, [
 			'unit_name' => 'required|min:5',
 			'status_id' => 'required|integer',
-			'currency_id' => 'required|array|min:1'
+			'currency_id' => 'required|integer'
 		]);
 
 		$unit = new Unit;
@@ -173,7 +173,7 @@ class UnitController extends Controller
 		$unit->client_contact_name = $request->client_contact_name;
 		$unit->client_contact_email = $request->client_contact_email;
 		$unit->status_id = $request->status_id;
-		$unit->currency_id = implode(',', (array)$request->currency_id);
+		$unit->currency_id = $request->currency_id;
 		$unit->save();
 
 		Session::flash('flash_message', 'Unit has been added successfully!'); //<--FLASH MESSAGE
@@ -244,9 +244,7 @@ class UnitController extends Controller
 
 		// Currencies
 		$currencies = Currency::pluck('currency_name', 'currency_id');
-    $selectedCurrencies = explode(",", $unit->currency_id);
-    $selectedCurrencies = array_map('intval', $selectedCurrencies);
-
+		
 		return view('units.create', [
 			'heading' => 'Edit Unit',
 			'btn_caption' => 'Edit Unit',
@@ -263,7 +261,6 @@ class UnitController extends Controller
 			'selectedOperationManager' => $selectedOperationManager,
 			'statuses' => $statuses,
 			'currencies' => $currencies,
-			'selectedCurrencies' => $selectedCurrencies,
 		]);
 	}
 
@@ -279,7 +276,7 @@ class UnitController extends Controller
 		$this->validate($request, [
 			'unit_name' => 'required|min:5',
 			'status_id' => 'required|integer',
-      'currency_id' => 'required|array|min:1'
+			'currency_id' => 'required|integer'
 		]);
 
 		$unit = Unit::find($id);
@@ -299,7 +296,7 @@ class UnitController extends Controller
 		$unit->client_contact_name = $request->client_contact_name;
 		$unit->client_contact_email = $request->client_contact_email;
 		$unit->status_id = $request->status_id;
-		$unit->currency_id = implode(',', (array)$request->currency_id);
+		$unit->currency_id = $request->currency_id;
 		$unit->save();
 
 		Session::flash('flash_message', 'Unit has been updated successfully!');
