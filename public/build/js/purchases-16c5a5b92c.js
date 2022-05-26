@@ -366,7 +366,9 @@ function calculations() {
         if (!isNaN(rate)) {
             var vat = goods * rate / 100;
             var  gross = goods + goods * rate / 100;
-            
+            vat = Math.round(vat * 100) / 100;
+            gross = Math.round(gross * 100) / 100;
+
             $('input[name="vat[]"]', row).val(addCommas(vat.toFixed(2)));
             $('input[name="gross[]"]', row).val(addCommas(gross.toFixed(2)));
             
