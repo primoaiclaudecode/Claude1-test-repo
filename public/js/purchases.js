@@ -532,9 +532,11 @@ $(document).ready(function () {
             if (currencies[val].length === 1){
                 $("#currency_id").val(currencies[val][0]).trigger('change');
                 $("#currency_id").attr('readonly',true);
+                $("#currency_id").css("pointer-events","none");
             } else if(purchType === 'cash') {
                 $("#currency_id").val(currencies[val][0]).trigger('change');
                 $("#currency_id").removeAttr('readonly');
+                $("#currency_id").css("pointer-events","all");
             } else {
                 $("#currency_id").val(0).trigger('change');
             }

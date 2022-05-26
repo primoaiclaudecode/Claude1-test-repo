@@ -34,7 +34,7 @@
 				{!! Form::text('tax_code_display_rate',null,['class'=>'form-control']) !!}
 			</div>
 			<div class="form-group">
-				{!! Form::label('tax_code_display_rate', 'Tax Code Display Rate:') !!}
+				{!! Form::label('tax_code_display_rate', 'Tax Code Currency:') !!}
 				{!! Form::select('currency_id', $currencies, null, ['class'=>'form-control', 'placeholder' => 'Choose',]) !!}
 			</div>
 			<div class="form-group">
