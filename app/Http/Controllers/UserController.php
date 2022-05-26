@@ -165,6 +165,7 @@ class UserController extends Controller
 		$user->unit_member = implode(',', (array)$request->unit_member);
 		$user->ops_mgr = implode(',', (array)$request->ops_mgr);
 		$user->ops_group_member = implode(',', (array)$request->ops_group_member);
+    $user->status = $request->status ?? User::STATUS_ACTIVE;
 		$user->save();
 
 		Session::flash('flash_message', 'User has been added successfully!'); //<--FLASH MESSAGE
@@ -248,6 +249,7 @@ class UserController extends Controller
 		}
 
 		$selectedOpsGroupMember = $selectedRegion;
+    $statuses = User::getStatusesList();
 
 		return view('users.create', [
 			'heading' => 'Edit User',
@@ -261,7 +263,8 @@ class UserController extends Controller
 			'selectedUserGroups' => $selectedUserGroups,
 			'selectedUnitMembers' => $selectedUnitMembers,
 			'selectedOperationsManager' => $selectedOperationsManager,
-			'selectedOpsGroupMember' => $selectedOpsGroupMember
+			'selectedOpsGroupMember' => $selectedOpsGroupMember,
+        'statuses'=>$statuses
 		]);
 	}
 
@@ -290,6 +293,7 @@ class UserController extends Controller
 		$user->unit_member = implode(',', (array)$request->unit_member);
 		$user->ops_mgr = implode(',', (array)$request->ops_mgr);
 		$user->ops_group_member = implode(',', (array)$request->ops_group_member);
+		$user->status = $request->status ?? User::STATUS_ACTIVE;
 		$user->save();
 
 		Session::flash('flash_message', 'User has been updated successfully!'); //<--FLASH MESSAGE

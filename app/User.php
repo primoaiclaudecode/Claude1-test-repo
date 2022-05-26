@@ -9,6 +9,9 @@ class User extends Authenticatable
 {
     use Notifiable;
 
+    const STATUS_ACTIVE = 1;
+    const STATUS_INACTIVE = 2;
+
     protected $primaryKey = 'user_id';
     public $timestamps = false;
     /**
@@ -17,7 +20,7 @@ class User extends Authenticatable
     * @var array
     */
     protected $fillable = [
-        'name', 'email', 'password',
+        'name', 'email', 'password', 'status'
     ];
 
     /**
@@ -29,6 +32,13 @@ class User extends Authenticatable
         'password', 'remember_token',
     ];
 
+    public static function getStatusesList()
+    {
+        return [
+            self::STATUS_ACTIVE   => 'Active',
+            self::STATUS_INACTIVE => 'Inactive',
+        ];
+    }
 
     public function getRememberToken()
     {

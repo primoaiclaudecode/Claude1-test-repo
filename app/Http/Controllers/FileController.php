@@ -66,7 +66,9 @@ class FileController extends Controller
 		$user_groups = UserGroup::select(['user_group_id', 'user_group_name'])->where('user_group_id', '!=', 5)->get();
 
 		// for users dropdown in Permissions modal box
-		$users_data = User::select(['user_id', 'username'])->where('username', '!=', 'super_user')->get();
+		$users_data = User::select(['user_id', 'username'])
+        ->where('username', '!=', 'super_user')
+        ->andWhere('status', '=', User::STATUS_ACTIVE)->get();
 
 		$region_groups = Region::select(['region_id', 'region_name'])->get();
 		$d_type = null;

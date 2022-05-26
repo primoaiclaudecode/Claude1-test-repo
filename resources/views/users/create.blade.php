@@ -49,6 +49,10 @@
 			        {!! Form::label('user_email', 'E-Mail Address:') !!}
 			        {!! Form::text('user_email',null,['class'=>'form-control']) !!}
 			    </div>
+					<div class="form-group">
+						{!! Form::label('status', 'User status:') !!}
+						{!! Form::select('status', $statuses, $user->status, ['class'=>'form-control', 'id'=>'status']); !!}
+					</div>
 			    <div class="form-group">
 			        {!! Form::label('user_group_member', 'User Group Member:') !!}
 			        {!! Form::select('user_group_member[]', $userGroups, isset($selectedUserGroups) ? $selectedUserGroups : null, ['class'=>'form-control', 'multiple' => 'multiple', 'size' => 7,'id'=>'user_group_member']); !!}
