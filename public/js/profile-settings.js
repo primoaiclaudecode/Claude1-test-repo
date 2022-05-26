@@ -50,11 +50,6 @@ function deleteLink(id) {
     });
 };
 
-function clearError() {
-    $('.error_message').remove();
-    $('#error_message').addClass('hidden').text('');
-};
-
 function editPosition(id, currentPosition) {
     $('#link_id').val(id);
     $('#new_position').val(currentPosition);

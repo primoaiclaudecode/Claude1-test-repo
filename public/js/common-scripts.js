@@ -333,3 +333,8 @@ function getSidebarFavs(menuLinks) {
 
     })
 }
+
+function clearError() {
+    $('.error_message').remove();
+    $('#error_message').addClass('hidden').text('');
+};
