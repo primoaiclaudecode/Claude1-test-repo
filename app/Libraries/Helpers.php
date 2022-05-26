@@ -111,4 +111,9 @@ class Helpers
 		
 		return $linkTitles;
 	}
+
+    public static function multiAttrsWhere(string $field, array $values): string
+    {
+        return "$field REGEXP '(^|,)(" . implode('|', $values) . ")(,|$)'";
+    }
 }

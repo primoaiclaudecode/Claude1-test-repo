@@ -14,6 +14,8 @@ services:
       - 9000:9000
     networks:
       - sam
+    links:
+      - sql
   nginx:
     build: ./images/nginx
     depends_on:
