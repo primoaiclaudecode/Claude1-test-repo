@@ -16,7 +16,7 @@ trait UserUnits
 	 *
 	 * @return Collection
 	 */
-	public function getUserUnits($onlyActive = false)
+	public function getUserUnits($onlyActive = true)
 	{
 		$user = auth()->user();
 		

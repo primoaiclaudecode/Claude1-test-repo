@@ -72,7 +72,7 @@ class RegisterController extends Controller
     public function create()
     {
 	    // Unit Name Dropdown
-	    $units = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+	    $units = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 	    // Currencies
 	    $currencies = Currency::pluck('currency_name', 'currency_id');
@@ -122,7 +122,7 @@ class RegisterController extends Controller
         $register = Register::find($id);
         
         // Unit Name Dropdown
-	    $units = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+	    $units = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 	    // Currencies
 	    $currencies = Currency::pluck('currency_name', 'currency_id');

@@ -744,7 +744,7 @@ class SheetController extends Controller
 		}
 
 		// Get list of units for current user level
-		$userUnitsQ = $this->getUserUnits(true);
+		$userUnitsQ = $this->getUserUnits();
 		$userUnits = $userUnitsQ->pluck('unit_name', 'unit_id');
 		$userUnitsCurrencies = $userUnitsQ->pluck('currency_id', 'unit_id')->toArray();
     $userUnitsCurrencies = array_map(function($item){ return explode(',',$item); }, $userUnitsCurrencies);
@@ -1082,7 +1082,7 @@ class SheetController extends Controller
 		}
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		// Tax codes. Temporary exclude 13.5% tax code from Sheet, but show on Report
 		$taxCodes = TaxCode::where('credit_sales', 1)
@@ -1242,7 +1242,7 @@ class SheetController extends Controller
 		$cashSalesData = CashSales::where('cash_sales_id', $sheetId)->first();
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		$selectedUnit = !is_null($cashSalesData) ? $cashSalesData->unit_id : $request->unit_id;
 		$unitName = !is_null($cashSalesData) ? $cashSalesData->unit_name : $request->unit_name;
@@ -1558,7 +1558,7 @@ class SheetController extends Controller
 		}
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		// Currency
 		$unit = Unit::find($unitId);
@@ -1883,7 +1883,7 @@ class SheetController extends Controller
 		}
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		// Vending machines + Reg number
 		$vendMachines = Vending::where('unit_id', $unitId)
@@ -2111,7 +2111,7 @@ class SheetController extends Controller
 		$userName = session()->get('userName');
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		$selectedUnit = $request->unit_id;
 		$unitName = $request->unit_name;
@@ -3944,7 +3944,7 @@ class SheetController extends Controller
 		$selectAll = Gate::allows('hq-user-group') ? 1 : 0;
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		$carNum = $id ? $id : ($request->has('sheet_id') ? $request->sheet_id : \App\Problem::max('id') + 1);
 
@@ -4945,7 +4945,7 @@ class SheetController extends Controller
 	public function customerFeedback(Request $request)
 	{
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		$unitId = Cookie::get('customerFeedbackUnitIdCookie', 0);
 		$contactDate = Carbon::now()->format('d-m-Y');

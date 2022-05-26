@@ -115,7 +115,7 @@ class AccountsController extends Controller
 			->get();
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		// Get suppliers list
 		$unit = Unit::find($unitId);
@@ -265,7 +265,7 @@ class AccountsController extends Controller
 		$toDateCookie = Cookie::get('bsiReportToDateCookie', '');
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		return view(
 			'accounts.bsi-report.index', [
@@ -434,7 +434,7 @@ class AccountsController extends Controller
 		$supervisor = $request->input('supervisor', session()->get('userName', ''));
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		return view(
 			'accounts.unit-month-end-closing.index', [

@@ -87,7 +87,7 @@ class VendingController extends Controller
 	public function create()
 	{
 		// Unit Name Dropdown
-		$units = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$units = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		// Machine
 		$machine_brand_arr = array();
@@ -164,7 +164,7 @@ class VendingController extends Controller
 		$vending = Vending::find($id);
 
 		// Unit Name Dropdown
-		$units = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$units = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		// Machine
 		$machine_brand_arr = [

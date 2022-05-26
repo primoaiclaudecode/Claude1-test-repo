@@ -85,7 +85,7 @@ class ReportController extends Controller
 		$toDate = Cookie::get('purchasesReportToDateCookie', Carbon::now()->format('d-m-Y'));
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		return view(
 			'reports.purchases.index', [
@@ -156,7 +156,7 @@ class ReportController extends Controller
 		$toDate = $request->to_date;
 
 		// Units
-		$userUnits = $this->getUserUnits()->pluck('unit_id');
+		$userUnits = $this->getUserUnits(false)->pluck('unit_id');
 
 		// Currency
 		$unit = Unit::find($unitId);
@@ -1012,7 +1012,7 @@ class ReportController extends Controller
 		$toDate = Cookie::get('salesSummaryReportToDateCookie', Carbon::now()->format('d-m-Y'));
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		return view(
 			'reports.sales-summary.index', [
@@ -1134,7 +1134,7 @@ class ReportController extends Controller
 
 		if (Gate::denies('su-user-group') && Gate::denies('hq-user-group')) {
 			// Get list of units for current user level
-			$userUnits = $this->getUserUnits(true)->pluck('unit_id');
+			$userUnits = $this->getUserUnits()->pluck('unit_id');
 
 			$sales->whereIn('unit_id', $userUnits);
 		}
@@ -1233,7 +1233,7 @@ class ReportController extends Controller
 		$toDate = Cookie::get('cashSalesReportToDateCookie', Carbon::now()->format('d-m-Y'));
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		return view(
 			'reports.cash-sales.index', [
@@ -1299,7 +1299,7 @@ class ReportController extends Controller
 		$toDate = $request->to_date;
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_id');
 
 		// Currency
 		$unit = Unit::find($unitId);
@@ -2225,7 +2225,7 @@ class ReportController extends Controller
 		$toDate = Cookie::get('creditSalesReportToDateCookie', Carbon::now()->format('d-m-Y'));
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		return view(
 			'reports.credit-sales.index', [
@@ -2313,7 +2313,7 @@ class ReportController extends Controller
 		$toDate = $request->to_date;
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_id');
 
 		// Currency
 		$unit = Unit::find($unitId);
@@ -2936,7 +2936,7 @@ class ReportController extends Controller
 		$toDate = Cookie::get('vendingSalesReportToDateCookie', Carbon::now()->format('d-m-Y'));
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		return view(
 			'reports.vending-sales.index', [
@@ -3021,7 +3021,7 @@ class ReportController extends Controller
 		$toDate = $request->to_date;
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_id');
 
 		// Currency
 		$unit = Unit::find($unitId);
@@ -4243,7 +4243,7 @@ class ReportController extends Controller
 		$toDate = Cookie::get('labourHoursReportToDateCookie', Carbon::now()->format('d-m-Y'));
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		return view(
 			'reports.labour-hours.index', [
@@ -4295,7 +4295,7 @@ class ReportController extends Controller
 		$toDate = $request->to_date;
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_id');
 
 		if ($unitId == '' && Gate::allows('su-user-group')) {
 			if ($request->all_records) {
@@ -4501,7 +4501,7 @@ class ReportController extends Controller
 		$toDate = $request->to_date;
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_id');
 
 		if ($unitId == '' && Gate::allows('su-user-group')) {
 			if ($request->all_records) {
@@ -4657,7 +4657,7 @@ class ReportController extends Controller
 		$purchaseType = Cookie::get('purchasesSummaryPurchaseTypeCookie', '');
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		return view(
 			'reports.purchases-summary.index', [
@@ -4942,7 +4942,7 @@ class ReportController extends Controller
 		$problemTypes = ProblemType::orderBy('title')->get();
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		return view(
 			'reports.problem-report.index', [
@@ -5001,7 +5001,7 @@ class ReportController extends Controller
 		$problemType = $request->problem_type;
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_id');
 
 		if ($unitId == '' && Gate::allows('su-user-group')) {
 			if ($request->all_records) {
@@ -5224,7 +5224,7 @@ class ReportController extends Controller
 		$toDate = Cookie::get('lodgementsReportToDateCookie', Carbon::now()->format('d-m-Y'));
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		return view(
 			'reports.lodgements.index', [
@@ -5299,7 +5299,7 @@ class ReportController extends Controller
 		$toDate = $request->to_date;
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_id');
 
 		$selectColumns = [
 			'l.lodgement_id',
@@ -5445,7 +5445,7 @@ class ReportController extends Controller
 		$toDate = Cookie::get('clientFeedbackReportToDateCookie', Carbon::now()->format('d-m-Y'));
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		return view(
 			'reports.client-feedback.index', [
@@ -5464,7 +5464,7 @@ class ReportController extends Controller
 	public function clientFeedbackGrid(Request $request)
 	{
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		// Read request params
 		$currentDateTime = Carbon::now();
@@ -5584,7 +5584,7 @@ class ReportController extends Controller
 		}
 
 		// Get list of units for current user level
-		$userUnits = $this->getUserUnits(true)->pluck('unit_name', 'unit_id');
+		$userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
 		$currentDateTime = Carbon::now();
 		$todayDate = $currentDateTime->format('d-m-Y');

@@ -65,7 +65,7 @@ class HomeController extends Controller
 	{
 		$unitId = $request->input('unitId', 0);
 
-		$userUnits = $unitId == 0 ? $this->getUserUnits(true)->pluck('unit_id') : [$unitId];
+		$userUnits = $unitId == 0 ? $this->getUserUnits()->pluck('unit_id') : [$unitId];
 
 		// Budget reminder
 		$budgets = PhasedBudget::with('unit')
@@ -437,7 +437,7 @@ class HomeController extends Controller
 		];
 
 		// Get list of units for current user level
-		$units = $this->getUserUnits(true);
+		$units = $this->getUserUnits();
 
 		// For the Unit users show only selected budget type
 		$showBudgetTypeOnly = Gate::denies('operations-user-group');
