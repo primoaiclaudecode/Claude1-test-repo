@@ -249,7 +249,7 @@
 							@endforeach
 
 							<tr id="tax_row_total">
-								<td class="vertical-align-middle"><strong>total</strong></td>
+								<td class="vertical-align-middle"><strong>Total</strong></td>
 								<td>
 									<div class="input-group">
 										<span class="input-group-addon currency-symbol">{{ $currencySymbol }}</span>
