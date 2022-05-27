@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Libraries\MenuHelper;
 use App\Services\GuardService;
 use App\UserMenuLink;
 use App\UserProfileSetting;
@@ -21,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
             $loggedUser = auth()->user();
 
             try {
-                $menuLinkTitles = \Helpers::menuLinkTitles();
+                $menuLinkTitles = MenuHelper::getFavouritesList();
                 $userMenuLinks = UserMenuLink::where('user_id', $loggedUser->user_id)->orderBy('position')->get();
 
                 $favouritesMenu = [];

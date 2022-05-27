@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\ActiveUser;
 use App\Event;
+use App\Libraries\MenuHelper;
+use App\Menu;
 use App\UserMenuLink;
 use App\UserProfileSetting;
 use Carbon\Carbon;
@@ -34,18 +36,15 @@ class ProfileSettingsController extends Controller
      */
     public function index()
     {
-        $allowsOperationsScorecard = Gate::allows('admin-user-group') || Gate::allows('management-user-group');
-
-        $rootDirNames = \Helpers::rootDirNames();
-        $menuLinkTitles = \Helpers::menuLinkTitles();
+        $rootDirNames = MenuHelper::getRootDirNames();
+        $menu = MenuHelper::getMenuList();
 
         $userProfileSettings = UserProfileSetting::where('user_id', auth()->user()->user_id)->first();
 
         return view('profile-settings.index', [
-            'showSidebar'               => $userProfileSettings && $userProfileSettings->show_sidebar,
-            'allowsOperationsScorecard' => $allowsOperationsScorecard,
-            'rootDirNames'              => $rootDirNames,
-            'menuLinkTitles'            => $menuLinkTitles,
+            'showSidebar' => $userProfileSettings && $userProfileSettings->show_sidebar,
+            'rootDirNames' => $rootDirNames,
+            'menu' => $menu,
         ]);
     }
 
@@ -58,7 +57,7 @@ class ProfileSettingsController extends Controller
      */
     public function getMenuLinks(Request $request)
     {
-        $menuLinkTitles = \Helpers::menuLinkTitles();
+        $menuLinkTitles = MenuHelper::getFavouritesList();
 
         $menuLinks = UserMenuLink::where('user_id', auth()->user()->user_id)
             ->orderBy('position')
@@ -74,10 +73,10 @@ class ProfileSettingsController extends Controller
 
         foreach ($menuLinks as $menuLink) {
             $linksList[] = [
-                'id'       => $menuLink->id,
-                'link'     => $menuLink->link,
+                'id' => $menuLink->id,
+                'link' => $menuLink->link,
                 'position' => $menuLink->position,
-                'title'    => isset($menuLinkTitles[$menuLink->link]) ? $menuLinkTitles[$menuLink->link] : $menuLink->link,
+                'title' => isset($menuLinkTitles[$menuLink->link]) ? $menuLinkTitles[$menuLink->link] : $menuLink->link,
             ];
         }
 
@@ -94,7 +93,7 @@ class ProfileSettingsController extends Controller
     public function addLink(Request $request)
     {
         $this->validate($request, [
-            'link'     => 'required|string',
+            'link' => 'required|string',
             'position' => 'required|integer|min:0',
         ]);
 
@@ -129,8 +128,8 @@ class ProfileSettingsController extends Controller
         // Insert new link
         UserMenuLink::create(
             [
-                'user_id'  => $userId,
-                'link'     => $request->link,
+                'user_id' => $userId,
+                'link' => $request->link,
                 'position' => $request->position,
             ]
         );
@@ -174,7 +173,7 @@ class ProfileSettingsController extends Controller
     public function changeLinkPosition(Request $request)
     {
         $this->validate($request, [
-            'id'       => 'required|integer',
+            'id' => 'required|integer',
             'position' => 'required|integer|min:0',
         ]);
 
@@ -214,7 +213,7 @@ class ProfileSettingsController extends Controller
         if (!$userProfileSettings) {
             UserProfileSetting::create(
                 [
-                    'user_id'      => $userId,
+                    'user_id' => $userId,
                     'show_sidebar' => 1,
                 ]
             );

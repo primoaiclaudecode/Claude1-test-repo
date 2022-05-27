@@ -15,6 +15,7 @@ class UserMenuLink extends Model
         'user_id',
         'link',
         'position',
+        'link_id',
     ];
     /**
      * The attributes excluded from the model's JSON form.

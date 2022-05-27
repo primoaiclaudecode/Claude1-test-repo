@@ -111,5 +111,10 @@ class AuthServiceProvider extends ServiceProvider
                 ]
             );
         });
+
+        Gate::define('admin-user-group,management-user-group', function ($user)
+        {
+            return Gate::allows('admin-user-group') || Gate::allows('management-user-group');
+        });
     }
 }
