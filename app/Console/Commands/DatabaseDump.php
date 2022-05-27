@@ -14,7 +14,6 @@ class DatabaseDump extends Command
      * @var string
      */
     protected $signature = 'database:dump';
-
     /**
      * The console command description.
      *
@@ -39,28 +38,29 @@ class DatabaseDump extends Command
      */
     public function handle()
     {
-    	// Create new dump
-    	$filePath = '/home/bitnami/backups/zip/ccsl_backup_' . date('m_d_Y') . '.zip';
+        // Create new dump
+        $filePath = '/home/bitnami/backups/zip/ccsl_backup_' . date('m_d_Y') . '.zip';
 
-	    $username = Config::get('database.connections.mysql.username');
-	    $password = Config::get('database.connections.mysql.password');
-	    $database = Config::get('database.connections.mysql.database');
+        $username = Config::get('database.connections.mysql.username');
+        $password = Config::get('database.connections.mysql.password');
+        $database = Config::get('database.connections.mysql.database');
 
-	    exec("mysqldump -u$username -p$password $database | gzip > $filePath");
+        exec("mysqldump -u$username -p$password $database | gzip > $filePath");
 
-	    // Send email
-        Mail::raw('Database dump ' . date('m/d/Y'), function ($message) use ($filePath) {
-	        $message->to('ataaffe@ccsl.ie');
-	        $message->cc('chris.primo@primosolutions.ie');
-	        $message->subject('Database dump');
-	        $message->attach($filePath);
+        // Send email
+        Mail::raw('Database dump ' . date('m/d/Y'), function ($message) use ($filePath)
+        {
+            $message->to('ataaffe@ccsl.ie');
+            $message->cc('chris.primo@primosolutions.ie');
+            $message->subject('Database dump');
+            $message->attach($filePath);
         });
 
-	    // Remove old dump
-	    $deleteDate = date('m_d_Y', strtotime('-2 month'));
+        // Remove old dump
+        $deleteDate = date('m_d_Y', strtotime('-2 month'));
 
-	    $oldFilePath = ' /home/bitnami/backups/zip/ccsl_backup_' . $deleteDate . '.zip';
+        $oldFilePath = ' /home/bitnami/backups/zip/ccsl_backup_' . $deleteDate . '.zip';
 
-	    exec("rm -f $oldFilePath");
+        exec("rm -f $oldFilePath");
     }
 }

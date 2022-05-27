@@ -12,21 +12,18 @@ class ContractType extends Model
      * @var array
      */
     protected $fillable = [
-        'title'
+        'title',
     ];
-
     /**
      * The attributes excluded from the model's JSON form.
      *
      * @var array
      */
     protected $hidden = [];
-
     /**
      * Disable timestamps
      *
      * @var bool $timestamps
      */
     public $timestamps = false;
-
 }

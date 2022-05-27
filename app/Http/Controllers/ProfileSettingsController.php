@@ -17,212 +17,210 @@ use Yajra\Datatables\Datatables;
 
 class ProfileSettingsController extends Controller
 {
-	/**
-	 * Create a new controller instance.
-	 *
-	 * @return void
-	 */
-	public function __construct()
-	{
-		$this->middleware('auth');
-	}
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
 
-	/**
-	 * Show Profile Settings page
-	 *
-	 * @return \Illuminate\Contracts\View\Factory|\Illuminate\Foundation\Application|\Illuminate\View\View
-	 */
-	public function index()
-	{
-		$allowsOperationsScorecard = Gate::allows('admin-user-group') || Gate::allows('management-user-group');
+    /**
+     * Show Profile Settings page
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Foundation\Application|\Illuminate\View\View
+     */
+    public function index()
+    {
+        $allowsOperationsScorecard = Gate::allows('admin-user-group') || Gate::allows('management-user-group');
 
-		$rootDirNames = \Helpers::rootDirNames();
-		$menuLinkTitles = \Helpers::menuLinkTitles();
+        $rootDirNames = \Helpers::rootDirNames();
+        $menuLinkTitles = \Helpers::menuLinkTitles();
 
-		$userProfileSettings = UserProfileSetting::where('user_id', auth()->user()->user_id)->first();
-		
-		return view('profile-settings.index', [
-			'showSidebar' => $userProfileSettings && $userProfileSettings->show_sidebar,
-			'allowsOperationsScorecard' => $allowsOperationsScorecard,
-			'rootDirNames' => $rootDirNames,
-			'menuLinkTitles' => $menuLinkTitles
-		]);
-	}
+        $userProfileSettings = UserProfileSetting::where('user_id', auth()->user()->user_id)->first();
 
-	/**
-	 * Get items for the user's Favourites menu
-	 *
-	 * @param Request $request
-	 *
-	 * @return \Illuminate\Http\JsonResponse
-	 */
-	public function getMenuLinks(Request $request)
-	{
-		$menuLinkTitles = \Helpers::menuLinkTitles();
+        return view('profile-settings.index', [
+            'showSidebar'               => $userProfileSettings && $userProfileSettings->show_sidebar,
+            'allowsOperationsScorecard' => $allowsOperationsScorecard,
+            'rootDirNames'              => $rootDirNames,
+            'menuLinkTitles'            => $menuLinkTitles,
+        ]);
+    }
 
-		$menuLinks = UserMenuLink::where('user_id', auth()->user()->user_id)
-			->orderBy('position')
-			->get(
-				[
-					'id',
-					'link',
-					'position'
-				]
-			);
+    /**
+     * Get items for the user's Favourites menu
+     *
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getMenuLinks(Request $request)
+    {
+        $menuLinkTitles = \Helpers::menuLinkTitles();
 
-		$linksList = [];
+        $menuLinks = UserMenuLink::where('user_id', auth()->user()->user_id)
+            ->orderBy('position')
+            ->get(
+                [
+                    'id',
+                    'link',
+                    'position',
+                ]
+            );
 
-		foreach ($menuLinks as $menuLink) {
-			$linksList[] = [
-				'id' => $menuLink->id,
-				'link' => $menuLink->link,
-				'position' => $menuLink->position,
-				'title' => isset($menuLinkTitles[$menuLink->link]) ? $menuLinkTitles[$menuLink->link] : $menuLink->link
-			];
-		}
+        $linksList = [];
 
-		return response()->json($linksList);
-	}
+        foreach ($menuLinks as $menuLink) {
+            $linksList[] = [
+                'id'       => $menuLink->id,
+                'link'     => $menuLink->link,
+                'position' => $menuLink->position,
+                'title'    => isset($menuLinkTitles[$menuLink->link]) ? $menuLinkTitles[$menuLink->link] : $menuLink->link,
+            ];
+        }
 
-	/**
-	 * Add item to the user's Favourites menu
-	 *
-	 * @param Request $request
-	 *
-	 * @return \Illuminate\Http\JsonResponse
-	 */
-	public function addLink(Request $request)
-	{
-		$this->validate($request, [
-			'link' => 'required|string',
-			'position' => 'required|integer|min:0',
-		]);
+        return response()->json($linksList);
+    }
 
-		$userId = auth()->user()->user_id;
+    /**
+     * Add item to the user's Favourites menu
+     *
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function addLink(Request $request)
+    {
+        $this->validate($request, [
+            'link'     => 'required|string',
+            'position' => 'required|integer|min:0',
+        ]);
 
-		// Check for unique
-		$menuLink = UserMenuLink::where('user_id', $userId)
-			->where('link', $request->link)
-			->first();
+        $userId = auth()->user()->user_id;
 
-		if (!is_null($menuLink)) {
-			return response()->json(
-				[
-					'errorMessage' => 'This link has already been added to the menu.'
-				],
-				500
-			);
-		}
+        // Check for unique
+        $menuLink = UserMenuLink::where('user_id', $userId)
+            ->where('link', $request->link)
+            ->first();
 
-		// Update positions for existing links
-		$menuLinks = UserMenuLink::where('user_id', auth()->user()->user_id)
-			->where('position', '>=', $request->position)
-			->orderBy('position')
-			->get();
+        if (!is_null($menuLink)) {
+            return response()->json(
+                [
+                    'errorMessage' => 'This link has already been added to the menu.',
+                ],
+                500
+            );
+        }
 
-		$position = $request->position;
-		foreach ($menuLinks as $menuLink) {
-			$menuLink->position = ++$position;
-			$menuLink->save();
-		}
+        // Update positions for existing links
+        $menuLinks = UserMenuLink::where('user_id', auth()->user()->user_id)
+            ->where('position', '>=', $request->position)
+            ->orderBy('position')
+            ->get();
 
-		// Insert new link
-		UserMenuLink::create(
-			[
-				'user_id' => $userId,
-				'link' => $request->link,
-				'position' => $request->position
-			]
-		);
-	}
+        $position = $request->position;
+        foreach ($menuLinks as $menuLink) {
+            $menuLink->position = ++$position;
+            $menuLink->save();
+        }
 
-	/**
-	 * Delete item from the user's Favourites menu
-	 *
-	 * @param Request $request
-	 *
-	 * @return void
-	 */
-	public function deleteLink(Request $request)
-	{
-		$this->validate($request, [
-			'id' => 'required|integer',
-		]);
+        // Insert new link
+        UserMenuLink::create(
+            [
+                'user_id'  => $userId,
+                'link'     => $request->link,
+                'position' => $request->position,
+            ]
+        );
+    }
 
-		// Delete link
-		UserMenuLink::destroy($request->id);
+    /**
+     * Delete item from the user's Favourites menu
+     *
+     * @param Request $request
+     *
+     * @return void
+     */
+    public function deleteLink(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required|integer',
+        ]);
 
-		// Update positions for existing links
-		$menuLinks = UserMenuLink::where('user_id', auth()->user()->user_id)
-			->orderBy('position')
-			->get();
+        // Delete link
+        UserMenuLink::destroy($request->id);
 
-		$position = 0;
-		foreach ($menuLinks as $menuLink) {
-			$menuLink->position = ++$position;
-			$menuLink->save();
-		}
-	}
+        // Update positions for existing links
+        $menuLinks = UserMenuLink::where('user_id', auth()->user()->user_id)
+            ->orderBy('position')
+            ->get();
 
-	/**
-	 * Change position for the the user's Favourites menu item
-	 *
-	 * @param Request $request
-	 *
-	 * @return void
-	 */
-	public function changeLinkPosition(Request $request)
-	{
-		$this->validate($request, [
-			'id' => 'required|integer',
-			'position' => 'required|integer|min:0',
-		]);
+        $position = 0;
+        foreach ($menuLinks as $menuLink) {
+            $menuLink->position = ++$position;
+            $menuLink->save();
+        }
+    }
 
-		// Update positions for other links
-		$menuLinks = UserMenuLink::where('user_id', auth()->user()->user_id)
-			->where('id', '!=', $request->id)
-			->orderBy('position')
-			->get();
+    /**
+     * Change position for the the user's Favourites menu item
+     *
+     * @param Request $request
+     *
+     * @return void
+     */
+    public function changeLinkPosition(Request $request)
+    {
+        $this->validate($request, [
+            'id'       => 'required|integer',
+            'position' => 'required|integer|min:0',
+        ]);
 
-		
-		$position = 1;
-		foreach ($menuLinks as $menuLink) {
-			$menuLink->position = $position++;
-			$menuLink->save();
-			
-			if ($position == $request->position) {
-				$position++;
-			}
-		}
+        // Update positions for other links
+        $menuLinks = UserMenuLink::where('user_id', auth()->user()->user_id)
+            ->where('id', '!=', $request->id)
+            ->orderBy('position')
+            ->get();
 
-		// Update position of the current link
-		$menuLink = UserMenuLink::findOrFail($request->id);
-		$menuLink->position = $request->position;
-		$menuLink->save();
-	}
+        $position = 1;
+        foreach ($menuLinks as $menuLink) {
+            $menuLink->position = $position++;
+            $menuLink->save();
 
-	/**
-	 * Toggle sidebar visibility
-	 *
-	 * @return \Illuminate\Http\JsonResponse
-	 */
-	public function toggleSidebar()
-	{
-		$userId = auth()->user()->user_id;
-		
-		$userProfileSettings = UserProfileSetting::where('user_id', $userId)->first();
-		
-		if (!$userProfileSettings) {
-			UserProfileSetting::create(
-				[
-					'user_id' => $userId,
-					'show_sidebar' => 1
-				]
-			);
-		} else {
-			$userProfileSettings->show_sidebar = !$userProfileSettings->show_sidebar;
-			$userProfileSettings->save();
-		}
-	}
-	
+            if ($position == $request->position) {
+                $position++;
+            }
+        }
+
+        // Update position of the current link
+        $menuLink = UserMenuLink::findOrFail($request->id);
+        $menuLink->position = $request->position;
+        $menuLink->save();
+    }
+
+    /**
+     * Toggle sidebar visibility
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function toggleSidebar()
+    {
+        $userId = auth()->user()->user_id;
+
+        $userProfileSettings = UserProfileSetting::where('user_id', $userId)->first();
+
+        if (!$userProfileSettings) {
+            UserProfileSetting::create(
+                [
+                    'user_id'      => $userId,
+                    'show_sidebar' => 1,
+                ]
+            );
+        } else {
+            $userProfileSettings->show_sidebar = !$userProfileSettings->show_sidebar;
+            $userProfileSettings->save();
+        }
+    }
 }

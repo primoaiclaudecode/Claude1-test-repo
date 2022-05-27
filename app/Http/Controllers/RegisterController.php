@@ -16,8 +16,8 @@ use Yajra\Datatables\Datatables;
 
 class RegisterController extends Controller
 {
-	use UserUnits;
-	
+    use UserUnits;
+
     /**
      * Create a new controller instance.
      *
@@ -26,7 +26,7 @@ class RegisterController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-	    $this->middleware('role:admin');
+        $this->middleware('role:admin');
     }
 
     /**
@@ -42,24 +42,28 @@ class RegisterController extends Controller
     // This function is returning json data to display in Grid
     public function json(Request $request)
     {
-        $registers = Register::select(['reg_management_id', 'reg_management_id', 'unit_id', 'reg_number']);
+        $registers = Register::select([ 'reg_management_id', 'reg_management_id', 'unit_id', 'reg_number' ]);
 
         return Datatables::of($registers)
-            ->setRowId(function($register) {
-                return 'tr_'.$register->reg_management_id;
+            ->setRowId(function ($register)
+            {
+                return 'tr_' . $register->reg_management_id;
             })
-            ->addColumn('checkbox', function ($register) {
-                return '<input name="del_chks" type="checkbox" class="checkboxs" value="'.$register->reg_management_id.'">';
+            ->addColumn('checkbox', function ($register)
+            {
+                return '<input name="del_chks" type="checkbox" class="checkboxs" value="' . $register->reg_management_id . '">';
             }, 0)
-            ->addColumn('action', function ($register) {
-                return '<button type="button" class="btn btn-danger btn-xs" onclick="window.location.href = \'registers/'.$register->reg_management_id.'/edit\'"><i class="fa fa-edit"></i></button> <form method="POST" action="" accept-charset="UTF-8" class="display-inline">
+            ->addColumn('action', function ($register)
+            {
+                return '<button type="button" class="btn btn-danger btn-xs" onclick="window.location.href = \'registers/' . $register->reg_management_id . '/edit\'"><i class="fa fa-edit"></i></button> <form method="POST" action="" accept-charset="UTF-8" class="display-inline">
                 <input name="_method" type="hidden" value="DELETE">
-                <input name="_token" type="hidden" value="'.csrf_token().'">
-                <button type="button" class="btn btn-danger btn-xs delete" data-token="'.csrf_token().'"><i class="fa fa-trash"></i></button>
+                <input name="_token" type="hidden" value="' . csrf_token() . '">
+                <button type="button" class="btn btn-danger btn-xs delete" data-token="' . csrf_token() . '"><i class="fa fa-trash"></i></button>
                 </form>';
             })
-            ->editColumn('unit_id', function ($register) {
-                return '<a href="units/'.$register->unit_id.'/edit">'.$register->unit['unit_name'].'</a>';
+            ->editColumn('unit_id', function ($register)
+            {
+                return '<a href="units/' . $register->unit_id . '/edit">' . $register->unit['unit_name'] . '</a>';
             })
             ->make();
     }
@@ -71,112 +75,111 @@ class RegisterController extends Controller
      */
     public function create()
     {
-	    // Unit Name Dropdown
-	    $units = $this->getUserUnits()->pluck('unit_name', 'unit_id');
+        // Unit Name Dropdown
+        $units = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
-	    // Currencies
-	    $currencies = Currency::pluck('currency_name', 'currency_id');
-	    
+        // Currencies
+        $currencies = Currency::pluck('currency_name', 'currency_id');
+
         return view('registers.create', [
-            'heading' => 'Create New Register',
+            'heading'     => 'Create New Register',
             'btn_caption' => 'Create Register',
-            'units' => $units,
-	        'currencies' => $currencies
+            'units'       => $units,
+            'currencies'  => $currencies,
         ]);
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
     {
         $this->validate($request, [
-            'unit_id' => 'required',
-            'reg_number' => 'required',
-	        'currency_id' => 'required|integer'
+            'unit_id'     => 'required',
+            'reg_number'  => 'required',
+            'currency_id' => 'required|integer',
         ]);
-        
+
         $register = new Register;
         $register->unit_id = $request->unit_id;
         $register->unit_name = '';
         $register->reg_number = $request->reg_number;
-	    $register->currency_id = $request->currency_id;
+        $register->currency_id = $request->currency_id;
         $register->save();
-        
-        Session::flash('flash_message','Register has been added successfully!'); //<--FLASH MESSAGE
-	    
+
+        Session::flash('flash_message', 'Register has been added successfully!'); //<--FLASH MESSAGE
+
         return redirect('/registers');
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function edit($id)
     {
         $register = Register::find($id);
-        
-        // Unit Name Dropdown
-	    $units = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
-	    // Currencies
-	    $currencies = Currency::pluck('currency_name', 'currency_id');
-        
+        // Unit Name Dropdown
+        $units = $this->getUserUnits()->pluck('unit_name', 'unit_id');
+
+        // Currencies
+        $currencies = Currency::pluck('currency_name', 'currency_id');
+
         return view('registers.create', [
-            'heading' => 'Edit Register',
+            'heading'     => 'Edit Register',
             'btn_caption' => 'Edit Register',
-            'register' => $register,
-            'units' => $units,
-	        'currencies' => $currencies
+            'register'    => $register,
+            'units'       => $units,
+            'currencies'  => $currencies,
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param \Illuminate\Http\Request $request
+     * @param int                      $id
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
     {
         $this->validate($request, [
-            'unit_id' => 'required',
-            'reg_number' => 'required',
-	        'currency_id' => 'required|integer'
+            'unit_id'     => 'required',
+            'reg_number'  => 'required',
+            'currency_id' => 'required|integer',
         ]);
-        
+
         $register = Register::find($id);
         $register->unit_id = $request->unit_id;
         $register->unit_name = '';
         $register->reg_number = $request->reg_number;
-	    $register->currency_id = $request->currency_id;
+        $register->currency_id = $request->currency_id;
         $register->save();
-        
-        Session::flash('flash_message','Register has been updated successfully!'); //<--FLASH MESSAGE
-	    
+
+        Session::flash('flash_message', 'Register has been updated successfully!'); //<--FLASH MESSAGE
+
         return redirect('/registers');
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
     {
         $registerIds = explode(',', $id);
-        foreach($registerIds as $registerId)
-        {
-            $register = Register::find($registerId);    
+        foreach ($registerIds as $registerId) {
+            $register = Register::find($registerId);
             $register->delete();
         }
-        echo $id;        
+        echo $id;
     }
 }

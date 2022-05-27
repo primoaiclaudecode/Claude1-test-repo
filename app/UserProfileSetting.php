@@ -12,16 +12,15 @@ class UserProfileSetting extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id', 'show_sidebar'
+        'user_id',
+        'show_sidebar',
     ];
-
     /**
      * The attributes excluded from the model's JSON form.
      *
      * @var array
      */
     protected $hidden = [];
-
     /**
      * Disable timestamps
      *

@@ -14,7 +14,6 @@ class CreateVendingSalesGoods extends Command
      * @var string
      */
     protected $signature = 'vending-sales-goods:create';
-
     /**
      * The console command description.
      *
@@ -39,74 +38,74 @@ class CreateVendingSalesGoods extends Command
      */
     public function handle()
     {
-    	// Prevent second launch
-	    if (count(VendingSaleGood::all()) > 0) {
-	    	return;
-	    }
-	    
-	    $taxCodesIds = [
-		    9 => 2,
-		    23 => 4,
-		    21 => 8
-	    ];
-	    
-	    $netExtIds = [
-		    'food' => 1,
-		    'minerals' => 3,
-		    'confectionary' => 26
-	    ];
-	    
+        // Prevent second launch
+        if (count(VendingSaleGood::all()) > 0) {
+            return;
+        }
+
+        $taxCodesIds = [
+            9  => 2,
+            23 => 4,
+            21 => 8,
+        ];
+
+        $netExtIds = [
+            'food'          => 1,
+            'minerals'      => 3,
+            'confectionary' => 26,
+        ];
+
         $vendingSales = VendingSales::all();
-        
+
         foreach ($vendingSales as $vendingSale) {
-        	$netExtList = [];
-        	
-        	if ($vendingSale->food > 0) {
-        		$netExtList[] = [
-        			'netExtId' => $netExtIds['food'],
-			        'amount' => $vendingSale->food,
-			        'taxCodesId' => $vendingSale->net_9 > 0 ? $taxCodesIds[9] : 0
-		        ];
-	        }
+            $netExtList = [];
 
-	        if ($vendingSale->minerals > 0) {
-		        $netExtList[] = [
-			        'netExtId' => $netExtIds['minerals'],
-			        'amount' => $vendingSale->minerals,
-			        'taxCodesId' => $vendingSale->net_21 > 0 ? $taxCodesIds[21] : $taxCodesIds[23] 
-		        ];
-	        }
+            if ($vendingSale->food > 0) {
+                $netExtList[] = [
+                    'netExtId'   => $netExtIds['food'],
+                    'amount'     => $vendingSale->food,
+                    'taxCodesId' => $vendingSale->net_9 > 0 ? $taxCodesIds[9] : 0,
+                ];
+            }
 
-	        if ($vendingSale->confectionary > 0) {
-	        	$taxCodeId = 0;
-	        	
-	        	if ($vendingSale->net_21 > 0) {
-			        $taxCodeId = $taxCodesIds[21];
-		        }
+            if ($vendingSale->minerals > 0) {
+                $netExtList[] = [
+                    'netExtId'   => $netExtIds['minerals'],
+                    'amount'     => $vendingSale->minerals,
+                    'taxCodesId' => $vendingSale->net_21 > 0 ? $taxCodesIds[21] : $taxCodesIds[23],
+                ];
+            }
 
-		        if ($vendingSale->net_23 > 0) {
-			        $taxCodeId = $taxCodesIds[23];
-		        }
-	        	
-		        $netExtList[] = [
-			        'netExtId' => $netExtIds['confectionary'],
-			        'amount' => $vendingSale->confectionary,
-			        'taxCodesId' => $taxCodeId
-		        ];
-	        }
+            if ($vendingSale->confectionary > 0) {
+                $taxCodeId = 0;
 
-			foreach ($netExtList as $goodItem) {
-				if ($goodItem['amount'] == 0 || $goodItem['taxCodesId'] == 0) {
-					continue;
-				}
+                if ($vendingSale->net_21 > 0) {
+                    $taxCodeId = $taxCodesIds[21];
+                }
 
-				$vendingSaleGood = new VendingSaleGood();
-				$vendingSaleGood->vending_sales_id = $vendingSale->vending_sales_id;
-				$vendingSaleGood->net_ext_id = $goodItem['netExtId'];
-				$vendingSaleGood->amount = $goodItem['amount'];
-				$vendingSaleGood->tax_code_id = $goodItem['taxCodesId'];
-				$vendingSaleGood->save();
-			}
+                if ($vendingSale->net_23 > 0) {
+                    $taxCodeId = $taxCodesIds[23];
+                }
+
+                $netExtList[] = [
+                    'netExtId'   => $netExtIds['confectionary'],
+                    'amount'     => $vendingSale->confectionary,
+                    'taxCodesId' => $taxCodeId,
+                ];
+            }
+
+            foreach ($netExtList as $goodItem) {
+                if ($goodItem['amount'] == 0 || $goodItem['taxCodesId'] == 0) {
+                    continue;
+                }
+
+                $vendingSaleGood = new VendingSaleGood();
+                $vendingSaleGood->vending_sales_id = $vendingSale->vending_sales_id;
+                $vendingSaleGood->net_ext_id = $goodItem['netExtId'];
+                $vendingSaleGood->amount = $goodItem['amount'];
+                $vendingSaleGood->tax_code_id = $goodItem['taxCodesId'];
+                $vendingSaleGood->save();
+            }
         }
     }
 }

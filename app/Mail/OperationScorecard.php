@@ -12,27 +12,25 @@ class OperationScorecard extends Mailable
 {
     use Queueable, SerializesModels;
 
-	/**
-	 * @var OperationsScorecard
-	 */
-	public $scoreCard;
+    /**
+     * @var OperationsScorecard
+     */
+    public $scoreCard;
+    /**
+     * @var array
+     */
+    public $unitInfo;
+    /**
+     * @var Collection
+     */
+    public $attachedFiles;
 
-	/**
-	 * @var array
-	 */
-	public $unitInfo;
-	
-	/**
-	 * @var Collection
-	 */
-	public $attachedFiles;
-	
     /**
      * Create a new message instance.
-     * 
+     *
      * @param OperationsScorecard $scoreCard
-     * @param array $unitInfo
-     * @param Collection $attachmedFiles
+     * @param array               $unitInfo
+     * @param Collection          $attachmedFiles
      *
      * @return void
      */
@@ -50,12 +48,12 @@ class OperationScorecard extends Mailable
      */
     public function build()
     {
-    	$email = $this->subject("Operations Scorecard")->view('emails.operations-scorecard');
-    	
-    	foreach ($this->attachedFiles as $attachedFile) {
-    	    $email->attach($attachedFile);	
-	    }
-    	
-	    return $email;
+        $email = $this->subject("Operations Scorecard")->view('emails.operations-scorecard');
+
+        foreach ($this->attachedFiles as $attachedFile) {
+            $email->attach($attachedFile);
+        }
+
+        return $email;
     }
 }

@@ -14,7 +14,6 @@ class CreateLodgementCosts extends Command
      * @var string
      */
     protected $signature = 'lodgement-costs:create';
-
     /**
      * The console command description.
      *
@@ -39,32 +38,32 @@ class CreateLodgementCosts extends Command
      */
     public function handle()
     {
-	    // Prevent second launch
-	    if (count(LodgementCost::all()) > 0) {
-		    return;
-	    }
-    	
-	    $lodgements = DB::table('lodgements as l')
-		    ->select(
-		    	[
-				    'l.lodgement_id',
-		    		'l.cash',
-				    'l.coin',
-				    'u.currency_id'
-			    ]
-		    )
-		    ->leftJoin('units AS u', 'l.unit_id', '=', 'u.unit_id')
-		    ->get();
-	    
-	    foreach ($lodgements as $lodgement) {
-	    	$lodgementCost = new LodgementCost();
-	    	
-	    	$lodgementCost->lodgement_id = $lodgement->lodgement_id;
-		    $lodgementCost->currency_id = $lodgement->currency_id;
-		    $lodgementCost->cash = $lodgement->cash;
-		    $lodgementCost->coin = $lodgement->coin;
-		    
-		    $lodgementCost->save();
-	    }
+        // Prevent second launch
+        if (count(LodgementCost::all()) > 0) {
+            return;
+        }
+
+        $lodgements = DB::table('lodgements as l')
+            ->select(
+                [
+                    'l.lodgement_id',
+                    'l.cash',
+                    'l.coin',
+                    'u.currency_id',
+                ]
+            )
+            ->leftJoin('units AS u', 'l.unit_id', '=', 'u.unit_id')
+            ->get();
+
+        foreach ($lodgements as $lodgement) {
+            $lodgementCost = new LodgementCost();
+
+            $lodgementCost->lodgement_id = $lodgement->lodgement_id;
+            $lodgementCost->currency_id = $lodgement->currency_id;
+            $lodgementCost->cash = $lodgement->cash;
+            $lodgementCost->coin = $lodgement->coin;
+
+            $lodgementCost->save();
+        }
     }
 }

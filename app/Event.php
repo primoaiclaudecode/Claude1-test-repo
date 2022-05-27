@@ -12,18 +12,18 @@ class Event extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id', 'ip_address', 'action'
+        'user_id',
+        'ip_address',
+        'action',
     ];
-
     /**
      * The attributes excluded from the model's JSON form.
      *
      * @var array
      */
     protected $hidden = [
-        'created_at'
+        'created_at',
     ];
-
     /**
      * Disable timestamps
      *
@@ -31,18 +31,19 @@ class Event extends Model
      */
     public $timestamps = false;
 
-	/**
-	 * Track action
-	 * 
-	 * @param string $action
-	 */
-    public static function trackAction($action) {
-    	self::create(
-		    [
-			    'user_id' => auth()->user()->user_id,
-			    'ip_address' => ip2long(request()->ip()),
-			    'action' => $action
-		    ]
-	    );
+    /**
+     * Track action
+     *
+     * @param string $action
+     */
+    public static function trackAction($action)
+    {
+        self::create(
+            [
+                'user_id'    => auth()->user()->user_id,
+                'ip_address' => ip2long(request()->ip()),
+                'action'     => $action,
+            ]
+        );
     }
 }

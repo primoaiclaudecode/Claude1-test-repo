@@ -10,20 +10,19 @@ class PhasedBudget extends Model
     protected $primaryKey = 'trading_account_id';
     public $timestamps = false;
 
-	/**
-	 * Get contract type.
-	 */
-	public function contractType()
-	{
-		return $this->belongsTo('App\ContractType');
-	}
+    /**
+     * Get contract type.
+     */
+    public function contractType()
+    {
+        return $this->belongsTo('App\ContractType');
+    }
 
-	/**
-	 * Get contract type.
-	 */
-	public function unit()
-	{
-		return $this->belongsTo('App\Unit');
-	}
-	
+    /**
+     * Get contract type.
+     */
+    public function unit()
+    {
+        return $this->belongsTo('App\Unit');
+    }
 }

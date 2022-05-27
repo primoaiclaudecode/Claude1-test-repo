@@ -9,33 +9,35 @@ class User extends Authenticatable
 {
     use Notifiable;
 
-    const STATUS_ACTIVE = 1;
+    const STATUS_ACTIVE   = 1;
     const STATUS_INACTIVE = 2;
-
     protected $primaryKey = 'user_id';
     public $timestamps = false;
     /**
-    * The attributes that are mass assignable.
-    *
-    * @var array
-    */
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
-        'name', 'email', 'password', 'status'
+        'name',
+        'email',
+        'password',
+        'status',
     ];
-
     /**
-    * The attributes that should be hidden for arrays.
-    *
-    * @var array
-    */
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
     ];
 
     public static function getStatusesList()
     {
         return [
-            self::STATUS_ACTIVE   => 'Active',
+            self::STATUS_ACTIVE => 'Active',
             self::STATUS_INACTIVE => 'Inactive',
         ];
     }
@@ -56,13 +58,12 @@ class User extends Authenticatable
     }
 
     /**
-    * Overrides the method to ignore the remember token.
-    */
+     * Overrides the method to ignore the remember token.
+     */
     public function setAttribute($key, $value)
     {
         $isRememberTokenAttribute = $key == $this->getRememberTokenName();
-        if (!$isRememberTokenAttribute)
-        {
+        if (!$isRememberTokenAttribute) {
             parent::setAttribute($key, $value);
         }
     }

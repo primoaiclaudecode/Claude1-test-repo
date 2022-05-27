@@ -13,7 +13,6 @@ class ToggleRowsVisibility extends Command
      * @var string
      */
     protected $signature = 'rows-visibility:fix';
-
     /**
      * The console command description.
      *
@@ -38,35 +37,35 @@ class ToggleRowsVisibility extends Command
      */
     public function handle()
     {
-    	$phasedBudgetRows = PhasedBudgetUnitRow::$rows;
-    	
-	    $hiddenRows = [];
-	    
-	    foreach (PhasedBudgetUnitRow::all() as $hiddenRow) {
-	    	$hiddenRows[$hiddenRow->user_id][$hiddenRow->unit_id][] = $hiddenRow->row_index;
-	    }
-	    
-	    foreach ($hiddenRows as $userId => $unitRows) {
-	    	foreach ($unitRows as $unitId => $rowIndexes) {
-	    		// Clear old rows
-			    PhasedBudgetUnitRow::where('user_id', $userId)->where('unit_id', $unitId)->delete();
-			    
-				// Insert new rows	    
-	    		foreach ($phasedBudgetRows as $rowIndex => $title) {
-	    			// Skip hidden rows
-	    			if (in_array($rowIndex, $rowIndexes)) {
-	    				continue;
-				    }
-	    			
-	    			PhasedBudgetUnitRow::create(
-	    				[
-	    					'user_id' => $userId,
-						    'unit_id' => $unitId,
-						    'row_index' => $rowIndex
-					    ]
-				    );
-			    }
-		    }
-	    }
+        $phasedBudgetRows = PhasedBudgetUnitRow::$rows;
+
+        $hiddenRows = [];
+
+        foreach (PhasedBudgetUnitRow::all() as $hiddenRow) {
+            $hiddenRows[$hiddenRow->user_id][$hiddenRow->unit_id][] = $hiddenRow->row_index;
+        }
+
+        foreach ($hiddenRows as $userId => $unitRows) {
+            foreach ($unitRows as $unitId => $rowIndexes) {
+                // Clear old rows
+                PhasedBudgetUnitRow::where('user_id', $userId)->where('unit_id', $unitId)->delete();
+
+                // Insert new rows
+                foreach ($phasedBudgetRows as $rowIndex => $title) {
+                    // Skip hidden rows
+                    if (in_array($rowIndex, $rowIndexes)) {
+                        continue;
+                    }
+
+                    PhasedBudgetUnitRow::create(
+                        [
+                            'user_id'   => $userId,
+                            'unit_id'   => $unitId,
+                            'row_index' => $rowIndex,
+                        ]
+                    );
+                }
+            }
+        }
     }
 }

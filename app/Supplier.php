@@ -9,11 +9,11 @@ class Supplier extends Model
     protected $primaryKey = 'suppliers_id';
     public $timestamps = false;
 
-	/**
-	 * Get currency.
-	 */
-	public function currency()
-	{
-		return $this->belongsTo('App\Currency');
-	}
+    /**
+     * Get currency.
+     */
+    public function currency()
+    {
+        return $this->belongsTo('App\Currency');
+    }
 }

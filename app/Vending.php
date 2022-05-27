@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Vending extends Model
 {
-	public $table = "vend_management";
+    public $table = "vend_management";
     protected $primaryKey = 'vend_management_id';
     public $timestamps = false;
 
@@ -18,12 +18,11 @@ class Vending extends Model
         return $this->belongsTo('App\Unit');
     }
 
-	/**
-	 * Get currency.
-	 */
-	public function currency()
-	{
-		return $this->belongsTo('App\Currency');
-	}
-    
+    /**
+     * Get currency.
+     */
+    public function currency()
+    {
+        return $this->belongsTo('App\Currency');
+    }
 }

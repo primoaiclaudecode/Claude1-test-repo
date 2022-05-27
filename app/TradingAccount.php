@@ -13,20 +13,18 @@ class TradingAccount extends Model
      * @var bool $timestamps
      */
     public $timestamps = false;
+    /**
+     * Table name
+     *
+     * @var string
+     */
+    protected $table = 'trading_account';
 
-	/**
-	 * Table name
-	 * 
-	 * @var string
-	 */
-	protected $table = 'trading_account';
-
-	/**
-	 * Get contract type.
-	 */
-	public function contractType()
-	{
-		return $this->belongsTo('App\ContractType');
-	}
-	
+    /**
+     * Get contract type.
+     */
+    public function contractType()
+    {
+        return $this->belongsTo('App\ContractType');
+    }
 }

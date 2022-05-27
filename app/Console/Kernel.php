@@ -25,19 +25,19 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         DatabaseDump::class,
-	    CarReminder::class,
-	    PhasedBudgetReminder::class,
-	    ClearActiveUsers::class,
-	    GetExchangeRates::class,
-	    HistoryExchangeRates::class,
-	    CreateLodgementCosts::class,
-	    ToggleRowsVisibility::class
+        CarReminder::class,
+        PhasedBudgetReminder::class,
+        ClearActiveUsers::class,
+        GetExchangeRates::class,
+        HistoryExchangeRates::class,
+        CreateLodgementCosts::class,
+        ToggleRowsVisibility::class,
     ];
 
     /**
      * Define the application's command schedule.
      *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
+     * @param \Illuminate\Console\Scheduling\Schedule $schedule
      * @return void
      */
     protected function schedule(Schedule $schedule)

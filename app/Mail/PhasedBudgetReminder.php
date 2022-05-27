@@ -12,19 +12,18 @@ class PhasedBudgetReminder extends Mailable
 {
     use Queueable, SerializesModels;
 
-	/**
-	 * @var string $unitName
-	 */
-	public $unitName;
+    /**
+     * @var string $unitName
+     */
+    public $unitName;
+    /**
+     * @var string $budgetDate
+     */
+    public $budgetDate;
 
-	/**
-	 * @var string $budgetDate
-	 */
-	public $budgetDate;
-	
     /**
      * Create a new message instance.
-     * 
+     *
      * @param string $unitName
      * @param string $budgetDate
      *
@@ -43,6 +42,6 @@ class PhasedBudgetReminder extends Mailable
      */
     public function build()
     {
-	    return $this->subject("Phased Budget reminder for {$this->unitName}")->view('emails.phased-budget-reminder');
+        return $this->subject("Phased Budget reminder for {$this->unitName}")->view('emails.phased-budget-reminder');
     }
 }

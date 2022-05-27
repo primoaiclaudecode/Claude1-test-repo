@@ -12,17 +12,17 @@ class DatabaseDump extends Mailable
     use Queueable, SerializesModels;
 
     private $dumpFilePath;
-    
+
     /**
      * Create a new message instance.
-     * 
+     *
      * @param string $dumpFilePath
      *
      * @return void
      */
     public function __construct($dumpFilePath)
     {
-        $this->dumpFilePath = $dumpFilePath; 
+        $this->dumpFilePath = $dumpFilePath;
     }
 
     /**

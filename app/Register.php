@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Register extends Model
 {
-	public $table = "reg_management";
+    public $table = "reg_management";
     protected $primaryKey = 'reg_management_id';
     public $timestamps = false;
 
@@ -18,11 +18,11 @@ class Register extends Model
         return $this->belongsTo('App\Unit');
     }
 
-	/**
-	 * Get currency.
-	 */
-	public function currency()
-	{
-		return $this->belongsTo('App\Currency');
-	}
+    /**
+     * Get currency.
+     */
+    public function currency()
+    {
+        return $this->belongsTo('App\Currency');
+    }
 }

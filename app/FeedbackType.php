@@ -12,21 +12,19 @@ class FeedbackType extends Model
      * @var array
      */
     protected $fillable = [
-        'score', 'title'
+        'score',
+        'title',
     ];
-
     /**
      * The attributes excluded from the model's JSON form.
      *
      * @var array
      */
     protected $hidden = [];
-
     /**
      * Disable timestamps
      *
      * @var bool $timestamps
      */
     public $timestamps = false;
-
 }

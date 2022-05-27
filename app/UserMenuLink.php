@@ -12,18 +12,18 @@ class UserMenuLink extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id', 'link', 'position'
+        'user_id',
+        'link',
+        'position',
     ];
-
     /**
      * The attributes excluded from the model's JSON form.
      *
      * @var array
      */
     protected $hidden = [
-        'created_at'
+        'created_at',
     ];
-
     /**
      * Disable timestamps
      *

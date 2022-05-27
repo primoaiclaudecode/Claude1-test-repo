@@ -12,18 +12,20 @@ class ActiveUser extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id', 'session_token', 'ip_address', 'expired_at'
+        'user_id',
+        'session_token',
+        'ip_address',
+        'expired_at',
     ];
-
     /**
      * The attributes excluded from the model's JSON form.
      *
      * @var array
      */
     protected $hidden = [
-        'created_at', 'updated_at'
+        'created_at',
+        'updated_at',
     ];
-
     /**
      * Disable timestamps
      *
@@ -31,12 +33,11 @@ class ActiveUser extends Model
      */
     public $timestamps = false;
 
-	/**
-	 * Get the user.
-	 */
-	public function user()
-	{
-		return $this->belongsTo('App\User');
-	}
-    
+    /**
+     * Get the user.
+     */
+    public function user()
+    {
+        return $this->belongsTo('App\User');
+    }
 }

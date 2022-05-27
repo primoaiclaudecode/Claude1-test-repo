@@ -12,29 +12,28 @@ class CarReminderUnit extends Mailable
 {
     use Queueable, SerializesModels;
 
-	/**
-	 * @var string $emailSubject
-	 */
-	public $emailSubject;
+    /**
+     * @var string $emailSubject
+     */
+    public $emailSubject;
+    /**
+     * @var Collection $emailData
+     */
+    public $emailData;
 
-	/**
-	 * @var Collection $emailData
-	 */
-	public $emailData;
-
-	/**
-	 * Create a new message instance.
-	 *
-	 * @param string $emailSubject
-	 * @param Collection $emailData
-	 *
-	 * @return void
-	 */
-	public function __construct($emailSubject, $emailData)
-	{
-		$this->emailData = $emailData;
-		$this->emailSubject = $emailSubject;
-	}
+    /**
+     * Create a new message instance.
+     *
+     * @param string     $emailSubject
+     * @param Collection $emailData
+     *
+     * @return void
+     */
+    public function __construct($emailSubject, $emailData)
+    {
+        $this->emailData = $emailData;
+        $this->emailSubject = $emailSubject;
+    }
 
     /**
      * Build the message.

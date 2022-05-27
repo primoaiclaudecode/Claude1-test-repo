@@ -12,20 +12,19 @@ class CarReminderUser extends Mailable
 {
     use Queueable, SerializesModels;
 
-	/**
-	 * @var string $emailSubject
-	 */
-	public $emailSubject;
+    /**
+     * @var string $emailSubject
+     */
+    public $emailSubject;
+    /**
+     * @var Collection $emailData
+     */
+    public $emailData;
 
-	/**
-	 * @var Collection $emailData
-	 */
-	public $emailData;
-    
     /**
      * Create a new message instance.
-     * 
-     * @param string $emailSubject
+     *
+     * @param string     $emailSubject
      * @param Collection $emailData
      *
      * @return void
@@ -43,6 +42,6 @@ class CarReminderUser extends Mailable
      */
     public function build()
     {
-	    return $this->subject($this->subject)->view('emails.car-reminder-user');
+        return $this->subject($this->subject)->view('emails.car-reminder-user');
     }
 }
