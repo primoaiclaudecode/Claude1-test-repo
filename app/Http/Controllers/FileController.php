@@ -47,6 +47,7 @@ class FileController extends Controller
      */
     public function index($dirId = 0)
     {
+
         // Check permission
         if (Gate::denies('su-user-group') && $dirId == 0) {
             abort(403, 'Access denied');
@@ -104,19 +105,19 @@ class FileController extends Controller
 
         return view(
             'files.index', [
-                'breadCrumbs'      => $breadCrumbs,
-                'dirId'            => $dirId,
-                'directories'      => $directories,
-                'files'            => $files,
-                'currentDirPath'   => $currentDirPath,
-                'folderList'       => $folderList,
-                'user_groups'      => $user_groups,
-                'users_data'       => $users_data,
-                'd_type'           => $d_type,
-                'dir_type'         => $dir_type,
+                'breadCrumbs' => $breadCrumbs,
+                'dirId' => $dirId,
+                'directories' => $directories,
+                'files' => $files,
+                'currentDirPath' => $currentDirPath,
+                'folderList' => $folderList,
+                'user_groups' => $user_groups,
+                'users_data' => $users_data,
+                'd_type' => $d_type,
+                'dir_type' => $dir_type,
                 'writePermissions' => $writePermissions,
-                'appUrl'           => $this->appUrl,
-                'region_groups'    => $region_groups,
+                'appUrl' => $this->appUrl,
+                'region_groups' => $region_groups,
             ]
         );
     }
@@ -373,9 +374,7 @@ class FileController extends Controller
                 $download = $file_download_row->dir_path . $file_download_row->dir_file_name;
                 if ($this->isWin) {
                     $download = dirname(base_path()) . '\\' . str_replace('/var/www', '', $download);
-                } else {
-                    $download = str_replace('/var/www', '', $download);
-                }
+                } 
                 header('Content-type:' . $file_download_row->file_type);
                 header('Content-Disposition:attachment;filename="' . $file_download_row->dir_file_name . '"');
                 readfile($download);
@@ -388,9 +387,7 @@ class FileController extends Controller
                 $download = $file_download_row->dir_path . $file_download_row->dir_file_name;
                 if ($this->isWin) {
                     $download = dirname(base_path()) . '\\' . str_replace('/var/www', '', $download);
-                } else {
-                    $download = str_replace('/var/www', '', $download);
-                }
+                } 
 
                 if (strpos($file_download_row->file_type, 'mp3') !== false || strpos($file_download_row->file_type, 'mp4') !== false) {
                     header('Location: ' . $this->appUrl . $download);
@@ -425,8 +422,8 @@ class FileController extends Controller
                 if (isset($user_value['write']) && $user_value['write'] == 1)
                     $user_id_write .= ',' . $user_key;
             }
-            $update_user = File::find($folder_id_hidden)->update([ 'user_id_read'  => $user_id_read,
-                                                                   'user_id_write' => $user_id_write ]);
+            $update_user = File::find($folder_id_hidden)->update([ 'user_id_read' => $user_id_read,
+                'user_id_write' => $user_id_write ]);
         }
         if (isset($permissions['Group']) && is_array($permissions['Group'])) {
             $group_id_read = $group_id_write = '';
@@ -438,8 +435,8 @@ class FileController extends Controller
             }
             $group_id_read = rtrim($group_id_read, ',');
             $group_id_write = rtrim($group_id_write, ',');
-            $update_user = File::find($folder_id_hidden)->update([ 'group_id_read'  => $group_id_read,
-                                                                   'group_id_write' => $group_id_write ]);
+            $update_user = File::find($folder_id_hidden)->update([ 'group_id_read' => $group_id_read,
+                'group_id_write' => $group_id_write ]);
         }
 
         if (isset($permissions['Region']) && is_array($permissions['Region'])) {
@@ -453,8 +450,8 @@ class FileController extends Controller
             $region_id_read = rtrim($region_id_read, ',');
             $region_id_write = rtrim($region_id_write, ',');
 
-            $update_user = File::find($folder_id_hidden)->update([ 'region_id_read'  => $region_id_read,
-                                                                   'region_id_write' => $region_id_write ]);
+            $update_user = File::find($folder_id_hidden)->update([ 'region_id_read' => $region_id_read,
+                'region_id_write' => $region_id_write ]);
         }
         //dd('KKKK');
 
@@ -478,12 +475,12 @@ class FileController extends Controller
             $children_exp = explode(',', $children);
             foreach ($children_exp as $value) {
                 if ($value == $folder_id_hidden) continue;
-                $update_user = File::find($value)->update([ 'user_id_read'    => $pp_user_id_read,
-                                                            'group_id_read'   => $pp_group_id_read,
-                                                            'user_id_write'   => $pp_user_id_write,
-                                                            'group_id_write'  => $pp_group_id_write,
-                                                            'region_id_read'  => $pp_region_id_read,
-                                                            'region_id_write' => $pp_region_id_write ]);
+                $update_user = File::find($value)->update([ 'user_id_read' => $pp_user_id_read,
+                    'group_id_read' => $pp_group_id_read,
+                    'user_id_write' => $pp_user_id_write,
+                    'group_id_write' => $pp_group_id_write,
+                    'region_id_read' => $pp_region_id_read,
+                    'region_id_write' => $pp_region_id_write ]);
             }
         }
         if (isset($update_user)) {
@@ -508,8 +505,8 @@ class FileController extends Controller
                 if (isset($file_user_value['write']) && $file_user_value['write'] == 1)
                     $user_id_write .= ',' . $file_user_key;
             }
-            $update_user = File::find($file_id_hidden)->update([ 'user_id_read'  => $user_id_read,
-                                                                 'user_id_write' => $user_id_write ]);
+            $update_user = File::find($file_id_hidden)->update([ 'user_id_read' => $user_id_read,
+                'user_id_write' => $user_id_write ]);
         }
         $group_id_read = $group_id_write = '';
         if (isset($file_permissions['Group']) && is_array($file_permissions['Group'])) {
@@ -521,8 +518,8 @@ class FileController extends Controller
             }
             $group_id_read = rtrim($group_id_read, ',');
             $group_id_write = rtrim($group_id_write, ',');
-            $update_user = File::find($file_id_hidden)->update([ 'group_id_read'  => $group_id_read,
-                                                                 'group_id_write' => $group_id_write ]);
+            $update_user = File::find($file_id_hidden)->update([ 'group_id_read' => $group_id_read,
+                'group_id_write' => $group_id_write ]);
         }
         $region_id_read = $region_id_write = '';
         if (isset($file_permissions['Region']) && is_array($file_permissions['Region'])) {
@@ -534,8 +531,8 @@ class FileController extends Controller
             }
             $region_id_read = rtrim($region_id_read, ',');
             $region_id_write = rtrim($region_id_write, ',');
-            $update_user = File::find($file_id_hidden)->update([ 'region_id_read'  => $region_id_read,
-                                                                 'region_id_write' => $region_id_write ]);
+            $update_user = File::find($file_id_hidden)->update([ 'region_id_read' => $region_id_read,
+                'region_id_write' => $region_id_write ]);
         }
         if (isset($update_user)) {
             Session::flash('flash_message', 'Permissions have been set.');
@@ -576,7 +573,7 @@ class FileController extends Controller
             if ($this->isWin) {
                 $directory_path = dirname(base_path()) . '\\' . str_replace('/var/www', '', $folder_row->dir_path);
             } else {
-                $directory_path = str_replace('/var/www', '', $folder_row->dir_path);
+                $directory_path =  $folder_row->dir_path;
             }
 
             $dir_count = $this->fs_getDirCount($directory_path);
@@ -949,7 +946,7 @@ class FileController extends Controller
                 if (strpos($file_to_move_row->file_type, 'image') !== false)
                     rename($current_dir_path . 'thumb_' . $file_to_move_row->dir_file_name, $folder_to_move_path . '/thumb_' . $file_to_move_row->dir_file_name);
                 File::find($hidden_move_file_id)->update([ 'parent_dir_id' => $folder_to_move,
-                                                           'dir_path'      => $file_full_path_new ]);
+                    'dir_path' => $file_full_path_new ]);
                 if (!empty($dir_id)) {
                     File::find($dir_id)->update([ 'date_modified' => date('Y-m-d H:i:s') ]);
                 }
@@ -1043,7 +1040,7 @@ class FileController extends Controller
             $current_dir_path = $fpath . str_replace('../', '', $current_dir_path);
         }
 
-        $download_dir_path = '/home/bitnami/backups/for_download/' . $dir_name->dir_file_name . '.zip';
+        $download_dir_path = \config('app.backup_path') . 'for_download/' . $dir_name->dir_file_name . '.zip';
 
         $this->fs_Zip($current_dir_path . $dir_name->dir_file_name, $download_dir_path, $dir_name->dir_file_name);
     }
@@ -1064,11 +1061,14 @@ class FileController extends Controller
             DEFINE('DS', '/'); //for linux
         }
 
+
         $source = str_replace('\\', DS, realpath($source));
+
         if (\File::isDirectory($source) === true) {
             $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
             foreach ($files as $file) {
                 $file = str_replace('\\', DS, $file);
+
                 // Ignore "." and ".." folders
                 if (in_array(substr($file, strrpos($file, DS) + 1), [ '.', '..' ]))
                     continue;
@@ -1091,9 +1091,10 @@ class FileController extends Controller
             $zip->add($source);
         }
         $zip->close();
+
         ////////////////////////////////////////////
-        ob_clean();
-        ob_end_flush();
+        @ob_clean();
+        @ob_end_flush();
         header("Content-type: application/zip");
         header("Content-Disposition: attachment; filename=" . $dir_to_download . '.zip');
         header("Pragma: no-cache");
@@ -1428,9 +1429,9 @@ class FileController extends Controller
         $units = Unit::pluck('unit_name', 'unit_id');
 
         return view('registers.create', [
-            'heading'     => 'Create New Register',
+            'heading' => 'Create New Register',
             'btn_caption' => 'Create Register',
-            'units'       => $units,
+            'units' => $units,
         ]);
     }
 
@@ -1443,7 +1444,7 @@ class FileController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'unit_name'  => 'required',
+            'unit_name' => 'required',
             'reg_number' => 'required',
         ]);
 
@@ -1471,10 +1472,10 @@ class FileController extends Controller
         $selectedUnit = $register->unit_id;
 
         return view('registers.create', [
-            'heading'      => 'Edit Register',
-            'btn_caption'  => 'Edit Register',
-            'register'     => $register,
-            'units'        => $units,
+            'heading' => 'Edit Register',
+            'btn_caption' => 'Edit Register',
+            'register' => $register,
+            'units' => $units,
             'selectedUnit' => $selectedUnit,
         ]);
     }
@@ -1489,7 +1490,7 @@ class FileController extends Controller
     public function update(Request $request, $id)
     {
         $this->validate($request, [
-            'unit_name'  => 'required',
+            'unit_name' => 'required',
             'reg_number' => 'required',
         ]);
 

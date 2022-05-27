@@ -13,3 +13,4 @@ Homestead.yaml
 composer.lock
 /images/logs
 /mysql
+/backups

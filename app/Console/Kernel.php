@@ -9,6 +9,7 @@ use App\Console\Commands\CreateLodgementCosts;
 use App\Console\Commands\CreateLodgements;
 use App\Console\Commands\CreateVendingSalesGoods;
 use App\Console\Commands\DatabaseDump;
+use App\Console\Commands\DevTool;
 use App\Console\Commands\GetExchangeRates;
 use App\Console\Commands\HistoryExchangeRates;
 use App\Console\Commands\PhasedBudgetReminder;
@@ -32,6 +33,7 @@ class Kernel extends ConsoleKernel
         HistoryExchangeRates::class,
         CreateLodgementCosts::class,
         ToggleRowsVisibility::class,
+        DevTool::class,
     ];
 
     /**

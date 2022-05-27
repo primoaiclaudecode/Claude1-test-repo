@@ -39,7 +39,7 @@ class DatabaseDump extends Command
     public function handle()
     {
         // Create new dump
-        $filePath = '/home/bitnami/backups/zip/ccsl_backup_' . date('m_d_Y') . '.zip';
+        $filePath = \config('app.backup_path').'zip/ccsl_backup_' . date('m_d_Y') . '.zip';
 
         $username = Config::get('database.connections.mysql.username');
         $password = Config::get('database.connections.mysql.password');
@@ -59,7 +59,7 @@ class DatabaseDump extends Command
         // Remove old dump
         $deleteDate = date('m_d_Y', strtotime('-2 month'));
 
-        $oldFilePath = ' /home/bitnami/backups/zip/ccsl_backup_' . $deleteDate . '.zip';
+        $oldFilePath = \config('app.backup_path').'ccsl_backup_' . $deleteDate . '.zip';
 
         exec("rm -f $oldFilePath");
     }

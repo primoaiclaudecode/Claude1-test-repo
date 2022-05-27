@@ -18,4 +18,14 @@ class File extends Model
         'region_id_read',
         'region_id_write',
         'date_modified' ];
+
+    public function getDirPathAttribute()
+    {
+        return isset($this->attributes['dir_path']) ? config('app.fpath') . 'file_share/' . $this->attributes['dir_path'] : '';
+    }
+
+    public function setDirPathAttribute($value)
+    {
+        $this->attributes['dir_path'] = str_replace(config('app.fpath') . 'file_share/', '', $value);
+    }
 }

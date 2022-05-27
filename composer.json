@@ -12,9 +12,8 @@
         "intervention/image": "^2.4",
         "zanysoft/laravel-zip": "^1.0",
         "chumper/zipper": "^1.0",
-        "unisharp/laravel-filemanager": "^1.9",
-        "mgallegos/laravel-jqgrid": "^1.2",
-        "koolphp/koolreport": "^3.25"
+        "koolphp/koolreport": "^3.25",
+        "sam/laravel-filemanager": "dev-master"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
@@ -23,6 +22,12 @@
         "symfony/css-selector": "3.1.*",
         "symfony/dom-crawler": "3.1.*"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/laravel-filemanager"
+        }
+    ],
     "autoload": {
         "classmap": [
             "database",
