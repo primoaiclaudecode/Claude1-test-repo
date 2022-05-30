@@ -19,6 +19,7 @@ use App\Status;
 
 class UnitController extends Controller
 {
+    protected $validator;
     /**
      * Create a new controller instance.
      *
@@ -159,8 +160,12 @@ class UnitController extends Controller
             'unit_name'   => 'required|min:5',
             'status_id'   => 'required|integer',
             'currency_id' => 'required|array|min:1',
+            'default_currency' => 'required|integer',
         ]);
-
+        if (!in_array($request->default_currency,$request->currency_id)){
+            Session::flash('error_message', "Default currency must be in currencies list");
+            return back()->withInput();
+        }
         $unit = new Unit;
         $unit->unit_name = $request->unit_name;
         $unit->details = $request->details;
@@ -179,6 +184,7 @@ class UnitController extends Controller
         $unit->client_contact_email = $request->client_contact_email;
         $unit->status_id = $request->status_id;
         $unit->currency_id = implode(',', (array)$request->currency_id);
+        $unit->default_currency = $request->default_currency;
         $unit->save();
 
         Session::flash('flash_message', 'Unit has been added successfully!'); //<--FLASH MESSAGE
@@ -287,8 +293,12 @@ class UnitController extends Controller
             'unit_name'   => 'required|min:5',
             'status_id'   => 'required|integer',
             'currency_id' => 'required|array|min:1',
+            'default_currency' => 'required|integer',
         ]);
-
+        if (!in_array($request->default_currency,$request->currency_id)){
+            Session::flash('error_message', "Default currency must be in currencies list");
+            return back()->withInput();
+        }
         $unit = Unit::find($id);
         $unit->unit_name = $request->unit_name;
         $unit->details = $request->details;
@@ -307,6 +317,7 @@ class UnitController extends Controller
         $unit->client_contact_email = $request->client_contact_email;
         $unit->status_id = $request->status_id;
         $unit->currency_id = implode(',', (array)$request->currency_id);
+        $unit->default_currency = $request->default_currency;
         $unit->save();
 
         Session::flash('flash_message', 'Unit has been updated successfully!');

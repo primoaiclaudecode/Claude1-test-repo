@@ -21,6 +21,9 @@
 					</em>
 				</div>
 			@endif
+			@if(Session::has('error_message'))
+				<div class="alert alert-danger"><em> {!! session('error_message') !!}</em></div>
+			@endif
 			<div class="form-group">
 				{!! Form::label('unit_name', 'Unit Name:') !!}
 				{!! Form::text('unit_name',null,['class'=>'form-control','autofocus' => 'autofocus']) !!}
@@ -80,6 +83,10 @@
 			<div class="form-group">
 				{!! Form::label('currency_id', 'Currency:') !!}
 				{!! Form::select('currency_id[]', $currencies, isset($selectedCurrencies) ? $selectedCurrencies : null, ['class'=>'form-control', 'multiple' => true, 'size' => 7, 'id' => 'currency_id', 'placeholder' => 'Select currency']); !!}
+			</div>
+			<div class="form-group">
+				{!! Form::label('default_currency', 'Default currency:') !!}
+				{!! Form::select('default_currency', $currencies, null, ['class'=>'form-control', 'id' => 'default_currency', 'placeholder' => 'Select default currency']); !!}
 			</div>
 			@if(isset($associatedUsers))
 				<div class="form-group">
