@@ -745,6 +745,7 @@ class SheetController extends Controller
         $userUnitsQ = $this->getUserUnits();
         $userUnits = $userUnitsQ->pluck('unit_name', 'unit_id');
         $userUnitsCurrencies = $userUnitsQ->pluck('currency_id', 'unit_id')->toArray();
+        $userUnitsDefaultCurrencies = $userUnitsQ->pluck('default_currency', 'unit_id')->toArray();
         $userUnitsCurrencies = array_map(function ($item) { return explode(',', $item); }, $userUnitsCurrencies);
 
         // Suppliers
@@ -807,6 +808,7 @@ class SheetController extends Controller
                 'selectedCurrency'    => $currencyId,
                 'currencySymbol'      => $currencySymbol,
                 'userUnitsCurrencies' => $userUnitsCurrencies,
+                'userUnitsDefaultCurrencies' => $userUnitsDefaultCurrencies,
             ]
         );
     }

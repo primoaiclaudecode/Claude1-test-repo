@@ -29,6 +29,7 @@
 								'tabindex' => 1, 'autofocus',
 								'purchType' => $purchType, 'autofocus',
 								'currencies'=> json_encode($userUnitsCurrencies),
+								'defaultCurrencies'=> json_encode($userUnitsDefaultCurrencies),
   					]) !!}
 				</div>
 

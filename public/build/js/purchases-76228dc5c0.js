@@ -528,15 +528,17 @@ $(document).ready(function () {
     let purchType =  $("#unit_id").attr('purchType');
     $("#unit_id").on("change", function () {
         let currencies = $(this).attr('currencies');
+        let defaultCurrencies = $(this).attr('defaultCurrencies');
         let val = $(this).val();
         currencies = JSON.parse(currencies);
-        if (typeof currencies[val] !== 'undefined' && typeof currencies[val][0] !== 'undefined'){
+        defaultCurrencies = JSON.parse(defaultCurrencies);
+        if (typeof defaultCurrencies[val] !== 'undefined' && typeof currencies[val] !== 'undefined'){
             if (currencies[val].length === 1){
-                $("#currency_id").val(currencies[val][0]).trigger('change');
+                $("#currency_id").val(defaultCurrencies[val]).trigger('change');
                 $("#currency_id").attr('readonly',true);
                 $("#currency_id").css("pointer-events","none");
             } else if(purchType === 'cash') {
-                $("#currency_id").val(currencies[val][0]).trigger('change');
+                $("#currency_id").val(defaultCurrencies[val]).trigger('change');
                 $("#currency_id").removeAttr('readonly');
                 $("#currency_id").css("pointer-events","all");
             } else {
