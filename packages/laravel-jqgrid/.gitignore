@@ -1,7 +1,0 @@
-/vendor
-.project
-.buildpath
-.settings
-composer.phar
-composer.lock
-.DS_Store
