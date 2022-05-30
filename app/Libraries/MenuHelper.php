@@ -11,7 +11,7 @@ class MenuHelper
 {
     public static function getFavouritesList()
     {
-        $linkTitles = Menu::orderBy('weight')->get()->pluck('name', 'link')->toArray();
+        $linkTitles = Menu::getAll()->pluck('name', 'link')->toArray();
 
         foreach (self::getRootDirNames() as $dirName) {
             $linkTitles["/files/{$dirName->id}"] = $dirName->dir_file_name;
@@ -57,6 +57,6 @@ class MenuHelper
 
     public static function getMenuList(): Collection
     {
-        return Menu::orderBy('weight')->get()->groupBy('section');
+        return Menu::getAll()->groupBy('section');
     }
 }

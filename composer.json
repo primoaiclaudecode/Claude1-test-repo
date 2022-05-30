@@ -13,7 +13,8 @@
         "zanysoft/laravel-zip": "^1.0",
         "chumper/zipper": "^1.0",
         "koolphp/koolreport": "^3.25",
-        "sam/laravel-filemanager": "dev-master"
+        "sam/laravel-filemanager": "dev-master",
+        "predis/predis": "^1.1"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
