@@ -163,12 +163,13 @@ a, a:hover, a:focus {
 
 
 /*fix residual frame*/
-
-#fake-sidebar {
-    width: 20px;
-    height: 100%;
-    position: fixed;
-    background: #2a3542;
+@media (min-width: 941px) {
+    #fake-sidebar {
+        width: 20px;
+        height: 100%;
+        position: fixed;
+        background: #2a3542;
+    }
 }
 /*sidebar navigation*/
 
