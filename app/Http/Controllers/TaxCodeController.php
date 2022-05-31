@@ -264,7 +264,7 @@ class TaxCodeController extends Controller
 
         // If Vending Sales is selected, save net ext for the current tax code
         if ($request->vending_sales == 1) {
-            $taxCode->vendingSaleTaxCodes()->sync($request->net_ext);
+            $taxCode->vendingSaleTaxCodes()->sync($request->net_ext ?? []);
 
             // Clear columns visibility for Vending Sales report
             ReportHiddenColumn::whereIn('report_name', [ 'vending-sales', 'sales_summary' ])->delete();
@@ -352,7 +352,7 @@ class TaxCodeController extends Controller
 
         // If Vending sales is selected, save net ext for the current tax code
         if ($request->vending_sales == 1) {
-            $taxCode->vendingSaleTaxCodes()->sync($request->net_ext);
+            $taxCode->vendingSaleTaxCodes()->sync($request->net_ext ?? []);
         }
 
         // Clear columns visibility for Vending Sales report
