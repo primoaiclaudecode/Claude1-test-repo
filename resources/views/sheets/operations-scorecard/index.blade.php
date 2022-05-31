@@ -538,7 +538,7 @@
     <link rel="stylesheet" href="{{ asset('vendor/laravel-filemanager/css/mfb.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/laravel-filemanager/css/dropzone.min.css') }}">
 
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+{{--    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>--}}
     <script src="//cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
 
     <script src="{{ asset('vendor/laravel-filemanager/js/cropper.min.js') }}"></script>
