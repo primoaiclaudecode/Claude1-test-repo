@@ -162,6 +162,13 @@ a, a:hover, a:focus {
 }
 
 
+/*fix residual frame*/
+#fake-sidebar{
+    width: 20px;
+    height: 100%;
+    position: fixed;
+    background: #2a3542;
+}
 /*sidebar navigation*/
 
 #sidebar {

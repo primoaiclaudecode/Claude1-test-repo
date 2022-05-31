@@ -6,7 +6,8 @@
     $rootDirNamesArr = MenuHelper::getRootDirNames();
     $menu = MenuHelper::getMenuList();
 @endphp
-<aside>
+<div id="fake-sidebar" style="{{$showSidebar?'display: none;':'display: block;'}}"></div>
+<aside style="{{$showSidebar?'display: block;':'display: none;'}}">
     <div id="sidebar" class="nav-collapse" style="display: none">
         <!-- sidebar menu start-->
         <ul class="sidebar-menu" id="nav-accordion">
