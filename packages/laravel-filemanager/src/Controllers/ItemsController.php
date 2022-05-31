@@ -1,6 +1,6 @@
 <?php
 
-namespace UniSharp\LaravelFilemanager\LaravelFilemanager\Controllers;
+namespace UniSharp\LaravelFilemanager\Controllers;
 
 /**
  * Class ItemsController.

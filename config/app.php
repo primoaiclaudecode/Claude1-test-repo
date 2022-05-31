@@ -181,9 +181,8 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         Chumper\Zipper\ZipperServiceProvider::class,
-        // UniSharp\LaravelFilemanager\LaravelFilemanagerServiceProvider::class,
+        UniSharp\LaravelFilemanager\LaravelFilemanagerServiceProvider::class,
         Intervention\Image\ImageServiceProvider::class,
-        // Mgallegos\LaravelJqgrid\LaravelJqgridServiceProvider::class,
     ],
 
     /*

@@ -1,6 +1,6 @@
 <?php
 
-namespace UniSharp\LaravelFilemanager\LaravelFilemanager\Traits;
+namespace UniSharp\LaravelFilemanager\Traits;
 use DB;
 use Session;
 use Illuminate\Support\Facades\File;

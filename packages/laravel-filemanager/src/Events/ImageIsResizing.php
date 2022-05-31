@@ -1,6 +1,6 @@
 <?php
 
-namespace UniSharp\LaravelFilemanager\LaravelFilemanager\Events;
+namespace UniSharp\LaravelFilemanager\Events;
 
 class ImageIsResizing
 {

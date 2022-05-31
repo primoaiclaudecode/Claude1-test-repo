@@ -517,7 +517,7 @@
     <!-- File Manager -->
     <link rel="shortcut icon" type="image/png" href="{{ asset('vendor/laravel-filemanager/img/folder.png') }}">
     <link rel="stylesheet" href="{{ asset('vendor/laravel-filemanager/css/cropper.min.css') }}">
-    <style>{!! \File::get(base_path('vendor/unisharp/laravel-filemanager/public/css/lfm.css')) !!}</style>
+    <style>{!! \File::get(base_path('vendor/sam/laravel-filemanager/public/css/lfm.css')) !!}</style>
     <link rel="stylesheet" href="{{ asset('vendor/laravel-filemanager/css/mfb.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/laravel-filemanager/css/dropzone.min.css') }}">
 
@@ -527,7 +527,7 @@
     <script src="{{ asset('vendor/laravel-filemanager/js/cropper.min.js') }}"></script>
     <script src="{{ asset('vendor/laravel-filemanager/js/jquery.form.min.js') }}"></script>
     <script src="{{ asset('vendor/laravel-filemanager/js/dropzone.min.js') }}"></script>
-    <script>{!! \File::get(base_path('vendor/unisharp/laravel-filemanager/public/js/script.js')) !!}</script>
+    <script>{!! \File::get(base_path('vendor/sam/laravel-filemanager/public/js/script.js')) !!}</script>
 
     <script>
         var route_prefix = "{{ url('/') }}";
