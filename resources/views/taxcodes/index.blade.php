@@ -31,6 +31,7 @@
 					<th class="text-align-center">Credit Purchase</th>
 					<th class="text-align-center">Credit Sales</th>
 					<th class="text-align-center">Vending Sales</th>
+					<th class="text-align-center">Currency</th>
 					<th></th>
 					<th class="text-align-center">Action</th>
 				</tr>
@@ -46,6 +47,7 @@
 					<th class="text-align-center"><input type="checkbox" id="select_all_credit_purch"></th>
 					<th class="text-align-center"><input type="checkbox" id="select_all_credit_sales"></th>
 					<th class="text-align-center"><input type="checkbox" id="select_all_vending_sales"></th>
+					<th></th>
 					<th></th>
 					<th></th>
 				</tr>

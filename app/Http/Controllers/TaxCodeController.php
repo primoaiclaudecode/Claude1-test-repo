@@ -49,6 +49,7 @@ class TaxCodeController extends Controller
                 'credit_purch',
                 'credit_sales',
                 'vending_sales',
+                'currency_id',
             ]
         );
 
@@ -96,6 +97,10 @@ class TaxCodeController extends Controller
                 $checked_vending_sales = $taxcode->vending_sales == 1 ? 'checked="checked"' : '';
 
                 return '<input name="vending_sales[]" type="checkbox" ' . $checked_vending_sales . ' class="vending_sales_chk" value="' . $taxcode->tax_code_ID . '">';;
+            })
+            ->editColumn('currency_id', function ($taxcode)
+            {
+                return $taxcode->currency->currency_name;
             })
             ->make();
     }

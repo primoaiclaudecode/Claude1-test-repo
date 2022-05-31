@@ -14,4 +14,9 @@ class TaxCode extends Model
     {
         return $this->belongsToMany('App\NetExt', 'vending_sale_tax_codes');
     }
+
+    public function currency()
+    {
+        return $this->belongsTo('App\Currency');
+    }
 }
