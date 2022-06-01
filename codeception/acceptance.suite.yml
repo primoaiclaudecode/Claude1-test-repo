@@ -9,13 +9,13 @@ modules:
     enabled:
         - PhpBrowser:
             url: http://localhost:8088
-            auth: ['cmcnally', 'Dublin2013']
         - \codeception\Helper\Acceptance
         - Asserts
         - Db:
             dsn: 'mysql:host=0.0.0.0:33333;dbname=sam'
             user: 'sam'
             password: 'sam'
+            cleanup: true
         - REST:
               depends: PhpBrowser
               url: http://localhost:8088
