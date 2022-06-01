@@ -17,7 +17,7 @@ class TaxCodesGridCest
     public function insertRowTest(AcceptanceTester $I)
     {
         $prefix = 'zzz99';
-        $I->haveInDatabase('tax_codes', [
+        $id = $I->haveInDatabase('tax_codes', [
             'tax_code_title' => $prefix,
             'tax_rate' => '14.53',
             'cash_purch' => 0,
@@ -33,6 +33,7 @@ class TaxCodesGridCest
         $response = json_decode($response, true);
         $I->assertArrayHasKey('data', $response);
         $element = end($response['data']);
+        $I->assertContains($id, $element);
         $I->assertContains($prefix, $element);
         $I->assertContains($prefix . '-14.53', $element);
         $I->assertContains('14.53', $element);

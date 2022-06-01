@@ -37,7 +37,7 @@ class TaxCodesEditCest
 
     public function editRecordTest(AcceptanceTester $I)
     {
-        $prefix = 'test65';
+        $prefix = 'test64';
         $id = $I->haveInDatabase('tax_codes', [
             'tax_code_title' => $prefix,
             'tax_rate' => '14.53',
