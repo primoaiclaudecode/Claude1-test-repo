@@ -74,6 +74,7 @@ function getSupplierCurrency() {
 }
 
 function getCurrency() {
+    console.log('getCurrency');
     $.ajax({
         type: 'GET',
         url: "/currency_data/json",
@@ -427,9 +428,9 @@ function calculations() {
 $(document).ready(function () {
     // Check if unit is open
     unitCloseCheck();
-    
+    console.log($('#purch_type').val());
     // Currency
-    if ($('#purch_type').val() === 'cash') {
+    if ($('#purch_type').val() === 'cash' || $('#purch_type').val() === 'credit') {
         getCurrency()
     }
     
@@ -532,6 +533,7 @@ $(document).ready(function () {
         let val = $(this).val();
         currencies = JSON.parse(currencies);
         defaultCurrencies = JSON.parse(defaultCurrencies);
+        console.log(currencies,defaultCurrencies,val);
         if (typeof defaultCurrencies[val] !== 'undefined' && typeof currencies[val] !== 'undefined'){
             if (currencies[val].length === 1){
                 $("#currency_id").val(defaultCurrencies[val]).trigger('change');
@@ -542,7 +544,7 @@ $(document).ready(function () {
                 $("#currency_id").removeAttr('readonly');
                 $("#currency_id").css("pointer-events","all");
             } else {
-                $("#currency_id").val(0).trigger('change');
+                $("#currency_id").val(defaultCurrencies[val]).trigger('change');
             }
         }
     });
