@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\User;
+use Illuminate\Support\Facades\Log;
 use Yajra\Datatables\Datatables;
 
 class EventController extends Controller
@@ -51,15 +52,19 @@ class EventController extends Controller
 
         $activeUsersList = [];
         foreach ($activeUsers as $activeUser) {
-            $activeUsersList[] = [
-                'userName'  => $activeUser->user->username,
-                'ipAddress' => long2ip($activeUser->ip_address),
-                'createdAt' => Carbon::parse($activeUser->created_at)->format('d-m-Y H:i'),
-                'updatedAt' => $activeUser->updated_at ? Carbon::parse($activeUser->updated_at)
-                    ->format('d-m-Y H:i') : '',
-                'expiredAt' => $activeUser->expired_at ? Carbon::parse($activeUser->expired_at)
-                    ->format('d-m-Y H:i') : '',
-            ];
+            try {
+                $activeUsersList[] = [
+                    'userName'  => $activeUser->user->username,
+                    'ipAddress' => long2ip($activeUser->ip_address),
+                    'createdAt' => Carbon::parse($activeUser->created_at)->format('d-m-Y H:i'),
+                    'updatedAt' => $activeUser->updated_at ? Carbon::parse($activeUser->updated_at)
+                        ->format('d-m-Y H:i') : '',
+                    'expiredAt' => $activeUser->expired_at ? Carbon::parse($activeUser->expired_at)
+                        ->format('d-m-Y H:i') : '',
+                ];
+            } catch (\Exception $exception){
+                Log::warning($exception->getMessage());
+            }
         }
 
         return view('events.index', [

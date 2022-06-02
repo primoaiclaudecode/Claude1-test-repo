@@ -32,8 +32,8 @@ trait UserUnits
             return $query->get();
         }
 
-        $unitMembersIds = !empty($user->unit_member)? explode(",", $user->unit_member):null;
-        $opsGroupMember = !empty($user->ops_group_member)? explode(",", $user->ops_group_member):null;
+        $unitMembersIds = !empty($user->unit_member)? explode(",", $user->unit_member):[];
+        $opsGroupMember = !empty($user->ops_group_member)? explode(",", $user->ops_group_member):[];
 
         // Operations level
         if (Gate::allows('operations-user-group')) {

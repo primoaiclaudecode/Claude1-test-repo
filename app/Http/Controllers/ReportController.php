@@ -6436,6 +6436,8 @@ class ReportController extends Controller
      */
     public function operationsScorecard()
     {
+        dd(Gate::denies('management-user-group'));
+        die();
         if (Gate::denies('management-user-group')) {
             abort(403, 'Access denied');
         }

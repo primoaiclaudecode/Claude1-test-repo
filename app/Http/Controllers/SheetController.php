@@ -2108,6 +2108,9 @@ class SheetController extends Controller
      */
     public function phasedBudget(Request $request)
     {
+        if (Gate::denies('hq-user-group')) {
+            abort(403, 'Access denied');
+        }
         $userId = session()->get('userId');
         $userName = session()->get('userName');
 
@@ -2570,6 +2573,9 @@ class SheetController extends Controller
 
     public function phasedBudgetConfimation(Request $request)
     {
+        if (Gate::denies('hq-user-group')) {
+            abort(403, 'Access denied');
+        }
         $userId = session()->get('userId');
         $userName = session()->get('userName');
 
@@ -3020,6 +3026,9 @@ class SheetController extends Controller
 
     public function phasedBudgetPost(Request $request)
     {
+        if (Gate::denies('hq-user-group')) {
+            abort(403, 'Access denied');
+        }
         $phasedBudget = new \App\PhasedBudget;
         $phasedBudget->user_id = $request->supervisor_id;
         $phasedBudget->trading_account_date = Carbon::now()->format('Y-m-d');
