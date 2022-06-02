@@ -6,6 +6,7 @@ use App\Status;
 use App\Unit;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 trait UserUnits
 {
@@ -31,16 +32,20 @@ trait UserUnits
             return $query->get();
         }
 
-        $unitMembersIds = explode(",", $user->unit_member);
-        $opsGroupMember = explode(",", $user->ops_group_member);
+        $unitMembersIds = !empty($user->unit_member)? explode(",", $user->unit_member):null;
+        $opsGroupMember = !empty($user->ops_group_member)? explode(",", $user->ops_group_member):null;
 
         // Operations level
         if (Gate::allows('operations-user-group')) {
             return $query->where(function ($query) use ($user, $unitMembersIds, $opsGroupMember)
             {
-                $query->where('ops_manager_user_id', $user->user_id)
-                    ->orWhereIn('unit_id', $unitMembersIds)
-                    ->orWhereRaw(\Helpers::multiAttrsWhere('operations_group', $opsGroupMember));
+                $query->where('ops_manager_user_id', $user->user_id);
+                if (!empty($unitMembersIds)) {
+                    $query->orWhereIn('unit_id', $unitMembersIds);
+                }
+                if (!empty($opsGroupMember)) {
+                    $query->orWhereRaw(\Helpers::multiAttrsWhere('operations_group', $opsGroupMember));
+                }
             })->get();
         }
 
