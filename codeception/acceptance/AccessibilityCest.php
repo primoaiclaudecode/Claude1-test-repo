@@ -1,7 +1,7 @@
 <?php
 namespace codeception;
 use codeception\AcceptanceTester;
-class AccessabilityCest
+class AccessibilityCest
 {
     public function _before(AcceptanceTester $I)
     {
