@@ -47,7 +47,7 @@
 
         <!-- Upload File Modal -->
 		<div id="upload_file" class="modal fade">
-		    {!! Form::open(['url' => $appUrl . 'files/upload-file', 'class' => 'form-horizontal form-bordered', 'files' => true]) !!}
+		    {!! Form::open(['url' => '/files/upload-file', 'class' => 'form-horizontal form-bordered', 'files' => true]) !!}
 		    {{ Form::hidden('current_dir_path', $currentDirPath) }}
 		    {{ Form::hidden('dir_id', $dirId) }}
 		    <div class="modal-dialog">
@@ -66,7 +66,7 @@
 		            </div>
 		            <div class="modal-footer">
 		                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-		                <button type="submit" name="submit" value="Upload File" class="btn btn-primary">Upload File</button>
+		                <button type="submit" name="submit" value="Upload File" class="btn btn-primary" id="upload_file_btn">Upload File</button>
 		            </div>
 		        </div>
 		    </div>
@@ -76,7 +76,7 @@
 
 		<!-- Create Folder Modal -->
 		<div id="create_folder" class="modal fade">
-		    {!! Form::open(['url' => $appUrl . 'files/create-dir', 'class' => 'form-horizontal form-bordered']) !!}
+		    {!! Form::open(['url' =>  '/files/create-dir', 'class' => 'form-horizontal form-bordered', 'id'=>'create_folder_form']) !!}
 		    {{ Form::hidden('current_dir_path', $currentDirPath) }}
 		    {{ Form::hidden('dir_id', $dirId) }}
 		    <div class="modal-dialog">
@@ -95,7 +95,7 @@
 		            </div>
 		            <div class="modal-footer">
 		                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-		                <button type="submit" name="submit" value="Create Directory" class="btn btn-primary">Create Directory</button>
+		                <button type="submit" name="submit" value="Create Directory" id="create_folder_btn" class="btn btn-primary" >Create Directory</button>
 		            </div>
 		        </div>
 		    </div>
@@ -105,7 +105,7 @@
 
 		<!-- Open / Save Modal -->
 		<div id="open_save" class="modal fade">
-		    {!! Form::open(['url' => $appUrl . 'files/open-download-file', 'class' => 'form-horizontal form-bordered', 'id' => 'form_open_save']) !!}
+		    {!! Form::open(['url' =>  '/files/open-download-file', 'class' => 'form-horizontal form-bordered', 'id' => 'form_open_save']) !!}
 		    {{ Form::hidden('dir_id', $dirId) }}
 		    <div class="modal-dialog">
 		        <div class="modal-content">
@@ -131,7 +131,7 @@
 
 		<!-- File/Folder Move Modal -->
 		<div id="file_move" class="modal fade">
-		    {!! Form::open(['url' => $appUrl . 'files/move-file', 'class' => 'form-horizontal form-bordered', 'id' => 'form_move_file']) !!}
+		    {!! Form::open(['url' => '/files/move-file', 'class' => 'form-horizontal form-bordered', 'id' => 'form_move_file']) !!}
 		    {{ Form::hidden('current_dir_path', $currentDirPath) }}
 		    {{ Form::hidden('dir_id', $dirId) }}
 		    <div class="modal-dialog">
@@ -166,7 +166,7 @@
 
 		<!-- Folder Permissions Modal -->
 		<div id="permissions" class="modal fade permission-modal">
-		    {!! Form::open(['url' => $appUrl . 'files/set-directory-permission', 'class' => 'form-horizontal form-bordered', 'id' => 'form_permissions']) !!}
+		    {!! Form::open(['url' => '/files/set-directory-permission', 'class' => 'form-horizontal form-bordered', 'id' => 'form_permissions']) !!}
 		    {{ Form::hidden('dir_id', $dirId) }}
 		    {{ Form::hidden('type', $d_type) }}
 		    <div class="modal-dialog">
@@ -241,7 +241,7 @@
 
 		<!-- File Permissions Modal -->
 		<div id="file_permissions" class="modal fade permission-modal">
-		    {!! Form::open(['url' => $appUrl . 'files/set-file-permission', 'class' => 'form-horizontal form-bordered', 'id' => 'form_permissions_file']) !!}
+		    {!! Form::open(['url' => '/files/set-file-permission', 'class' => 'form-horizontal form-bordered', 'id' => 'form_permissions_file']) !!}
 		    {{ Form::hidden('dir_id', $dirId) }}
 		    {{ Form::hidden('type', $d_type) }}
 		    <div class="modal-dialog">
@@ -297,7 +297,7 @@
 
 		<!-- Add User / Group Modal -->
 		<div id="add_user_group_div" class="modal fade">
-		    {!! Form::open(['url' => $appUrl . 'files/add-user-group', 'class' => 'form-horizontal form-bordered', 'id' => 'form_add_user_group']) !!}
+		    {!! Form::open(['url' => '/files/add-user-group', 'class' => 'form-horizontal form-bordered', 'id' => 'form_add_user_group']) !!}
 		    {{ Form::hidden('dir_id', $dirId) }}
 		    {{ Form::hidden('type', $d_type) }}
 		    <div class="modal-dialog">
@@ -370,7 +370,7 @@
 
 		<!-- File Add User / Group Modal -->
 		<div id="file_add_user_group_div" class="modal fade">
-		    {!! Form::open(['url' => $appUrl . 'files/add-file-user-group', 'class' => 'form-horizontal form-bordered', 'id' => 'file_form_add_user_group']) !!}
+		    {!! Form::open(['url' => '/files/add-file-user-group', 'class' => 'form-horizontal form-bordered', 'id' => 'file_form_add_user_group']) !!}
 		    {{ Form::hidden('dir_id', $dirId) }}
 		    {{ Form::hidden('type', $d_type) }}
 		    <div class="modal-dialog">

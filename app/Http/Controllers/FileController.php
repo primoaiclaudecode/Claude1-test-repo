@@ -180,20 +180,20 @@ class FileController extends Controller
                 $movePermissionDel = '
                         <a alt="Move" title="Move" href="javascript: void(0)" class="move_file_link" onclick="move_folder(' . $fVal->id . ')"> <button type="button" class="btn btn-primary"><i class="fa fa-arrows"></i></button> </a>
                         <a alt="Permissions" title="Permissions" href="javascript: void(0)" class="permission_link" onclick="permissions(' . $fVal->id . ')"> <button type="button" class="btn btn-primary"><i class="fa fa-lock"></i></button> </a>
-                        <a alt="Delete" title="Delete" href="' . $this->appUrl . 'files/delete-directory/' . $dirId . '/' . $fVal->id . '" onclick="return confirm(\'Are you sure you want to remove this directory?\')"> <button type="button" class="btn btn-primary"><i class="fa fa-trash"></i></button></a>
+                        <a alt="Delete" id="delete_file_'.$fVal->id.'" title="Delete" href="' . '/files/delete-directory/' . $dirId . '/' . $fVal->id . '" onclick="return confirm(\'Are you sure you want to remove this directory?\')"> <button type="button" class="btn btn-primary"><i class="fa fa-trash"></i></button></a>
                     ';
             }
 
             $dirsStr .= '<div class="row margin-bottom-10">
-                    <div class="col-md-1 files-dir col-sm-1 col-xs-1"><a href="' . $this->appUrl . 'files/' . $fVal->id . '"><img src="' . $this->appUrl . 'img/dir.jpg"></a></div>
+                    <div class="col-md-1 files-dir col-sm-1 col-xs-1"><a href="' . '/files/' . $fVal->id . '"><img src="' . '/img/dir.jpg"></a></div>
                     <div class="col-md-3 col-sm-3 col-xs-3 margin-top-10 files-padding-left-10">
-                        <a href="' . $this->appUrl . 'files/' . $fVal->id . '">' . $fVal->dir_file_name . '</a>
+                        <a href="' . '/files/' . $fVal->id . '">' . $fVal->dir_file_name . '</a>
                     </div>
                     <div class="col-md-5 col-sm-4 col-xs-4 margin-top-10 files-padding-left-10">
                         ' . $lastModifiedTime . '
                     </div>
                     <div class="col-md-3 col-sm-4 col-xs-4 btns-margin files-padding-left-10">
-                        <a alt="Download" title="Download" href="' . $this->appUrl . 'files/download-directory/' . $dirId . '/' . $fVal->id . '"> <button type="button" class="btn btn-primary"><i class="fa fa-download"></i></button> </a>
+                        <a alt="Download" title="Download" href="' . '/files/download-directory/' . $dirId . '/' . $fVal->id . '"> <button type="button" class="btn btn-primary download_file"><i class="fa fa-download"></i></button> </a>
                         ' . $movePermissionDel . '
                     </div>
                 </div>';
@@ -284,7 +284,7 @@ class FileController extends Controller
                 $movePermissionDel = '
                     <a alt="Move" title="Move" href="javascript:void(0)" class="move_file_link" onclick="move_file(' . $fVal->id . ')"> <button type="button" class="btn btn-primary"><i class="fa fa-arrows"></i></button> </a>
                     <a alt="Permissions" title="Permissions" href="javascript: void(0)" class="file_permission_link" onclick="file_permissions(' . $dirId . ', ' . $fileId . ')"> <button type="button" class="btn btn-primary"><i class="fa fa-lock"></i></button> </a>
-                    <a alt="Delete" title="Delete" href="' . $this->appUrl . 'files/delete-file/' . $dirId . '/' . $fileId . '" onclick="return confirm(\'Are you sure you want to remove this file?\')"> <button type="button" class="btn btn-primary"><i class="fa fa-trash"></i></button></a>
+                    <a alt="Delete" title="Delete" href="' . '/files/delete-file/' . $dirId . '/' . $fileId . '" onclick="return confirm(\'Are you sure you want to remove this file?\')"> <button type="button" class="btn btn-primary"><i class="fa fa-trash"></i></button></a>
                 ';
             }
 
@@ -297,7 +297,7 @@ class FileController extends Controller
                     ' . date('l, j F Y', strtotime($fVal->date_created)) . ' at ' . date('g:i A', strtotime($fVal->date_created)) . '
                 </div>
                 <div class="col-md-3 col-sm-4 col-xs-4 btns-margin files-padding-left-10">
-                    <a alt="Download" title="Download" class="link_download" onclick="open_save(' . $fVal->id . ')" href="javascript:void(0)"> <button type="button" class="btn btn-primary"><i class="fa fa-download"></i></button> </a>
+                    <a alt="Download" title="Download" class="link_download" onclick="open_save(' . $fVal->id . ')" href="javascript:void(0)"> <button type="button" class="btn btn-primary download_file"><i class="fa fa-download"></i></button> </a>
                         ' . $movePermissionDel . '
                 </div>
             </div>';
@@ -1266,7 +1266,7 @@ class FileController extends Controller
                     if ($count == $dir_arr_count)
                         $bread_crumbs .= '<li class="active">' . $dir_row->dir_file_name . '</li>';
                     else
-                        $bread_crumbs .= '<li><a href="' . $this->appUrl . 'files/' . $dir_row->id . '">' . $dir_row->dir_file_name . '</a></li>';
+                        $bread_crumbs .= '<li><a href="' . '/files/' . $dir_row->id . '">' . $dir_row->dir_file_name . '</a></li>';
                     $count++;
                 }
             }
@@ -1359,18 +1359,18 @@ class FileController extends Controller
                 if ($count == $dirArrCount) {
                     $breadCrumbs .= '<li class="active">' . $files->dir_file_name . '</li>';
                 } else {
-                    $breadCrumbs .= '<li><a href="' . $this->appUrl . 'files/' . $files->id . '">' . $files->dir_file_name . '</a></li>';
+                    $breadCrumbs .= '<li><a href="' . '/files/' . $files->id . '">' . $files->dir_file_name . '</a></li>';
                 }
 
                 $count++;
             }
 
-            $root = Gate::allows('su-user-group') ? '<a href="' . $this->appUrl . 'files">Files</a> <span class="grey-color">/</span> ' : '';
+            $root = Gate::allows('su-user-group') ? '<a href="' . '/files">Files</a> <span class="grey-color">/</span> ' : '';
 
             return $root . $breadCrumbs;
         }
 
-        $breadCrumbs = '<a href="' . $this->appUrl . 'files">Files</a>';
+        $breadCrumbs = '<a href="' . '/files">Files</a>';
 
         return $breadCrumbs;
     }
