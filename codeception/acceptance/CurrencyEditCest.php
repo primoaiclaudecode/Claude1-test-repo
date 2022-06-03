@@ -77,5 +77,9 @@ class CurrencyEditCest
             'currency_id !=' => $id,
             'is_default' => 1,
         ]);
+        $I->amOnPage('/currencies/1/edit');
+        $I->see('Edit Currency');
+        $I->checkOption('is_default');
+        $I->click('Edit Currency');
     }
 }
