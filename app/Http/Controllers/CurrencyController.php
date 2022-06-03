@@ -40,7 +40,7 @@ class CurrencyController extends Controller
     public function create()
     {
         return view('currencies.create', [
-            'heading'     => 'Create New Currency',
+            'heading' => 'Create New Currency',
             'btn_caption' => 'Create Currency',
         ]);
     }
@@ -55,10 +55,10 @@ class CurrencyController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'currency_name'   => 'required|string',
-            'currency_code'   => 'required|string|max:3',
+            'currency_name' => 'required|string',
+            'currency_code' => 'required|string|max:3',
             'currency_symbol' => 'required|string|max:1',
-            'is_default'      => 'boolean',
+            'is_default' => 'boolean',
         ]);
 
         try {
@@ -98,9 +98,9 @@ class CurrencyController extends Controller
         $currency = Currency::find($id);
 
         return view('currencies.create', [
-            'heading'     => 'Edit Currency',
+            'heading' => 'Edit Currency',
             'btn_caption' => 'Edit Currency',
-            'currency'    => $currency,
+            'currency' => $currency,
         ]);
     }
 
@@ -115,12 +115,17 @@ class CurrencyController extends Controller
     public function update(Request $request, $id)
     {
         $this->validate($request, [
-            'currency_name'   => 'required|string',
-            'currency_code'   => 'required|string|max:3',
+            'currency_name' => 'required|string',
+            'currency_code' => 'required|string|max:3',
             'currency_symbol' => 'required|string|max:1',
-            'is_default'      => 'boolean',
+            'is_default' => 'boolean',
         ]);
-
+        if ($request->is_default == 0) {
+            $is_default = Currency::where('is_default', 1)->where('currency_id', '!=', $id)->exists();
+            if (!$is_default) {
+                return redirect()->back()->withErrors('There is no other default currencies. To change default, check another one to be default');
+            }
+        }
         $currency = Currency::find($id);
         $currency->currency_name = $request->currency_name;
         $currency->currency_code = strtoupper($request->currency_code);
@@ -214,13 +219,13 @@ class CurrencyController extends Controller
 
         if (is_null($currency)) {
             return response()->json([
-                'currencyId'     => 0,
+                'currencyId' => 0,
                 'currencySymbol' => '',
             ]);
         }
 
         return response()->json([
-            'currencyId'     => $currency->currency_id,
+            'currencyId' => $currency->currency_id,
             'currencySymbol' => $currency->currency_symbol,
         ]);
     }
