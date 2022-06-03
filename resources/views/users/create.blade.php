@@ -51,7 +51,7 @@
 			    </div>
 					<div class="form-group">
 						{!! Form::label('status', 'User status:') !!}
-						{!! Form::select('status', $statuses, $user->status, ['class'=>'form-control', 'id'=>'status']); !!}
+						{!! Form::select('status', $statuses, isset($user) ?$user->status : null, ['class'=>'form-control', 'id'=>'status']); !!}
 					</div>
 			    <div class="form-group">
 			        {!! Form::label('user_group_member', 'User Group Member:') !!}

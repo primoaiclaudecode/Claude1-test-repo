@@ -147,7 +147,8 @@ class UserController extends Controller
             ->with('userGroups', $userGroups)
             ->with('unitMembers', $unitMembers)
             ->with('operationsManager', $operationsManagerArr)
-            ->with('opsGroupMember', $opsGroupMember);
+            ->with('opsGroupMember', $opsGroupMember)
+            ->with('statuses', User::getStatusesList());
     }
 
     /**
