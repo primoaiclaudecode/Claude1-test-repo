@@ -146,9 +146,8 @@ function validation() {
     // Validate Currency/Cash/Coin
     var lastRow = $('#datatable tr').last();
 
-    var currency = $('select[name="currency"]', lastRow);
-
-    if (currency.val() == 0) {
+    var currency = $('select[name="currency[]"]', lastRow);
+    if (currency.val() == 0 || typeof currency.val() === 'undefined') {
         scrollToElement(currency);
         currency
             .after(

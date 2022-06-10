@@ -19,7 +19,7 @@ class CurrencyController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('role:su');
+        $this->middleware('role:su')->except('json', 'find');
     }
 
     /**
