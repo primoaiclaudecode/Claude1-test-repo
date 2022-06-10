@@ -49,8 +49,8 @@ class AccountsController extends Controller
 
         // Submit form in the table
         if ($request->has('submit') && $request->submit == 'Submit') {
-            if (Gate::denies('su-user-group')) {
-                abort(403, 'Access denied. You need SU role');
+            if (Gate::denies('su-user-group') && Gate::denies('admin-user-group')) {
+                abort(403, 'Access denied. You need to be SU or admin');
             }
             $stmntChk = 1;
             $uniqueId = '';
