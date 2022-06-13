@@ -49,7 +49,7 @@ class CreateLodgementCosts extends Command
                     'l.lodgement_id',
                     'l.cash',
                     'l.coin',
-                    'u.currency_id',
+                    'u.default_currency',
                 ]
             )
             ->leftJoin('units AS u', 'l.unit_id', '=', 'u.unit_id')
@@ -59,7 +59,7 @@ class CreateLodgementCosts extends Command
             $lodgementCost = new LodgementCost();
 
             $lodgementCost->lodgement_id = $lodgement->lodgement_id;
-            $lodgementCost->currency_id = $lodgement->currency_id;
+            $lodgementCost->currency_id = $lodgement->default_currency;
             $lodgementCost->cash = $lodgement->cash;
             $lodgementCost->coin = $lodgement->coin;
 

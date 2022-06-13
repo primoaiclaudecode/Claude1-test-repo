@@ -22,6 +22,9 @@ class MenuHelper
 
     public static function getRootDirNames()
     {
+        if (empty(auth()->user())){
+            return [];
+        }
         $userId = auth()->user()->user_id;
 
         $groupId = DB::table('users')
