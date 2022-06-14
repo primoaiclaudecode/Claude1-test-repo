@@ -303,23 +303,13 @@ function addRow() {
 
     var cash = $('input[name="cash[]"]', lastRow);
 
-    if (parseFloat(cash.val()) === 0) {
+    var coin = $('input[name="coin[]"]', lastRow);
+
+    if (parseFloat(cash.val()) === 0 && parseFloat(coin.val()) === 0) {
         scrollToElement(cash);
         cash.parents('.input-group')
             .after(
-                $('<span />').addClass('error_message add-row-error').text('Please enter a value for Cash')
-            );
-
-        return;
-    }
-
-    var coin = $('input[name="coin[]"]', lastRow);
-
-    if (parseFloat(coin.val()) == 0) {
-        scrollToElement(coin);
-        coin.parents('.input-group')
-            .after(
-                $('<span />').addClass('error_message add-row-error').text('Please enter a value for Coin')
+                $('<span />').addClass('error_message add-row-error').text('Please enter a value for Cash or Coin')
             );
 
         return;
