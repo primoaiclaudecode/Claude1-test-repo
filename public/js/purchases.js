@@ -403,6 +403,14 @@ function calculations() {
     $('#gross_total').val(addCommas(tableTotals.gross.toFixed(2)));
 
     // Tax rates
+    $('tr[id^="tax_row_"]').each(function() {
+        var row = $(this);
+        
+        $('input[name="analysis_goods[]"]', row).val(0.00);
+        $('input[name="analysis_vat[]"]', row).val(0.00);
+        $('input[name="analysis_gross[]"]', row).val(0.00);
+    })
+
     $.each(rateValues, function(index, total) {
         var taxRow = $('#tax_row_' + index);
         
