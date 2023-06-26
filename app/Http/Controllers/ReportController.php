@@ -5606,7 +5606,7 @@ class ReportController extends Controller
 
         return view(
             'reports.problem-report.index', [
-                'userUnits'           => Gate::allows('hq-user-group') ? [ '' => 'Select All' ] + $userUnits->toArray() : $userUnits->toArray(),
+                'userUnits'           => Gate::allows('operations-user-group') ? [ '' => 'Select All' ] + $userUnits->toArray() : $userUnits->toArray(),
                 'selectedUnit'        => $unitId,
                 'fromDate'            => $fromDate,
                 'toDate'              => $toDate,
