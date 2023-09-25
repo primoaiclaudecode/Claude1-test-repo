@@ -13,3 +13,4 @@ Homestead.yaml
 /images/logs
 /mysql
 /backups
+/!vendor

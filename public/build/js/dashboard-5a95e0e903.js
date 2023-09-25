@@ -122,6 +122,7 @@ function getDashboardData() {
         data: {
             startDate: $('#from_date').val(),
             endDate: $('#to_date').val(),
+            currency_id: $('#currency_id').val()
         },
         success: function (data) {
             // Clear data
@@ -590,7 +591,7 @@ $(document).ready(function () {
         $("#to_date").datepicker().focus();
     });
 
-    $("#from_date, #to_date").change(function () {
+    $("#from_date, #to_date, #currency_id").change(function () {
         getDashboardData();
     });
     

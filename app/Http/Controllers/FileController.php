@@ -1151,11 +1151,23 @@ class FileController extends Controller
         ]);
         $fpath = config('app.fpath');
         if ($request->has('submit') && $request->submit == 'Upload File') {
+            
             $userId = Session::get('userId');
+            
             $fileName = $request->file('file_name')->getClientOriginalName();
             $fileType = $request->file('file_name')->getMimeType();
             $fileSize = $request->file('file_name')->getClientSize();
+
+            $redirect_on_submit = true;
+            if($request->has('redirect_on_submit')){
+                $redirect_on_submit = $request->redirect_on_submit;
+            }
+
             $dirId = $request->has('dir_id') ? $request->dir_id : 0;
+            if($dirId == 0){
+                $dirId = $this->get_dir_id_from_path($request->current_dir_path);
+            }
+
             if ($this->isWin) {
                 $path = dirname(base_path()) . '\\' . str_replace('../', '', $request->current_dir_path);
             } else {
@@ -1202,8 +1214,46 @@ class FileController extends Controller
                 }
             }
 
-            return redirect('/files/' . $dirId);
+            if($redirect_on_submit){
+                return redirect('/files/' . $dirId);
+            }
         }
+    }
+
+    private function get_dir_id_from_path($path)
+    {
+        $search = "../file_share/";
+        if(strpos($path, $search) !== false){
+            $path = str_replace($search, '', $path);
+        }
+
+        if(empty($path)){
+            return 0;
+        }
+
+        $pieces = explode('/', $path);
+
+        if(empty($pieces)){
+            return 0;
+        }
+
+        $dir_name_index = count($pieces) - 2;
+        $dir_path = '';
+        for($x = 0; $x < $dir_name_index; $x++){
+            $dir_path = $dir_path . $pieces[$x] . '/';
+        }
+
+        $dirs = File::select('id')
+            ->where('dir_file_name', $pieces[$dir_name_index])
+            ->where('dir_path', $dir_path)
+            ->where('is_dir', 1)
+            ->get();
+
+        foreach($dirs as $dir){
+            return $dir->id;
+        }
+
+        return 0;
     }
 
     private function get_children($pid)

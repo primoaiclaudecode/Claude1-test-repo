@@ -113,7 +113,7 @@
                     <div class="col-xs-12 col-sm-9 col-md-4" id="attached_file_name" style="text-align: left;padding-top: 5px;">
                         @foreach($dir_file_arr1 as $key => $value)
                             <span>
-								<a href="{{ url('/laravel-filemanager/') }}/{{ $value}}" target="_blank">{{ $key }}</a>
+								<a href="{{$value}}" target="_blank">{{ $key }}</a>
 								<a href="javascript:void(0);" class="del-file" style="float:right;" data-fid="{{ $value }}">
 									<i class="fa fa-trash fa-fw"></i>
 								</a>
@@ -291,7 +291,7 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="#" id="upload" data-mfb-label="{{ trans('laravel-filemanager::lfm.nav-upload') }}">
+                                        <a href="#" id="btn_upload_file" data-mfb-label="{{ trans('laravel-filemanager::lfm.nav-upload') }}">
                                             <i class="fa fa-upload"></i>
                                         </a>
                                     </li>
@@ -342,7 +342,10 @@
     </div>
 
     <div id="upload_file" class="modal fade">
-        {!! Form::open(['url' => '', 'class' => 'form-horizontal form-bordered', 'files' => true]) !!}
+        <form action='/files/upload-file' role='form' id='fileUploadForm' name='fileUploadForm' method='post'
+                                      enctype='multipart/form-data' class='form-horizontal form-bordered'>
+        <input type='hidden' name='current_dir_path' id='current_dir_path'>
+        <input type='hidden' name='dir_id' id='dir_id' value=0>
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -359,11 +362,11 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="submit" name="submit" value="Upload File" class="btn btn-primary">Upload File</button>
+                    <button type="submit" name="submit" value="Upload File" class="btn btn-primary"  id="upload_file_btn">Upload File</button>
                 </div>
             </div>
         </div>
-        {!!Form::close()!!}
+        </form>
     </div>
 @stop
 
@@ -386,8 +389,40 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
+
+            $('#upload_file').submit(function(e) {
+                e.preventDefault();
+
+                var current_dir_path = $('#current_dir_path').val();
+                var dir_id = 0;
+                var file = $('#name').prop('files')[0];
+
+                var formdata = new FormData();
+                formdata.append("_token", "{{ csrf_token() }}")
+                formdata.append('current_dir_path', current_dir_path);
+                formdata.append('dir_id', dir_id);
+                formdata.append('file_name', file);
+                formdata.append('submit', 'Upload File');
+                formdata.append('redirect_on_submit', false);
+
+                fetch("<?php echo $appUrl; ?>/files/upload-file", {
+                    method: "POST",
+                    body: formdata
+                })
+                .then(response => response.text())
+                .then(text => {
+                    loadItems();
+                    $('#upload_file').modal('hide');
+                })
+                .catch(error => console.log(error)); // Handle the error response object
+            });
+
+            $(document).on("click", "#upload_file_btn", function (e) {
+                var path = "../file_share" + $('#working_dir').val() + "/";
+                $('#current_dir_path').val(path);
+            });
+
             $(document).on("click", "#btn_upload_file", function (e) {
-                $("#myModal").modal('hide');
                 $('#upload_file').modal({
                     backdrop: 'static',
                     keyboard: false,

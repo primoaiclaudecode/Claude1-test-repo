@@ -265,8 +265,7 @@
                 language: {
                     search: "Find:"
                 },
-                pageLength: 10,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                paging: false,
                 stateSave: false,
                 footerCallback: function (row, data, start, end, display) {
                     var api = this.api(), data;
@@ -358,8 +357,7 @@
                 language: {
                     search: "Find:"
                 },
-                pageLength: 10,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                paging: false,
                 stateSave: false,
                 //Purchases Total in Footer
                 footerCallback: function (row, data, start, end, display) {
@@ -457,8 +455,7 @@
                 language: {
                     search: "Find:"
                 },
-                pageLength: 10,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                paging: false,
                 stateSave: false,
                 //Purchases Total in Footer
                 footerCallback: function (row, data, start, end, display) {

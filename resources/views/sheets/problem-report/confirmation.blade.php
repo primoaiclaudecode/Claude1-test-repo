@@ -93,7 +93,7 @@
 
                 <label class="col-xs-12 col-sm-3 col-md-2 control-label custom-labels">Attached Files:</label>
                 <div class="col-xs-12 col-sm-9 col-md-4">
-					<?php
+                    <?php
 					if ($file_id != '') {
 						$fileArr = explode(",", $file_id);
 						if (count($fileArr) > 0 && !empty($fileArr)) {
@@ -179,6 +179,7 @@
                 {{ Form::hidden('closing_comments', $closingComments) }}
                 {{ Form::hidden('closed_date', $closedDate) }}
                 {{ Form::hidden('sheet_id', $sheetId) }}
+                {{ Form::hidden('file_id', $file_id) }}
             {!!Form::close()!!}
 
             <p>

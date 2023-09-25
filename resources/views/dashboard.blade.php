@@ -47,7 +47,7 @@
                 <div class="form-group col-xs-12">
                     <div class="chart-card">
                         <div class="row">
-                            <div class="form-group col-lg-6 col-xs-12">
+                            <div class="form-group col-lg-4 col-xs-12">
                                 <label class="col-xs-3 control-label custom-labels">From Date:</label>
                                 <div class="col-xs-9">
                                     <div class="input-group">
@@ -59,18 +59,31 @@
                                 </div>
                             </div>
 
-                            <div class="form-group col-lg-6 col-xs-12">
+                            <div class="form-group col-lg-4 col-xs-12">
                                 <label class="col-xs-3 control-label custom-labels">To Date:</label>
                                 <div class="col-xs-9">
                                     <div class="input-group">
-                                        {{ Form::text('from_date', $toDate, array('id' => 'to_date', 'class' => 'form-control cursor-pointer', 'tabindex' => 2, 'readonly' => '')) }}
+                                        {{ Form::text('to_date', $toDate, array('id' => 'to_date', 'class' => 'form-control cursor-pointer', 'tabindex' => 2, 'readonly' => '')) }}
                                         <span class="input-group-addon cursor-pointer" id="to_date_icon">
                             				<i class="fa fa-calendar"></i>
                         				</span>
                                     </div>
                                 </div>
                             </div>
+                            
+                            <div class="form-group col-lg-4 col-xs-12">
+                                <label class="col-xs-3 control-label custom-labels">Currency:</label>
+                                <div class="col-xs-9">
+                                    <div class="input-group">
+                                    {!! Form::select('currency_id', $currencies, 1, ['id' => 'currency_id',  'class'=>'form-control cursor-pointer', 'tabindex' => 3, 'readonly' => '']) !!}
+                                        <span class="input-group-addon cursor-pointer" id="currency_icon">
+                            				<i class="fa fa-money" id="currency_icon_image"></i>
+                        				</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+          
 
                         <div class="row">
                             <div id="chart" class="col-xs-12"></div>

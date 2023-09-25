@@ -3970,9 +3970,7 @@ class SheetController extends Controller
 
         $problemTypes = \App\ProblemType::orderBy('title')->pluck('title', 'id');
         $dir_file_arr = [];
-
         if (($id && $request->return_from != 'confirm') || ($request->id && $request->return_from != 'confirm')) {
-            //echo 'DDDDDDDDDDDDDDDD';
             $problemReportData = \DB::select("SELECT *, DATE_FORMAT(problem_date,'%d-%m-%Y') formatted_problem_date, DATE_FORMAT(closed_date,'%d-%m-%Y') formatted_closed_date FROM problems WHERE id = '$id'");
             $file_id = $problemReportData[0]->file_id;
             if ($file_id > 0) {
@@ -3984,11 +3982,29 @@ class SheetController extends Controller
                         $dir_file_name = @$file_systemData1->dir_file_name;
                         $dir_path = @$file_systemData1->dir_path;
                         if ($dir_file_name != '' && $dir_path != '') {
-                            $dir_path = str_replace("/opt/bitnami/apache2/htdocs/", "", $dir_path);
-                            $dir_file_arr[$dir_file_name] = $dir_path . $dir_file_name;
+                            $dir_path = str_replace("/opt/bitnami/apache2/htdocs/file_share/", "", $dir_path);
+                            $dir_file_arr[$dir_file_name] = url('/laravel-filemanager/file_share') . '/' . $dir_path . $dir_file_name;
                         }
                     }
                 }
+            }
+        }
+        else if($request->return_from == 'confirm'){
+            if($request->has('file_id')){
+                $file_id = $request->file_id;
+
+                $file_urls = explode(",", $file_id);
+                foreach ($file_urls as $url) {
+    
+                    $pos = strpos($url, "file_share/");
+                    if ($pos === false) {
+                        continue;
+                    }
+    
+                    $path = substr($url, $pos + strlen("file_share/"));
+                    $path_parts = pathinfo($path);
+                    $dir_file_arr[$path_parts['basename']] = url('/laravel-filemanager/file_share') . '/'  . $path;
+                } 
             }
         }
 
@@ -4066,8 +4082,15 @@ class SheetController extends Controller
             $newArr = [];
             if (count($fileArr) > 0 && !empty($fileArr)) {
                 foreach ($fileArr as $key => $value) {
-                    $filesInFolder = $fpath . $value;
-                    $path_parts = pathinfo($filesInFolder);
+
+                    $pos = strpos($value, "file_share/");
+                    if ($pos === false) {
+                        continue;
+                    }
+
+                    $path = substr($value, $pos + strlen("file_share/"));
+
+                    $path_parts = pathinfo($path);
                     $dirname = $path_parts['dirname'] . '/';
                     $basename = $path_parts['basename'];
 
@@ -4075,6 +4098,7 @@ class SheetController extends Controller
                     $query->where('F.is_dir', '=', 0);
                     $query->where('F.dir_path', '=', $dirname);
                     $query->where('F.dir_file_name', '=', $basename);
+
                     $file_systemData = $query->first();
                     $newFileID1 = @$file_systemData->id;
                     if ($newFileID1 > 0) {

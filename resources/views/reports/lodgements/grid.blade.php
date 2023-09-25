@@ -207,16 +207,16 @@
                     },
                     {
                         extend: 'excelHtml5',
-                        title: 'Vending Sales Report',
-                        filename: 'Excel_vending_sales_report_' + currentDate(),
+                        title: 'Lodgements Report',
+                        filename: 'Excel_lodgements_report_' + currentDate(),
                         exportOptions: {
                             columns: ':not(:last-child)'
                         }
                     },
                     {
                         extend: 'csvHtml5',
-                        title: 'Vending Sales Report',
-                        filename: 'CSV_vending_sales_report_' + currentDate(),
+                        title: 'Lodgements Report',
+                        filename: 'CSV_lodgements_report_' + currentDate(),
                         exportOptions: {
                             columns: ':not(:last-child)'
                         }
@@ -311,16 +311,16 @@
                 buttons: [
                     {
                         extend: 'excelHtml5',
-                        title: 'Vending Sales Report',
-                        filename: 'Excel_vending_sales_report_' + currentDate(),
+                        title: 'Lodgements Report',
+                        filename: 'Excel_lodgements_report_' + currentDate(),
                         exportOptions: {
                             columns: ':not(:last-child)'
                         }
                     },
                     {
                         extend: 'csvHtml5',
-                        title: 'Vending Sales Report',
-                        filename: 'CSV_vending_sales_report_' + currentDate(),
+                        title: 'Lodgements Report',
+                        filename: 'CSV_lodgements_report_' + currentDate(),
                         exportOptions: {
                             columns: ':not(:last-child)'
                         }

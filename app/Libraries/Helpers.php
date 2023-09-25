@@ -21,6 +21,10 @@ class Helpers
         return strtolower(str_replace('Controller', '', $exp_controller[0]) . 's.' . $exp_controller[1]);
     }
 
+    public static function formatCurrencyAmount($symbol, $num){
+        return $symbol . number_format($num, 2);
+    }
+
     public static function formatEuroAmounts($num)
     {
         return "&euro;" . number_format($num, 2);

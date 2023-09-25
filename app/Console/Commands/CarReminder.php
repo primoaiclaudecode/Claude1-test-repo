@@ -90,12 +90,12 @@ class CarReminder extends Command
 
             $titleIds = $reportItems->pluck('id')->unique()->toArray();
 
-            Mail::to($email)->send(
-                new CarReminderUser(
-                    'SAM Alert!!! CAR#(' . implode(', ', $titleIds) . ')',
-                    $reportItems
-                )
-            );
+            // Mail::to($email)->send(
+            //     new CarReminderUser(
+            //         'SAM Alert!!! CAR#(' . implode(', ', $titleIds) . ')',
+            //         $reportItems
+            //     )
+            // );
 
             // Debug info
             $this->info('==============================================');
@@ -122,12 +122,12 @@ class CarReminder extends Command
 
             $titleUsers = $reportItems->pluck('userName')->unique()->toArray();
 
-            Mail::to($email)->send(
-                new CarReminderUnit(
-                    'SAM Alert!!! Problem report open > 30 days for (' . implode(', ', $titleUsers) . ')',
-                    $reportItems->groupBy('userName')
-                )
-            );
+            // Mail::to($email)->send(
+            //     new CarReminderUnit(
+            //         'SAM Alert!!! Problem report open > 30 days for (' . implode(', ', $titleUsers) . ')',
+            //         $reportItems->groupBy('userName')
+            //     )
+            // );
 
             // Debug info
             $this->info('==============================================');

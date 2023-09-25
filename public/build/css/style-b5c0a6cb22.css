@@ -162,22 +162,13 @@ a, a:hover, a:focus {
 }
 
 
-/*fix residual frame*/
-@media (min-width: 941px) {
-    #fake-sidebar {
-        width: 20px;
-        height: 100%;
-        position: fixed;
-        background: #2a3542;
-    }
-}
 /*sidebar navigation*/
 
 #sidebar {
     width: 230px;
     height: 100%;
     position: fixed;
-    background: #7f380d;
+    background: #2a3542;
 }
 
 #sidebar ul li {
@@ -197,7 +188,7 @@ a, a:hover, a:focus {
     height:17px;
     width:17px;
     display:inline-block;
-    background: url(/img/nav-expand.png) no-repeat top;
+    background: url(../img/nav-expand.png) no-repeat top;
     border-radius:3px;
     -moz-border-radius:3px;
     -webkit-border-radius:3px;
@@ -206,7 +197,7 @@ a, a:hover, a:focus {
     top:15px;
 }
 .active .dcjq-icon {
-    background: url(/img/nav-expand.png) no-repeat bottom;
+    background: url(../img/nav-expand.png) no-repeat bottom;
     border-radius:3px;
     -moz-border-radius:3px;
     -webkit-border-radius:3px;
@@ -366,6 +357,7 @@ a.logo {
     font-size: 21px;
     color: #2e2e2e;
     float: left;
+    margin-top: 15px;
     text-transform: uppercase;
 }
 
@@ -5729,26 +5721,4 @@ a.guest-on i {
 .top-menu.favourites .dropdown-toggle i {
     margin-right: 5px;
     color: #a9d96c;
-}
-
-.fav-sidebar-icon {
-    position: absolute;
-    top: 17px;
-    left: 11px;
-    color: #36404d;
-}
-.fav-sidebar-icon.active {
-    color: #FF6C60!important;
-}
-.fav-sidebar-icon:hover {
-    color: #FF6C60;
-}
-.fav-sidebar-icon.active:hover {
-    color: #36404d!important;
-}
-.ccsl-logo {
-    max-width: 50px;
-}
-.select2.select2-container.select2-container--default {
-    width: 100%!important;
 }

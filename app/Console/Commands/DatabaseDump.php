@@ -48,11 +48,11 @@ class DatabaseDump extends Command
         exec("mysqldump -u$username -p$password $database | gzip > $filePath");
 
         // Send email
-        Mail::raw('Database dump ' . date('m/d/Y'), function ($message) use ($filePath)
+        Mail::raw('Devbox Database dump ' . date('m/d/Y'), function ($message) use ($filePath)
         {
-            $message->to('ataaffe@ccsl.ie');
+            $message->to('scampbell@primotechnology.ie');
             $message->cc('chris.primo@primosolutions.ie');
-            $message->subject('Database dump');
+            $message->subject('Devbox Database dump');
             $message->attach($filePath);
         });
 
