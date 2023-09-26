@@ -285,16 +285,14 @@
                     }
 
                     // Cash Purchases Checkboxes
-                    if (obj.cash_purchases_data) {
-                        $('#cash_purchases_chk_bxs').html(obj.cash_purchases_data);
-                        $(".checkbox label").css("padding-left", 0);
-                    }
+                    $('#cash_purchases_chk_bxs').html(obj.cash_purchases_data);
+                    $(".checkbox label").css("padding-left", 0);
+
 
                     // Credit Sales Checkboxes
-                    if (obj.credit_sales_data) {
-                        $('#credit_sales_chk_bxs').html(obj.credit_sales_data);
-                        $(".checkbox label").css("padding-left", 0);
-                    }
+                    $('#credit_sales_chk_bxs').html(obj.credit_sales_data);
+                    $(".checkbox label").css("padding-left", 0);
+
                 });
             } else {
                 $('#reg_num').html('{{ Form::text('reg_number', null, array('id' => 'reg_number', 'class' => 'form-control text-right', 'tabindex' => 2)) }}');

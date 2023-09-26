@@ -163,7 +163,7 @@ class ReportController extends Controller
         // Currency
         $unit = Unit::find($unitId);
         $defaultCurrency = Currency::where('is_default', 1)->first();
-        $unitCurrency = !is_null($unit) ? $unit->default_currency : $defaultCurrency->currency_id;
+        $unitCurrency = !is_null($unit) ? $unit->currency->currency_id : $defaultCurrency->currency_id;
 
         $purchases = PurchasesDataUtils::GetPurchasesOld($fromDate, $toDate, $unitId, $unitCurrency, $userUnits, $request->all_records);
 
@@ -516,11 +516,11 @@ class ReportController extends Controller
         // Currency
         $unit = Unit::find($unitId);
         $defaultCurrency = Currency::where('is_default', 1)->first();
-        $unitCurrency = !is_null($unit) ? $unit->currency_id : $defaultCurrency->currency_id;
+        $unitCurrency = !is_null($unit) ? $unit->currency->currency_id : $defaultCurrency->currency_id;
 
         if ($unitId == '' && Gate::allows('su-user-group')) {
             if ($request->all_records) {
-                $cashSales = \DB::table('cash_sales AS cs')
+                $cashSales = DB::table('cash_sales AS cs')
                     ->select(
                         [
                             'cs.cash_sales_id',
@@ -572,7 +572,7 @@ class ReportController extends Controller
                             ->whereRaw('ER.date = cs.sale_date');
                     });
             } else {
-                $cashSales = \DB::table('cash_sales AS cs')
+                $cashSales = DB::table('cash_sales AS cs')
                     ->select(
                         [
                             'cs.cash_sales_id',
@@ -627,7 +627,7 @@ class ReportController extends Controller
             }
         } elseif ($unitId == '' && Gate::allows('hq-user-group')) {
             if ($request->all_records) {
-                $cashSales = \DB::table('cash_sales AS cs')
+                $cashSales = DB::table('cash_sales AS cs')
                     ->select(
                         [
                             'cs.cash_sales_id',
@@ -678,7 +678,7 @@ class ReportController extends Controller
                             ->whereRaw('ER.date = cs.sale_date');
                     });
             } else {
-                $cashSales = \DB::table('cash_sales AS cs')
+                $cashSales = DB::table('cash_sales AS cs')
                     ->select(
                         [
                             'cs.cash_sales_id',
@@ -731,7 +731,7 @@ class ReportController extends Controller
                     ->whereBetween('cs.sale_date', [ $fromDate, $toDate ]);
             }
         } elseif ($unitId == '' && Gate::allows('operations-user-group')) {
-            $cashSales = \DB::table('cash_sales AS cs')
+            $cashSales = DB::table('cash_sales AS cs')
                 ->select(
                     [
                         'cs.cash_sales_id',
@@ -785,7 +785,7 @@ class ReportController extends Controller
                 ->whereIn('cs.unit_id', $userUnits->pluck('unit_id'))
                 ->whereBetween('cs.sale_date', [ $fromDate, $toDate ]);
         } elseif ($unitId == '' && Gate::allows('unit-user-group')) {
-            $cashSales = \DB::table('cash_sales AS cs')
+            $cashSales = DB::table('cash_sales AS cs')
                 ->select(
                     [
                         'cs.cash_sales_id',
@@ -840,7 +840,7 @@ class ReportController extends Controller
                 ->whereBetween('cs.sale_date', [ $fromDate, $toDate ]);
         } elseif ($unitId != '' && Gate::allows('su-user-group')) {
             if ($request->all_records) {
-                $cashSales = \DB::table('cash_sales AS cs')
+                $cashSales = DB::table('cash_sales AS cs')
                     ->select(
                         [
                             'cs.cash_sales_id',
@@ -893,7 +893,7 @@ class ReportController extends Controller
                     })
                     ->where('cs.unit_id', $unitId);
             } else {
-                $cashSales = \DB::table('cash_sales AS cs')
+                $cashSales = DB::table('cash_sales AS cs')
                     ->select(
                         [
                             'cs.cash_sales_id',
@@ -949,7 +949,7 @@ class ReportController extends Controller
             }
         } elseif ($unitId != '' && Gate::allows('hq-user-group')) {
             if ($request->all_records) {
-                $cashSales = \DB::table('cash_sales AS cs')
+                $cashSales = DB::table('cash_sales AS cs')
                     ->select(
                         [
                             'cs.cash_sales_id',
@@ -1001,7 +1001,7 @@ class ReportController extends Controller
                     })
                     ->where('cs.unit_id', $unitId);
             } else {
-                $cashSales = \DB::table('cash_sales AS cs')
+                $cashSales = DB::table('cash_sales AS cs')
                     ->select(
                         [
                             'cs.cash_sales_id',
@@ -1055,7 +1055,7 @@ class ReportController extends Controller
                     ->whereBetween('cs.sale_date', [ $fromDate, $toDate ]);
             }
         } else {
-            $cashSales = \DB::table('cash_sales AS cs')
+            $cashSales = DB::table('cash_sales AS cs')
                 ->select(
                     [
                         'cs.cash_sales_id',
@@ -1121,7 +1121,7 @@ class ReportController extends Controller
                 })
                 ->addColumn('checkbox', function ($cashSale)
                 {
-                    $cashSalesData = \DB::table('cash_sales')
+                    $cashSalesData = DB::table('cash_sales')
                         ->select('closed')
                         ->where('cash_sales_id', $cashSale->cash_sales_id)
                         ->first();
@@ -1270,7 +1270,7 @@ class ReportController extends Controller
                 })
                 ->addColumn('action', function ($cashSale)
                 {
-                    $cashSalesData = \DB::table('cash_sales')
+                    $cashSalesData = DB::table('cash_sales')
                         ->select('closed')
                         ->where('cash_sales_id', $cashSale->cash_sales_id)
                         ->first();
@@ -1458,7 +1458,7 @@ class ReportController extends Controller
                 })
                 ->addColumn('action', function ($cashSale)
                 {
-                    $cashSalesData = \DB::table('cash_sales')
+                    $cashSalesData = DB::table('cash_sales')
                         ->select('closed')
                         ->where('cash_sales_id', $cashSale->cash_sales_id)
                         ->first();
@@ -3100,7 +3100,7 @@ class ReportController extends Controller
         $userUnits = $this->getUserUnits()->pluck('unit_name', 'unit_id');
 
         // Currency
-        $unitCurrency = Unit::find($unitId)->default_currency;
+        $unitCurrency = Unit::find($unitId)->currency->currency_id;
         $currencySymbol = Currency::find($unitCurrency)->currency_symbol;
 
         // Budget Column
@@ -4460,7 +4460,7 @@ class ReportController extends Controller
         $unitIDStr = $unitId != '' ? ' AND p.unit_id = ' . $unitId : '';
         $purchaseTypeStr = $purchaseType != 'both' ? ' AND p.purch_type = "' . $purchaseType . '"' : '';
 
-        $unitCurrency = Unit::find($unitId)->default_currency;
+        $unitCurrency = Unit::find($unitId)->currency->currency_id;
         $currencySymbol = Currency::find($unitCurrency)->currency_symbol;
 
         $purchases = PurchasesDataUtils::GetPurchasesForSummary($fromDate, $toDate, $unitId, $unitCurrency, $purchaseType);
