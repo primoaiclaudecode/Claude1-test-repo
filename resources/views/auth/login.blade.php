@@ -5,7 +5,7 @@
         <section class="body-sign">
             <div class="center-sign login_white_bg">
                 <a href="/" class="logo pull-left auth-logo">
-                    {!! Html::image('/img/logo-square.png', 'S.A.M', array('height' => 80)) !!}
+                    {!! Html::image('/img/primo-technology-logo.png', 'S.A.M', array('height' => 80)) !!}
                 </a>
 
                 <div class="panel panel-sign">
